@@ -82,7 +82,7 @@ def keypress(event):
         flux=np.convolve(flux,np.ones(kernsize)/kernsize)
         updateplot()
     if event.key=='b':
-        #jbg.changefocus('terminal')
+#         #jbg.changefocus('terminal')
         wave1=float(raw_input('Enter beginning wavelength: \n'))
         wave2=float(raw_input('Enter ending wavelength: \n'))
         wrange=range(jbg.closest(wave,wave1),jbg.closest(wave,wave2))
@@ -102,7 +102,7 @@ def keypress(event):
     #   calcEWupper(float(velbound))
     if event.key=='n':
        normspec()
-       jbg.changefocus('terminal')
+       # jbg.changefocus('terminal')
        answer=raw_input('Write out normalized spectrum? \n')
        if ((answer=='y')|(answer=='yes')): dumpnormspec()
     if event.key=='v':
@@ -119,7 +119,7 @@ def keypress(event):
         #pyqtRemoveInputHook()
         #pdb.set_trace()
     if event.key=='r':
-        jbg.changefocus('terminal')
+        # jbg.changefocus('terminal')
         answer=raw_input('Enter name of line parameter file. \n')
         try:
             parfiletable=np.genfromtxt('lineparfiles/'+answer,dtype=None,delimiter='|')
@@ -137,7 +137,7 @@ def keypress(event):
                 cflag=cflag.astype(int) ; bflag=bflag.astype(int) ; vflag=vflag.astype(int)
                 fitpars,parinfo=joebvpfit.initlinepars(zs,restwaves,initvals=[restwaves,cols,bs,zs,vels],initinfo=[cflag,bflag,vflag])
         except IOError: print 'Invalid filename!'
-        jbg.changefocus('figure')
+#         #jbg.changefocus('figure')
     updateplot()
 
 def enterVPmode():
@@ -154,7 +154,7 @@ def enterVPmode():
  
 def VPoptions():
     global newrestwave,newz,veltog,newcol,newb,fitpars,parinfo,fiterrors
-    jbg.changefocus('terminal')
+    # jbg.changefocus('terminal')
     doubs=np.array(['C IV','Si IV','O VI','Si II','N V'])
     doublams=np.array([[1548.195,1550.77],[1393.755,1402.77],[1031.9261,1037.6167],[1190.4158,1193.2897],[1238.821,1242.804]])
     if len(fitpars)!=0:
@@ -178,7 +178,7 @@ def VPoptions():
           ans=raw_input('b parameter? \n') ; newb=float(ans)
           ans=raw_input('Click on location of line.')
           veltog=1
-          jbg.changefocus('figure')
+          # jbg.changefocus('figure')
           ### This operation continues in new function to intercept click
 
     elif ((ans=='c') | (ans=='C')):
@@ -272,7 +272,7 @@ def finishaddnewline(newvel):
             fitpars[4].extend([newvel])
             fiterrors[0].extend([0.]) ;  fiterrors[1].extend([0.]) ;  fiterrors[2].extend([0.])
             fiterrors[3].extend([0.]) ;  fiterrors[4].extend([0.])
-    jbg.changefocus('terminal')
+    # jbg.changefocus('terminal')
     ans=raw_input('Tie this line to any other? \n')
     if isinstance(ans,int):
         if int(ans) in range(len(fitpars[0])):
@@ -291,7 +291,7 @@ def finishaddnewline(newvel):
     else:
         parinfo=np.concatenate([parinfo,[[1],[0],[0],[1],[0]]],axis=1)
     listlines()
-    jbg.changefocus('figure')
+    # jbg.changefocus('figure')
 
 def writelinepars(filename,vfitpars,vfiterrors,writeoutfile='default'):
     global fitpars,fiterrors
@@ -336,7 +336,7 @@ def dumpnormspec():
     newfilename='normspec-'+cfg.field+'-'+str(round(wave1,1))+'-'+str(round(wave2,1))+'.dat'
     np.savetxt(newfilename,np.transpose((wave[wrange],normflux,normsig)))
     print 'Normalized spectrum written to:',newfilename
-    jbg.changefocus('figure')
+    # jbg.changefocus('figure')
 
 def fitlegendre(wavepts,fluxpts,sigpts,order):
     vander=L.legvander(wavepts,order)
@@ -429,7 +429,7 @@ def updateplot(plotrange='initial',numchunks=8):
     #plt.xticks(ticklocs,[-velrange,-velrange/2.,0,velrange,velrange/2.])
     plt.draw()
     plt.tight_layout()
-    #jbg.changefocus('figure')
+#     #jbg.changefocus('figure')
 
 def initplot(fig, wave1, wave2,numchunks=8):
     global wave,flux,normflux,spls,wrange,waveidx1,waveidx2
