@@ -171,9 +171,9 @@ def VPoptions():
         else:
            lamidx=jbg.closest(atomicdata.vernlam,float(ans))
            newrestwave=atomicdata.vernlam[lamidx]
-           ans=raw_input('Add the following line:  '+atomicdata.vernion[lamidx]+ ' ' +round(atomicdata.vernlam[lamidx],2)+' \n?')
+           ans=raw_input('Add the following line:  '+atomicdata.vernion[lamidx]+ ' ' +str(round(atomicdata.vernlam[lamidx],2))+' \n?')
         if ((ans=='y') | (ans=='Y')):
-          ans=raw_input('Redshift of new line? \n') ; newz=float(ans)
+          ans=raw_input('Redshift of new line? \n ') ; newz=float(ans)
           ans=raw_input('Column density? \n') ; newcol=float(ans)
           ans=raw_input('b parameter? \n') ; newb=float(ans)
           ans=raw_input('Click on location of line.')
