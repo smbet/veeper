@@ -29,8 +29,8 @@ def closewave(wavearr,wave):
 
 
 def onclick(event):
-    global fittog,EWtog,veltog,ztog
-    global fitidx
+    global fittog,EWtog,veltog,ztog,comptog
+    global fitidx,fitpars
     global wave
     global flux
     global EWwave1,newvel,newrestwave,newz,newvel,newcol,newb
@@ -73,6 +73,28 @@ def onclick(event):
         ztog=0
         newvel=0.
         finishaddnewline(newvel)
+    if comptog==1:  #Handle adding new component to all transitions of species
+        ### Find the species and redshift
+        obswaves=np.array(fitpars[0])*(1.+np.array(fitpars[3])+np.array(fitpars[4])/c)
+        thisline=jbg.closest(obswaves,event.xdata)
+        thispix=jbg.closest(wave,event.xdata)
+        thisrw = fitpars[0][thisline] ; thisz = fitpars[3][thisline] ; thistrans=atomicdata.lam2ion(thisrw)
+        ### Return lines of same species in list to be fitted
+        matches=np.where((np.array(atomicdata.lam2ion(fitpars[0]))==thistrans)&(np.abs(np.array(fitpars[3])-thisz)<0.001))[0]
+        ### Calculate model and find residuals then match new velocity to local residual maximum
+        model=joebvpfit.voigtfunc(wave,fitpars)
+        res=normflux[thispix-50:thispix+50]-model[thispix-50:thispix+50]
+        vels=jbg.veltrans(thisz,wave[thispix-50:thispix+50],thisrw)
+        newvel=vels[np.argmax(res)]
+        ### Set the new parameters and add the line(s)!
+        newrestwave=np.array(fitpars[0])[matches]
+        newcol=cfg.defaultcol
+        newb=cfg.defaultb
+        newz=thisz
+        comptog=0
+        finishaddnewline(newvel)
+
+
 def keypress(event):
     global cont,fittog,EWtog,wave1,wave2,wrange,ewid,cid,filename,fitcoeff,fitcovmtx,zs,restwaves,normtog,VPtog,veltog,fitpars,fiterrors,parinfo,labeltog,pixtog
     global wave,flux,sigup,fitidx
@@ -175,7 +197,7 @@ def enterVPmode():
 
  
 def VPoptions():
-    global newrestwave,newz,veltog,ztog,newcol,newb,fitpars,parinfo,fiterrors
+    global newrestwave,newz,veltog,ztog,newcol,newb,fitpars,parinfo,fiterrors,comptog
     # jbg.changefocus('terminal')
     doubs=np.array(['C IV','Si IV','O VI','Si II','N V'])
     doublams=np.array([[1548.195,1550.77],[1393.755,1402.77],[1031.9261,1037.6167],[1190.4158,1193.2897],[1238.821,1242.804]])
@@ -183,13 +205,17 @@ def VPoptions():
             ans=raw_input('Add, change, delete, or write out lines and fit parameters? (a, c, d, or w) \n')
     else: ans='a'
     if ((ans=='a') | (ans=='A')):
-        ans=raw_input('Approximate rest frame wavelength of the line to add or species to add doublet? \n')
+        ans=raw_input('Approximate rest frame wavelength of the line to add, species name to add doublet, or \'comp\' to add new component for existing line:')
         if ans in doubs:
            newrestwave=doublams[np.where(doubs==ans)[0]][0]
            print newrestwave
            lamidx1=jbg.closest(atomicdata.vernlam,newrestwave[0])
            lamidx2=jbg.closest(atomicdata.vernlam,newrestwave[1])
            ans=raw_input('Add the following lines:  '+atomicdata.vernion[lamidx1]+ ' ' +round(atomicdata.vernlam[lamidx1],2)+' '+round(atomicdata.vernlam[lamidx2],2) +' \n?')
+        elif ans=='comp':
+            print 'Click existing line to add component.'
+            comptog=1
+            return
         else:
            lamidx=jbg.closest(atomicdata.vernlam,float(ans))
            newrestwave=atomicdata.vernlam[lamidx]
@@ -430,6 +456,8 @@ def updateplot(plotrange='initial',numchunks=8):
                 sp.plot(wave,[0]*len(wave),color='gray')
                 sp.set_ylim(-0.2,1.3)
                 sp.set_xlim(wave[prange[0]],wave[prange[-1]])
+                sp.set_xlabel('wavelength')
+                sp.set_ylabel('relative flux')
 
 
                 ### label lines we are trying to fit
@@ -491,6 +519,8 @@ def initplot(fig, wave1, wave2,numchunks=8):
         spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
         pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
         spls[i].plot(wave[pixs],normflux[pixs],linestyle='steps')
+        spls[i].set_xlabel('wavelength')
+        spls[i].set_ylabel('relative flux')
     plt.tight_layout()
 
 ###################################################################
@@ -503,6 +533,7 @@ veltog=0
 ztog=0
 labeltog=1
 pixtog=0
+comptog=0
 ###################################################################
 
 #########################
@@ -553,7 +584,6 @@ if __name__=='__main__':
 
     global fitidx,fig
     velrange=1800.
-    print sys.argv
     ### Handle command line arguments
     if len(sys.argv) < 4:
         print "Fit a continuum for a spectrum region and Voigt profile fit absorption lines."
@@ -562,7 +592,6 @@ if __name__=='__main__':
         print "Or: filename 'inputlines' startwave endwave lineinputfile"
         sys.exit()
     elif sys.argv[2]=='inputlines':
-        print 'hello'
         filename=str(sys.argv[1])
         parfilename=str(sys.argv[5])
         if filename[-5:]=='.fits':
@@ -625,7 +654,6 @@ if __name__=='__main__':
         linevel=allpars['vel']
         linevlim1=allpars['vlim1'] ; linevlim2=allpars['vlim2']
         colflag=allpars['colflag'] ; bflag=allpars['bflag'] ; velflag=allpars['velflag']
-        #pix1=allpars['pix1'] ; pix2=allpars['pix2']
         restwaves=linerestwave
         initinfo=[colflag,bflag,velflag]
         initpars=[restwaves,linecol,lineb,zs,linevel,linevlim1,linevlim2]
@@ -641,17 +669,11 @@ if __name__=='__main__':
 
         fitpars=linepars
         cfg.fitidx=joebvpfit.fitpix(wave,fitpars)
-        print fitpars
         fig=plt.figure(figsize=(13.5,12))
         cid=fig.canvas.mpl_connect('button_press_event', onclick)
         kid=fig.canvas.mpl_connect('key_press_event', keypress)
 
-        #ax=fig.add_subplot(111)
         initplot(fig,wave1,wave2)
 
-        #ax.plot(wave[wrange],flux[wrange],linestyle='steps')
-        #ax.plot(wave[wrange],normflux[wrange],linestyle='steps')
-        #xlabel('wavelength')
-        #ylabel('flux')
 
         plt.show()
