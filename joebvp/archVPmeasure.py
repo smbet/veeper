@@ -19,6 +19,7 @@ from astropy.io import ascii
 import pdb
 
 plt.rcParams['font.family']='serif'
+plt.rcParams['keymap.yscale'] = '.'
 
 c=299792.458
 
@@ -28,11 +29,11 @@ def closewave(wavearr,wave):
 
 
 def onclick(event):
-    global fittog,EWtog,veltog
+    global fittog,EWtog,veltog,ztog
     global fitidx
     global wave
     global flux
-    global EWwave1,newvel,newrestwave,newz,newvel
+    global EWwave1,newvel,newrestwave,newz,newvel,newcol,newb
     global zEW,EWrestwave
     if fittog==1:
         if event.button==1:
@@ -58,9 +59,22 @@ def onclick(event):
         print 'Velocity:',round(newvel,3)
         veltog=0
         finishaddnewline(newvel)
-
+    if ztog==1:
+        if isinstance(newrestwave,float): nrw=newrestwave
+        else: nrw=newrestwave[0]
+        newloc=wave[jbg.closest(wave,event.xdata)]
+        newz=newloc/nrw - 1.
+        ans=raw_input('Column density ('+str(cfg.defaultcol)+')? \n')
+        if ans=='': newcol=cfg.defaultcol
+        else: newcol=float(ans)
+        ans=raw_input('b parameter ('+str(cfg.defaultb)+')? \n')
+        if ans=='': newb=cfg.defaultb
+        else: newb=float(ans)
+        ztog=0
+        newvel=0.
+        finishaddnewline(newvel)
 def keypress(event):
-    global cont,fittog,EWtog,wave1,wave2,wrange,ewid,cid,filename,fitcoeff,fitcovmtx,zs,restwaves,normtog,VPtog,veltog,fitpars,fiterrors,parinfo
+    global cont,fittog,EWtog,wave1,wave2,wrange,ewid,cid,filename,fitcoeff,fitcovmtx,zs,restwaves,normtog,VPtog,veltog,fitpars,fiterrors,parinfo,labeltog,pixtog
     global wave,flux,sigup,fitidx
     global normflux,normsig
     if event.key=='t':
@@ -100,6 +114,14 @@ def keypress(event):
     #   changefocus('terminal')
     #   velbound=raw_input('Enter +/- velocity range. \n')
     #   calcEWupper(float(velbound))
+    if event.key=='l':
+       if labeltog==0:   labeltog=1
+       else: labeltog=0
+       updateplot()
+    if event.key=='k':
+       if pixtog==0:   pixtog=1
+       else: pixtog=0
+       updateplot()
     if event.key=='n':
        normspec()
        # jbg.changefocus('terminal')
@@ -147,13 +169,13 @@ def enterVPmode():
     wave1idx=jbg.closest(wave,wave1)
     wave2idx=jbg.closest(wave,wave2)
     prange=np.arange(wave1idx,wave2idx)
-    updateplot(prange)
+    #updateplot(prange)
     VPtog=1
     VPoptions()
 
  
 def VPoptions():
-    global newrestwave,newz,veltog,newcol,newb,fitpars,parinfo,fiterrors
+    global newrestwave,newz,veltog,ztog,newcol,newb,fitpars,parinfo,fiterrors
     # jbg.changefocus('terminal')
     doubs=np.array(['C IV','Si IV','O VI','Si II','N V'])
     doublams=np.array([[1548.195,1550.77],[1393.755,1402.77],[1031.9261,1037.6167],[1190.4158,1193.2897],[1238.821,1242.804]])
@@ -173,9 +195,17 @@ def VPoptions():
            newrestwave=atomicdata.vernlam[lamidx]
            ans=raw_input('Add the following line:  '+atomicdata.vernion[lamidx]+ ' ' +str(round(atomicdata.vernlam[lamidx],2))+' \n?')
         if ((ans=='y') | (ans=='Y')):
-          ans=raw_input('Redshift of new line? \n ') ; newz=float(ans)
-          ans=raw_input('Column density? \n') ; newcol=float(ans)
-          ans=raw_input('b parameter? \n') ; newb=float(ans)
+          ans=raw_input('Redshift of new line or press \'c\' to specify by click? \n ')
+          if ans=='c':
+                  ztog=1
+                  return
+          else: newz=float(ans)
+          ans=raw_input('Column density ('+str(cfg.defaultcol)+')? \n')
+          if ans=='': newcol=cfg.defaultcol
+          else: newcol=float(ans)
+          ans=raw_input('b parameter ('+str(cfg.defaultb)+')? \n')
+          if ans=='': newb=cfg.defaultb
+          else: newb=float(ans)
           ans=raw_input('Click on location of line.')
           veltog=1
           # jbg.changefocus('figure')
@@ -247,7 +277,7 @@ def VPoptions():
         updateplot()
 
 def finishaddnewline(newvel):
-    global newrestwave,newz,veltog,newcol,newb,parinfo,fitpars,fiterrors
+    global newrestwave,newz,veltog,newcol,newb,parinfo,fitpars,fiterrors,wave
     ### Show list of lines before concatenating to prevent errors
     #listlines()
     ### Initialize fitpars and fiterrors if necessary
@@ -261,6 +291,8 @@ def finishaddnewline(newvel):
         fitpars[2].extend([newb])
         fitpars[3].extend([newz])
         fitpars[4].extend([newvel])
+        fitpars[5].extend([-cfg.defaultvlim])
+        fitpars[6].extend([cfg.defaultvlim])
         fiterrors[0].extend([0.]) ;  fiterrors[1].extend([0.]) ;  fiterrors[2].extend([0.])
         fiterrors[3].extend([0.]) ;  fiterrors[4].extend([0.])
     else:
@@ -270,6 +302,8 @@ def finishaddnewline(newvel):
             fitpars[2].extend([newb])
             fitpars[3].extend([newz])
             fitpars[4].extend([newvel])
+            fitpars[5].extend([-cfg.defaultvlim])
+            fitpars[6].extend([cfg.defaultvlim])
             fiterrors[0].extend([0.]) ;  fiterrors[1].extend([0.]) ;  fiterrors[2].extend([0.])
             fiterrors[3].extend([0.]) ;  fiterrors[4].extend([0.])
     # jbg.changefocus('terminal')
@@ -290,6 +324,10 @@ def finishaddnewline(newvel):
    
     else:
         parinfo=np.concatenate([parinfo,[[1],[0],[0],[1],[0]]],axis=1)
+    print fitpars
+    #import pdb
+    #pdb.set_trace()
+    cfg.fitidx=joebvpfit.fitpix(wave,fitpars)
     listlines()
     # jbg.changefocus('figure')
 
@@ -363,7 +401,7 @@ def redchisq(fluxpts1,fitpts1,sigpts,order):
     return Xsq,df
 
 def updateplot(plotrange='initial',numchunks=8):
-    global wave,flux,fitidx,wrange,fitcoeff,normtog,VPtog,ax,fitpars
+    global wave,flux,fitidx,wrange,fitcoeff,normtog,VPtog,ax,fitpars,labeltog,pixtog
     global fig,spls
     if plotrange=='initial': prange=wrange
     else: prange=plotrange
@@ -383,19 +421,29 @@ def updateplot(plotrange='initial',numchunks=8):
                 #sp.plot(wave[prange],[0]*len(prange),color='gray')
 
                 sp.plot(wave,normflux,linestyle='steps')
+                if pixtog==1:
+                    sp.plot(wave[cfg.fitidx],normflux[cfg.fitidx],'gs',markersize=4,mec='green')
                 model=joebvpfit.voigtfunc(wave,fitpars)
                 res=normflux-model
                 sp.plot(wave,model,'r')
-                sp.plot(wave,res,'.',color='black')
+                sp.plot(wave,-res,'.',color='black')
                 sp.plot(wave,[0]*len(wave),color='gray')
-                sp.set_ylim(-0.5,1.3)
+                sp.set_ylim(-0.2,1.3)
                 sp.set_xlim(wave[prange[0]],wave[prange[-1]])
-                ### label lines we are trying to fit
 
-                for j in range(len(fitpars[0])):
-                    labelloc=fitpars[0][j]*(1.+fitpars[3][j])+fitpars[4][j]/c*fitpars[0][j]*(1.+fitpars[3][j])
-                    label='- '+str(round(fitpars[0][j],1))+'  z = '+str(round(fitpars[3][j],5))
-                    sp.text(labelloc,1.0,label,rotation='vertical',withdash=True,horizontalalignment='center',va='bottom',clip_on=True)
+
+                ### label lines we are trying to fit
+                if labeltog==1:
+                    for j in range(len(fitpars[0])):
+
+                        labelloc=fitpars[0][j]*(1.+fitpars[3][j])+fitpars[4][j]/c*fitpars[0][j]*(1.+fitpars[3][j])
+                        label='_ '+str(round(fitpars[0][j],1))+'\n  '+str(round(fitpars[3][j],5))
+                        #label1='- '+str(round(fitpars[0][j],1))
+                        #label2='  '+str(round(fitpars[3][j],5))
+                        sp.text(labelloc,1.1,label,rotation='vertical',withdash=True,horizontalalignment='center',va='bottom',clip_on=True,fontsize=10)
+                        #sp.text(labelloc+1.1,1.1,label2,rotation='vertical',withdash=True,horizontalalignment='center',va='bottom',clip_on=True,fontsize=10)
+                        #sp.text(labelloc,1.0,label,rotation='vertical',withdash=True,horizontalalignment='left',va='bottom',clip_on=True,fontsize=10)
+                        sp.set_ylim(-0.2,1.6)
 
             #sp.plot(wave[prange],normsig[prange],linestyle='steps',color='red')
             #sp.plot(wave[prange],-normsig[prange],linestyle='steps',color='red')
@@ -452,7 +500,9 @@ EWtog=0
 normtog=0
 VPtog=0
 veltog=0
-
+ztog=0
+labeltog=1
+pixtog=0
 ###################################################################
 
 #########################
@@ -580,17 +630,18 @@ if __name__=='__main__':
         initinfo=[colflag,bflag,velflag]
         initpars=[restwaves,linecol,lineb,zs,linevel,linevlim1,linevlim2]
         linepars,parinfo=joebvpfit.initlinepars(zs,restwaves,initpars,initinfo=initinfo)
+
         origpars=linepars ; origparinfo=parinfo
         vel=[]
         linelistidx=-99.
-        cfg.fitidx=joebvpfit.fitpix(wave,linepars)
 
         waveidx1=jbg.closest(wave,wave1)
         waveidx2=jbg.closest(wave,wave2)
         wrange=range(waveidx1,waveidx2)
 
         fitpars=linepars
-
+        cfg.fitidx=joebvpfit.fitpix(wave,fitpars)
+        print fitpars
         fig=plt.figure(figsize=(13.5,12))
         cid=fig.canvas.mpl_connect('button_press_event', onclick)
         kid=fig.canvas.mpl_connect('key_press_event', keypress)

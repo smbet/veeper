@@ -15,7 +15,7 @@ def foldpars(pars,numpars=5):
 	for i in range(numpars):
 		fparrow=[]
 		for j in range(rows):
-			fparrow.append(pars[i+5*j])
+			fparrow.append(pars[i+numpars*j])
 		fpars.append(fparrow)
 	return fpars
 
@@ -58,58 +58,65 @@ def fitpix(wave,pararr):
 def prepparinfo(linepars,parflags):
 	parinfo=[]
 	parflags=np.array(parflags)
+	numpars=5
 	for i in range(len(parflags[0])):
 		parinfo.extend([{'fixed':1},{'fixed':0},{'fixed':0},{'fixed':1},{'fixed':0}])
 		for j in range(1,len(parflags)):
-			if parflags[j][i]==1: parinfo[i*5+j]['fixed']=1
-			elif parflags[j][i]<=0: parinfo[i*5+j]['fixed']=0
+			if parflags[j][i]==1: parinfo[i*numpars+j]['fixed']=1
+			elif parflags[j][i]<=0: parinfo[i*numpars+j]['fixed']=0
 			else:
 				matches=np.where(np.array(parflags[j])==parflags[j][i])[0]
 				if matches[0]!=i:
-					tiedpar=int(matches[0]*5+j)
-					parinfo[i*5+j]['tied']='p['+str(tiedpar)+']'
+					tiedpar=int(matches[0]*numpars+j)
+					parinfo[i*numpars+j]['tied']='p['+str(tiedpar)+']'
 		col=round(linepars[1][i],2)
 		vel=round(linepars[4][i],2)
 		bpar=round(linepars[2][i],2)
-		parinfo[5*i+1]['limited']=[1,1]
-		parinfo[5*i+1]['limits']=[round(col-5.,2),round(col+5.,2)]
-		parinfo[5*i+2]['limited']=[1,1]
+		parinfo[numpars*i+1]['limited']=[1,1]
+		parinfo[numpars*i+1]['limits']=[round(col-5.,2),round(col+5.,2)]
+		parinfo[numpars*i+2]['limited']=[1,1]
 		### adjust b-value limits based on species
 		lydiff=abs(linepars[0][i]-cfg.lyseries)
 		lymatch = np.where(abs(lydiff)<=0.05)[0]
 		if lymatch:
-			parinfo[5*i+2]['limits']=[max([6.,bpar-10.]),min([bpar+10],150.)]
+			parinfo[numpars*i+2]['limits']=[max([6.,bpar-10.]),min([bpar+10],150.)]
 		else:
-			parinfo[5*i+2]['limits']=[max([6.,bpar-10.]),min([bpar+10],85.)]
-		#else: parinfo[5*i+2]['limits']=[1.,150.]
-	#parinfo[5*i+2]['maxstep']=5.
-		parinfo[5*i+2]['step']=0.5
-		parinfo[5*i+2]['mpside']=2
-		#parinfo[5*i+2]['relstep']=0.0001
-		parinfo[5*i+4]['limited']=[1,1]
+			parinfo[numpars*i+2]['limits']=[max([6.,bpar-10.]),min([bpar+10],85.)]
+		#else: parinfo[numpars*i+2]['limits']=[1.,150.]
+	#parinfo[numpars*i+2]['maxstep']=5.
+		parinfo[numpars*i+2]['step']=0.5
+		parinfo[numpars*i+2]['mpside']=2
+		#parinfo[numpars*i+2]['relstep']=0.0001
+		parinfo[numpars*i+4]['limited']=[1,1]
 		### Allow velocity to flop around
 		if parflags[4][i]<0:
 			flopamt=abs(parflags[4][i])
-			parinfo[5*i+4]['limits']=[round(vel-flopamt,2),round(vel+flopamt,2)]
+			parinfo[numpars*i+4]['limits']=[round(vel-flopamt,2),round(vel+flopamt,2)]
 		elif len(linepars)>5:
 			v1=round(linepars[5][i],2) ; v2=round(linepars[6][i],2)
-			parinfo[5*i+4]['limits']=[v1,v2]
+			parinfo[numpars*i+4]['limits']=[v1,v2]
 		else:
-			parinfo[5*i+4]['limits']=[round(vel-50.,2),round(vel+50.,2)]
-		parinfo[5*i+4]['step']=1.
-		#parinfo[5*i+4]['relstep']=0.01
+			parinfo[numpars*i+4]['limits']=[round(vel-50.,2),round(vel+50.,2)]
+		parinfo[numpars*i+4]['step']=1.
+		#parinfo[numpars*i+4]['relstep']=0.01
 	return parinfo
 
 def joebvpfit(wave,flux,sig,linepars,flags):
 
 	xtol=1e-11
 	gtol=1e-11
-	parinfo=prepparinfo(linepars,flags)
-	linepars=unfoldpars(linepars)
+	# Only feed to the fitter the parameters that go into the model
+	partofit=linepars[:5]
+	parinfo=prepparinfo(partofit,flags)
+	# Save the velocity windows to add back to the parameter array
+	vlim1=linepars[5] ; vlim2=linepars[6]
+	partofit=unfoldpars(partofit)
 	modelvars={'x':wave,'y':flux,'err':sig}
-	m=nmpfit.mpfit(voigterrfunc,linepars,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=1e-10,xtol=xtol,gtol=gtol)
+	m=nmpfit.mpfit(voigterrfunc,partofit,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=1e-10,xtol=xtol,gtol=gtol)
 	if m.status <= 0: print 'Fitting error:',m.errmsg
 	fitpars=foldpars(m.params)
+	# Add velocity windows back to parameter array
+	fitpars.append(vlim1) ; fitpars.append(vlim2)
 	fiterrors=foldpars(m.perror)
 
 	print '\nFit results: \n'

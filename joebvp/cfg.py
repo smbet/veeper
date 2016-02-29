@@ -78,3 +78,4 @@ contoutfile=outputdir+'continua.dat'
 largeVPparfile=outputdir+'VPlist.dat'
 defaultcol=13.1
 defaultb=20.0
+defaultvlim=100.
