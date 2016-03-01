@@ -79,3 +79,13 @@ largeVPparfile=outputdir+'VPlist.dat'
 defaultcol=13.1
 defaultb=20.0
 defaultvlim=100.
+
+# Plotting
+ylim = (-0.2, 1.2)
+xtick_fontsize = 'small'
+ytick_fontsize = 'small'
+xy_fontsize = 'small'
+x_labelpad = 0
+y_labelpad = -3
+label_ypos = 0.2 * (ylim[0]+ylim[1])
+label_fontsize = 8

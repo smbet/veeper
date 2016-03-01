@@ -20,7 +20,9 @@ import pdb
 
 plt.rcParams['font.family']='serif'
 plt.rcParams['keymap.yscale'] = '.'
-
+plt.rcParams['xtick.labelsize'] = cfg.xtick_fontsize 
+plt.rcParams['ytick.labelsize'] = cfg.ytick_fontsize 
+plt.rcParams['axes.formatter.useoffset'] = False
 c=299792.458
 
 def closewave(wavearr,wave):
@@ -452,33 +454,30 @@ def updateplot(plotrange='initial',numchunks=8):
                 model=joebvpfit.voigtfunc(wave,fitpars)
                 res=normflux-model
                 sp.plot(wave,model,'r')
-                sp.plot(wave,-res,'.',color='black')
+                sp.plot(wave,-res,'.',color='black', ms=2)
                 sp.plot(wave,[0]*len(wave),color='gray')
-                sp.set_ylim(-0.2,1.3)
-                sp.set_xlim(wave[prange[0]],wave[prange[-1]])
-                sp.set_xlabel('wavelength')
-                sp.set_ylabel('relative flux')
-
-
+                
                 ### label lines we are trying to fit
                 if labeltog==1:
                     for j in range(len(fitpars[0])):
-
                         labelloc=fitpars[0][j]*(1.+fitpars[3][j])+fitpars[4][j]/c*fitpars[0][j]*(1.+fitpars[3][j])
-                        label='_ '+str(round(fitpars[0][j],1))+'\n  '+str(round(fitpars[3][j],5))
+                        label = ' {:.1f}_\nz{:.4f}'.format(fitpars[0][j], fitpars[3][j])
                         #label1='- '+str(round(fitpars[0][j],1))
                         #label2='  '+str(round(fitpars[3][j],5))
-                        sp.text(labelloc,1.1,label,rotation='vertical',withdash=True,horizontalalignment='center',va='bottom',clip_on=True,fontsize=10)
+                        sp.text(labelloc, cfg.label_ypos, label, rotation=90, withdash=True, ha='center', va='bottom', clip_on=True, fontsize=cfg.label_fontsize)
                         #sp.text(labelloc+1.1,1.1,label2,rotation='vertical',withdash=True,horizontalalignment='center',va='bottom',clip_on=True,fontsize=10)
                         #sp.text(labelloc,1.0,label,rotation='vertical',withdash=True,horizontalalignment='left',va='bottom',clip_on=True,fontsize=10)
-                        sp.set_ylim(-0.2,1.6)
+                        
 
             #sp.plot(wave[prange],normsig[prange],linestyle='steps',color='red')
             #sp.plot(wave[prange],-normsig[prange],linestyle='steps',color='red')
 
-            sp.plot(wave,normsig,linestyle='steps',color='red')
-            sp.plot(wave,-normsig,linestyle='steps',color='red')
-
+            sp.plot(wave,normsig,linestyle='steps',color='red', lw=0.5)
+            sp.plot(wave,-normsig,linestyle='steps',color='red', lw=0.5)
+            sp.set_ylim(cfg.ylim)
+            sp.set_xlim(wave[prange[0]],wave[prange[-1]])
+            sp.set_xlabel('wavelength (A)', fontsize=cfg.xy_fontsize, labelpad=cfg.x_labelpad)
+            sp.set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
 
         #ax.clear()
         #ax.plot(wave[prange],normflux[prange],linestyle='steps')
@@ -519,9 +518,12 @@ def initplot(fig, wave1, wave2,numchunks=8):
         spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
         pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
         spls[i].plot(wave[pixs],normflux[pixs],linestyle='steps')
-        spls[i].set_xlabel('wavelength')
-        spls[i].set_ylabel('relative flux')
+        spls[i].set_xlabel('wavelength (A)', fontsize=cfg.xy_fontsize, labelpad=cfg.x_labelpad)
+        spls[i].set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
+        spls[i].set_ylim(cfg.ylim)
+        spls[i].minorticks_on()
     plt.tight_layout()
+
 
 ###################################################################
 
