@@ -286,7 +286,6 @@ def wherebetween(testval,lim1,lim2):
 
 ### Generate appropriate calls for a grid of subplots
 def subplotgrid(num):
-  print num
   if num==1: calls=[[1,1,1]]
   elif num==2: calls=[[2,1,1],[2,1,2]]
   elif num==3: calls=[[3,1,1],[3,1,2],[3,1,3]]

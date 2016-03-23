@@ -4,7 +4,7 @@ from numpy.linalg import svd
 import matplotlib
 import sys,os
 if 'linux' in sys.platform: matplotlib.use('wxagg')  # and also try macosx and wxagg and tkagg
-else: matplotlib.use('TkAgg')
+else: matplotlib.use('Qt4Agg')
 from matplotlib import pyplot as plt
 import pyfits as pf
 #import datetime, time
@@ -637,8 +637,6 @@ if __name__=='__main__':
 
         ### Find lines in wavelength range and initialize
         lineobswave=linerestwave*(1.+linez)
-        restwave=0.
-        z=0.
         lineshere=np.where((lineobswave>wave1)&(lineobswave<wave2))[0]
         zs=linez[lineshere]
         restwaves=linerestwave[lineshere]
@@ -663,7 +661,6 @@ if __name__=='__main__':
 
         origpars=linepars ; origparinfo=parinfo
         vel=[]
-        linelistidx=-99.
 
         waveidx1=jbg.closest(wave,wave1)
         waveidx2=jbg.closest(wave,wave2)
