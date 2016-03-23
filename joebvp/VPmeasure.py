@@ -7,7 +7,7 @@ Created on Mon Mar 21 22:50:45 2016
 
 from PyQt4.uic import loadUiType
 from PyQt4.QtGui import *
-import atomicdata
+import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
 from joebvp import cfg
 from joebvp import joebvpfit
