@@ -175,6 +175,32 @@
         <string>Fit Lines</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="boxFitpix">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>520</y>
+         <width>131</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Pixels used in fit</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="boxLineLabel">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>500</y>
+         <width>131</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Line labels</string>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
