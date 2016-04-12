@@ -7,6 +7,7 @@ Created on Mon Mar 21 22:50:45 2016
 
 from PyQt4.uic import loadUiType
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
 from joebvp import cfg
@@ -22,6 +23,66 @@ Ui_MainWindow, QMainWindow = loadUiType('mainvpwindow.ui')
 
 c=cfg.c/1e5
 
+class LineParTableModel(QAbstractTableModel):
+    def __init__(self,fitpars,fiterrors,parinfo,parent=None):
+            QAbstractTableModel.__init__(self,parent)
+            self.fitpars=fitpars
+            self.fiterrors=fiterrors
+            self.parinfo=parinfo
+
+    def rowCount(self,parent):
+        return len(self.fitpars[0])
+
+    def columnCount(self, parent):
+        return len(self.fitpars)
+
+
+
+    def data(self,index,role):
+
+        if role == Qt.EditRole:
+            row = index.row()
+            column = index.column()
+            print str(round(self.fitpars[column][row],3))
+            return str(round(self.fitpars[column][row],3))
+
+        if index.isValid() and role == Qt.DisplayRole:
+            row = index.row()
+            column = index.column()
+            #try:
+            #    value = self._listdata[row][column]
+            #    fileName = os.path.split(value)[-1]
+            #except IndexError:
+            #    return
+            return QVariant(round(self.fitpars[column][row],3))
+        else: return None
+
+    def flags(self,index):
+        return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def setData(self,index,value,role=Qt.EditRole):
+        if role == Qt.EditRole:
+            row = index.row()
+            column = index.column()
+            print 'Value',value.toFloat()[0]
+            if value.toFloat()[1]==True:
+                val = round(float(value.toFloat()[0]),2)
+                self.fitpars[column][row] = val
+                print self.fitpars[column][row],val
+                self.dataChanged.emit(index,index)
+                return True
+
+        return False
+
+
+
+        #if not index.isValid():
+        #    return QVariant()
+        #elif role != Qt.DisplayRole:
+        #    return QVariant()
+        #else:
+        #    return QVariant(self.fitpars[index.row()][index.column()])
+
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self,spec,linelist,wave1=None,wave2=None,numchunks=8):
         super(Main,self).__init__()
@@ -36,6 +97,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.spls = []
         self.labeltog = 1
         self.pixtog = 0
+        self.restog = 1
         #self.mplfigs.itemClicked.connect(self.changefig)
 
 
@@ -50,6 +112,11 @@ class Main(QMainWindow, Ui_MainWindow):
         self.initialpars()
         self.poptable()
         self.fitButton.clicked.connect(self.fitlines)
+        self.boxLineLabel.clicked.connect(self.toglabels)
+        self.boxFitpix.clicked.connect(self.togfitpix)
+        self.boxResiduals.clicked.connect(self.togresiduals)
+        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
+        self.tableView.setModel(self.datamodel)
 
         fig=Figure()
         self.fig=fig
@@ -127,7 +194,30 @@ class Main(QMainWindow, Ui_MainWindow):
     def fitlines(self):
         print 'Fitting line profile(s)...'
         self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.fitpars,self.parinfo)
+        self.datamodel.fitpars=self.fitpars
+        self.datamodel.fiterrors=self.fiterrors
+        #self.datamodel.dataChanged.emit(QModelIndex,QModelIndex)
         self.poptable()
+        self.updateplot()
+
+
+    def toglabels(self):
+        if self.labeltog==1: self.labeltog=0
+        else: self.labeltog=1
+        self.updateplot()
+
+    def togfitpix(self):
+        if self.pixtog == 1:
+            self.pixtog = 0
+        else:
+            self.pixtog = 1
+        self.updateplot()
+
+    def togresiduals(self):
+        if self.restog == 1:
+            self.restog = 0
+        else:
+            self.restog = 1
         self.updateplot()
 
     def updateplot(self):
@@ -146,7 +236,8 @@ class Main(QMainWindow, Ui_MainWindow):
                     model=joebvpfit.voigtfunc(self.wave,self.fitpars)
                     res=self.normflux-model
                     sp.plot(self.wave,model,'r')
-                    sp.plot(self.wave,-res,'.',color='black', ms=2)
+                    if self.restog==1:
+                        sp.plot(self.wave,-res,'.',color='black', ms=2)
                     sp.plot(self.wave,[0]*len(self.wave),color='gray')
     
                     ### label lines we are trying to fit
@@ -224,7 +315,7 @@ if __name__ == '__main__':
         spec=readspec(filename)
         inputlines=ascii.read(parfilename)
 
-
+        '''
         fig1 = Figure()
         ax1f1 = fig1.add_subplot(111)
         ax1f1.plot(np.random.rand(5))
@@ -238,7 +329,8 @@ if __name__ == '__main__':
         fig3 = Figure()
         ax1f3 = fig3.add_subplot(111)
         ax1f3.pcolormesh(np.random.rand(20,20))
-        
+        '''
+
         app = QtGui.QApplication(sys.argv)
         main = Main(spec,inputlines)
         #main.addfig('One plot',fig1)
@@ -246,4 +338,6 @@ if __name__ == '__main__':
         #main.addfig('Pcolormesh',fig3)
         main.show()
         sys.exit(app.exec_())
-        
+
+
+

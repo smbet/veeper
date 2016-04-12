@@ -200,6 +200,35 @@
        <property name="text">
         <string>Line labels</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="boxResiduals">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>540</y>
+         <width>131</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Residuals</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QTableView" name="tableView">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>510</y>
+         <width>256</width>
+         <height>192</height>
+        </rect>
+       </property>
       </widget>
      </widget>
     </item>
