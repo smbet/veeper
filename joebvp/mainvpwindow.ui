@@ -193,7 +193,20 @@
         </rect>
        </property>
        <property name="text">
-        <string>Load New Parameters</string>
+        <string>Load New Line File</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="writeParsButton">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>480</y>
+         <width>171</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Write out parameters</string>
        </property>
       </widget>
      </widget>

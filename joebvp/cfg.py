@@ -73,9 +73,9 @@ uqwgidxs=[]
 
 outputdir='./'
 
-VPparoutfile=outputdir+field+'_Dec24_VP_conttrials.dat'
+VPparoutfile=outputdir+field+'_VP.dat'
 contoutfile=outputdir+'continua.dat'
-largeVPparfile=outputdir+'VPlist.dat'
+largeVPparfile=outputdir+'_VP_log.dat'
 defaultcol=13.1
 defaultb=20.0
 defaultvlim=100.

@@ -12,6 +12,7 @@ import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
 from joebvp import cfg
 from joebvp import joebvpfit
+import os
 
 
 from matplotlib.figure import Figure
@@ -38,7 +39,28 @@ class LineParTableModel(QAbstractTableModel):
         return 9
         #return len(self.fitpars)
 
+    def writelinepars(self, outfilename,specfilename):
+        fitpars = self.fitpars
+        fiterrors = self.fiterrors
+        bigfiletowrite = cfg.largeVPparfile
+        filetowrite = outfilename
 
+        if os.path.isfile(filetowrite):
+            VPparfile = open(filetowrite, 'wb')
+            bigparfile = open(bigfiletowrite, 'ab')
+        else:
+            VPparfile = open(filetowrite, 'wb')
+            bigparfile = open(bigfiletowrite, 'wb')
+        for i in range(len(fitpars[0])):
+            towrite = jbg.pipedelimrow(
+                [specfilename, fitpars[0][i], round(fitpars[3][i],3), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
+                round(fitpars[4][i],3), round(fiterrors[4][i],3)])
+            VPparfile.write(towrite)
+            bigparfile.write(towrite)
+        VPparfile.close()
+        bigparfile.close()
+        print 'Line parameters written to:'
+        print filetowrite
 
     def data(self,index,role):
 
@@ -47,12 +69,12 @@ class LineParTableModel(QAbstractTableModel):
             column = index.column()
             if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
             elif column == 2: toret=round(self.fitpars[3][row],5)
-            elif column == 3: toret=round(self.fitpars[1][row],5)
-            elif column == 4: toret=round(self.fiterrors[1][row],5)
-            elif column == 5: toret=round(self.fitpars[2][row],5)
-            elif column == 6: toret=round(self.fiterrors[2][row],5)
-            elif column == 7: toret=round(self.fitpars[4][row],5)
-            elif column == 8: toret=round(self.fiterrors[4][row],5)
+            elif column == 3: toret=round(self.fitpars[1][row],3)
+            elif column == 4: toret=round(self.fiterrors[1][row],3)
+            elif column == 5: toret=round(self.fitpars[2][row],3)
+            elif column == 6: toret=round(self.fiterrors[2][row],3)
+            elif column == 7: toret=round(self.fitpars[4][row],3)
+            elif column == 8: toret=round(self.fiterrors[4][row],3)
             else: toret=QVariant(round(self.fitpars[column][row],3))
             return toret
 
@@ -61,12 +83,12 @@ class LineParTableModel(QAbstractTableModel):
             column = index.column()
             if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
             elif column == 2: toret=round(self.fitpars[3][row],5)
-            elif column == 3: toret=round(self.fitpars[1][row],5)
-            elif column == 4: toret=round(self.fiterrors[1][row],5)
-            elif column == 5: toret=round(self.fitpars[2][row],5)
-            elif column == 6: toret=round(self.fiterrors[2][row],5)
-            elif column == 7: toret=round(self.fitpars[4][row],5)
-            elif column == 8: toret=round(self.fiterrors[4][row],5)
+            elif column == 3: toret=round(self.fitpars[1][row],3)
+            elif column == 4: toret=round(self.fiterrors[1][row],3)
+            elif column == 5: toret=round(self.fitpars[2][row],3)
+            elif column == 6: toret=round(self.fiterrors[2][row],3)
+            elif column == 7: toret=round(self.fitpars[4][row],3)
+            elif column == 8: toret=round(self.fiterrors[4][row],3)
             else: toret=QVariant(round(self.fitpars[column][row],3))
             return toret
         else: return None
@@ -126,9 +148,11 @@ class LineParTableModel(QAbstractTableModel):
                 return self.headers[section]
 
 class Main(QMainWindow, Ui_MainWindow):
-    def __init__(self,spec,parfilename=None,wave1=None,wave2=None,numchunks=8):
+    def __init__(self,specfilename,parfilename=None,wave1=None,wave2=None,numchunks=8):
         super(Main,self).__init__()
         self.setupUi(self)
+
+        ### Initialize stuff
         self.line_dict = {}
         self.fitpars = None
         self.parinfo = None
@@ -140,21 +164,26 @@ class Main(QMainWindow, Ui_MainWindow):
         self.pixtog = 0
         self.restog = 1
 
-        self.spectrum=spec
-        self.wave=spec.wavelength.value
-        self.normflux=spec.flux/spec.co
-        self.normsig=spec.sig/spec.co
+        ### Read in spectrum and list of lines to fit
+        self.specfilename=specfilename
+        self.spectrum = readspec(specfilename)
+        self.wave=self.spectrum.wavelength.value
+        self.normflux=self.spectrum.flux/self.spectrum.co
+        self.normsig=self.spectrum.sig/self.spectrum.co
 
         if not parfilename==None:
             self.linelist = self.initialpars(parfilename)
 
+
+        ### Connect signals to slots
         self.fitButton.clicked.connect(self.fitlines)
         self.boxLineLabel.clicked.connect(self.toglabels)
         self.boxFitpix.clicked.connect(self.togfitpix)
         self.boxResiduals.clicked.connect(self.togresiduals)
-        self.loadParsButton.clicked.connect(self.showParFileDialog)
+        self.loadParsButton.clicked.connect(self.openParFileDialog)
+        self.writeParsButton.clicked.connect(self.writeParFileDialog)
 
-
+        ### Initialize spectral plots
         fig=Figure()
         self.fig=fig
         self.initplot(fig)
@@ -176,7 +205,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
     def initplot(self,fig,numchunks=8):
-        wlen=len(spec.wavelength)/numchunks
+        wlen=len(self.spectrum.wavelength)/numchunks
         self.spls=[]
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
         else: waveidx1=jbg.closest(wave,wave1)
@@ -187,6 +216,7 @@ class Main(QMainWindow, Ui_MainWindow):
             #self.spls.append(plt.subplot(gs[sg[i][0],sg[i][1]]))
             pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
             self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps')
+            self.spls[i].set_xlim(self.wave[pixs[0]],self.wave[pixs[-1]])
             self.spls[i].set_ylim(cfg.ylim)
             self.spls[i].set_xlabel('wavelength',labelpad=0)
             self.spls[i].set_ylabel('relative flux',labelpad=-5)
@@ -254,14 +284,22 @@ class Main(QMainWindow, Ui_MainWindow):
             self.restog = 1
         self.updateplot()
 
-    def showParFileDialog(self):
+    def openParFileDialog(self):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
-        self.initialpars(str(fname))
+        fname = str(fname)
+        if fname != '':
+            self.initialpars(fname)
+
+    def writeParFileDialog(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
+        fname = str(fname)
+        if fname != '':
+            self.datamodel.writelinepars(fname,self.specfilename)
 
     def updateplot(self):
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
         else: waveidx1=jbg.closest(self.wave,self.wave1)
-        wlen=len(spec.wavelength)/self.numchunks
+        wlen=len(self.spectrum.wavelength)/self.numchunks
         for i,sp in enumerate(self.spls):
                 sp.clear()
                 prange=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
@@ -328,32 +366,15 @@ if __name__ == '__main__':
         from linetools.spectra.io import readspec
 
 
-        filename=str(sys.argv[1])
+        specfilename=str(sys.argv[1])
         parfilename=str(sys.argv[5])
 
-        if filename[-5:]=='.fits':
-            spectrum=pf.open(filename)
-            if len(spectrum)==4:
-                wave=spectrum[2].data
-                flux=spectrum[0].data
-                sigup=spectrum[1].data
-                cont=spectrum[3].data
-                normflux=flux/cont
-                normsig=sigup/cont
-                normtog=1
-            else:
-                wave=spectrum[1].data[0][0]
-                flux=spectrum[1].data[0][1]
-                sigup=spectrum[1].data[0][3]
 
-        else:
-            sys.exit()
 
-        ### Read in spectrum and list of lines to fit
-        spec=readspec(filename)
+
 
         app = QtGui.QApplication(sys.argv)
-        main = Main(spec,parfilename)
+        main = Main(specfilename,parfilename)
         #main.addfig('One plot',fig1)
         #main.addfig('Two Plots',fig2)
         #main.addfig('Pcolormesh',fig3)
