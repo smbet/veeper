@@ -29,12 +29,14 @@ class LineParTableModel(QAbstractTableModel):
             self.fitpars=fitpars
             self.fiterrors=fiterrors
             self.parinfo=parinfo
+            self.headers=['Wavelength','Species','z','N','sig(N)','b','sig(b)','v','sig(v)']
 
     def rowCount(self,parent):
         return len(self.fitpars[0])
 
     def columnCount(self, parent):
-        return len(self.fitpars)
+        return 9
+        #return len(self.fitpars)
 
 
 
@@ -43,18 +45,30 @@ class LineParTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
-            print str(round(self.fitpars[column][row],3))
-            return str(round(self.fitpars[column][row],3))
+            if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
+            elif column == 2: toret=round(self.fitpars[3][row],5)
+            elif column == 3: toret=round(self.fitpars[1][row],5)
+            elif column == 4: toret=round(self.fiterrors[1][row],5)
+            elif column == 5: toret=round(self.fitpars[2][row],5)
+            elif column == 6: toret=round(self.fiterrors[2][row],5)
+            elif column == 7: toret=round(self.fitpars[4][row],5)
+            elif column == 8: toret=round(self.fiterrors[4][row],5)
+            else: toret=QVariant(round(self.fitpars[column][row],3))
+            return toret
 
         if index.isValid() and role == Qt.DisplayRole:
             row = index.row()
             column = index.column()
-            #try:
-            #    value = self._listdata[row][column]
-            #    fileName = os.path.split(value)[-1]
-            #except IndexError:
-            #    return
-            return QVariant(round(self.fitpars[column][row],3))
+            if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
+            elif column == 2: toret=round(self.fitpars[3][row],5)
+            elif column == 3: toret=round(self.fitpars[1][row],5)
+            elif column == 4: toret=round(self.fiterrors[1][row],5)
+            elif column == 5: toret=round(self.fitpars[2][row],5)
+            elif column == 6: toret=round(self.fiterrors[2][row],5)
+            elif column == 7: toret=round(self.fitpars[4][row],5)
+            elif column == 8: toret=round(self.fiterrors[4][row],5)
+            else: toret=QVariant(round(self.fitpars[column][row],3))
+            return toret
         else: return None
 
     def flags(self,index):
@@ -64,27 +78,55 @@ class LineParTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
-            print 'Value',value.toFloat()[0]
             if value.toFloat()[1]==True:
                 val = round(float(value.toFloat()[0]),2)
-                self.fitpars[column][row] = val
-                print self.fitpars[column][row],val
+                if column == 1: pass
+                if column == 2: self.fitpars[3][row] = val
+                elif column == 3: self.fitpars[1][row] = val
+                elif column == 4: self.fiterrors[1][row] = val
+                elif column == 5: self.fitpars[2][row] = val
+                elif column == 6: self.fiterrors[2][row] = val
+                elif column == 7: self.fitpars[4][row] = val
+                elif column == 8: self.fiterrors[4][row] = val
+                else: self.fitpars[column][row] = val
                 self.dataChanged.emit(index,index)
                 return True
 
         return False
 
+    def insertRows(self,position,rows,parent=QModelIndex()):
+        self.beginInsertRows(parent,position,position+rows-1)
+        if isinstance(newrestwave,float):
+            self.fitpars[0].extend([newrestwave])
+            self.fitpars[1].extend([newcol])
+            self.fitpars[2].extend([newb])
+            self.fitpars[3].extend([newz])
+            self.fitpars[4].extend([newvel])
+            self.fitpars[5].extend([-cfg.defaultvlim])
+            self.fitpars[6].extend([cfg.defaultvlim])
+            self.fiterrors[0].extend([0.]) ;  self.fiterrors[1].extend([0.]) ;  self.fiterrors[2].extend([0.])
+            self.fiterrors[3].extend([0.]) ;  self.fiterrors[4].extend([0.])
+        for i in range(rows):
+            defaultFitpars=[[0]*len(self.fitpars)]
+            defaultFiterrors = [[0] * len(self.fiterrors)]
+            defaultParinfo = [[0] * len(self.parinfo)]
+            self.fitpars.insert(position,defaultFitpars)
+        self.endInsertRows()
 
 
-        #if not index.isValid():
-        #    return QVariant()
-        #elif role != Qt.DisplayRole:
-        #    return QVariant()
-        #else:
-        #    return QVariant(self.fitpars[index.row()][index.column()])
+    def updatedata(self,fitpars,fiterrors,parinfo):
+        self.fitpars=fitpars
+        self.fiterrors=fiterrors
+        self.parinfo=parinfo
+        self.dataChanged.emit(self.index(0,0),self.index(self.rowCount(self)-1,self.columnCount(self)-1))
+
+    def headerData(self,section,orientation,role):
+        if role == Qt.DisplayRole:
+            if orientation==Qt.Horizontal:
+                return self.headers[section]
 
 class Main(QMainWindow, Ui_MainWindow):
-    def __init__(self,spec,linelist,wave1=None,wave2=None,numchunks=8):
+    def __init__(self,spec,parfilename=None,wave1=None,wave2=None,numchunks=8):
         super(Main,self).__init__()
         self.setupUi(self)
         self.line_dict = {}
@@ -92,31 +134,26 @@ class Main(QMainWindow, Ui_MainWindow):
         self.parinfo = None
         self.wave1 = wave1
         self.wave2 = wave2
-        self.linelist = linelist
         self.numchunks = numchunks
         self.spls = []
         self.labeltog = 1
         self.pixtog = 0
         self.restog = 1
-        #self.mplfigs.itemClicked.connect(self.changefig)
-
-
-
 
         self.spectrum=spec
         self.wave=spec.wavelength.value
         self.normflux=spec.flux/spec.co
         self.normsig=spec.sig/spec.co
-        self.lineList.setRowCount(len(linelist))
 
-        self.initialpars()
-        self.poptable()
+        if not parfilename==None:
+            self.linelist = self.initialpars(parfilename)
+
         self.fitButton.clicked.connect(self.fitlines)
         self.boxLineLabel.clicked.connect(self.toglabels)
         self.boxFitpix.clicked.connect(self.togfitpix)
         self.boxResiduals.clicked.connect(self.togresiduals)
-        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
-        self.tableView.setModel(self.datamodel)
+        self.loadParsButton.clicked.connect(self.showParFileDialog)
+
 
         fig=Figure()
         self.fig=fig
@@ -139,11 +176,6 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
     def initplot(self,fig,numchunks=8):
-        #global wave,flux,normflux,spls,wrange,waveidx1,waveidx2
-        #waveidx1=jbg.closest(wave,wave1)
-        #waveidx2=jbg.closest(wave,wave2)
-        #wrange=range(waveidx1,waveidx2)
-        #wlen=(waveidx2-waveidx1)/numchunks
         wlen=len(spec.wavelength)/numchunks
         self.spls=[]
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
@@ -151,15 +183,19 @@ class Main(QMainWindow, Ui_MainWindow):
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
+            #print sg[i][0],sg[i][1]
+            #self.spls.append(plt.subplot(gs[sg[i][0],sg[i][1]]))
             pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
             self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps')
-            self.spls[i].set_xlabel('wavelength')
-            self.spls[i].set_ylabel('relative flux')
-        #fig.tight_layout()
+            self.spls[i].set_ylim(cfg.ylim)
+            self.spls[i].set_xlabel('wavelength',labelpad=0)
+            self.spls[i].set_ylabel('relative flux',labelpad=-5)
+        fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,wspace=0.15,hspace=0.25)
         self.addmpl(fig)
 
-    def initialpars(self):
+    def initialpars(self,parfilename):
         ### Deal with initial parameters from line input file
+        self.linelist = ascii.read(parfilename)
         linerestwave=self.linelist['restwave'].data
         linez=self.linelist['zsys'].data
         lineobswave=linerestwave*(1.+linez)
@@ -188,16 +224,14 @@ class Main(QMainWindow, Ui_MainWindow):
         initpars=[restwaves,linecol,lineb,zs,linevel,linevlim1,linevlim2]
         self.fitpars,self.parinfo=joebvpfit.initlinepars(zs,restwaves,initpars,initinfo=initinfo)
         self.fiterrors=np.ones([5,len(self.fitpars[0])])*-99 #Initialize errors to junk
-        #print self.fiterrors
         cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
+        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
+        self.tableView.setModel(self.datamodel)
 
     def fitlines(self):
         print 'Fitting line profile(s)...'
-        self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.fitpars,self.parinfo)
-        self.datamodel.fitpars=self.fitpars
-        self.datamodel.fiterrors=self.fiterrors
-        #self.datamodel.dataChanged.emit(QModelIndex,QModelIndex)
-        self.poptable()
+        self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
+        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,)
         self.updateplot()
 
 
@@ -219,6 +253,10 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.restog = 1
         self.updateplot()
+
+    def showParFileDialog(self):
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
+        self.initialpars(str(fname))
 
     def updateplot(self):
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
@@ -313,26 +351,9 @@ if __name__ == '__main__':
 
         ### Read in spectrum and list of lines to fit
         spec=readspec(filename)
-        inputlines=ascii.read(parfilename)
-
-        '''
-        fig1 = Figure()
-        ax1f1 = fig1.add_subplot(111)
-        ax1f1.plot(np.random.rand(5))
-        
-        fig2 = Figure()
-        ax1f2 = fig2.add_subplot(121)
-        ax1f2.plot(np.random.rand(5))
-        ax2f2 = fig2.add_subplot(122)
-        ax2f2.plot(np.random.rand(10))
-        
-        fig3 = Figure()
-        ax1f3 = fig3.add_subplot(111)
-        ax1f3.pcolormesh(np.random.rand(20,20))
-        '''
 
         app = QtGui.QApplication(sys.argv)
-        main = Main(spec,inputlines)
+        main = Main(spec,parfilename)
         #main.addfig('One plot',fig1)
         #main.addfig('Two Plots',fig2)
         #main.addfig('Pcolormesh',fig3)

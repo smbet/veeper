@@ -303,6 +303,17 @@ def subplotgrid(num):
   elif num==15: calls=[[5,3,1],[5,3,4],[5,3,7],[5,3,10],[5,3,13],[5,3,2],[5,3,5],[5,3,8],[5,3,11],[5,3,14],[5,3,3],[5,3,6],[5,3,9],[5,3,12],[5,3,15]]
   return calls
 
+def subplotgridspec(num):
+    if num==1: calls=[[0]]
+    elif num==2: calls=[[0],[1]]
+    elif num==3: calls=[[0],[1],[2]]
+    elif num==4: calls=[[0],[1],[2],[3]]
+    elif num==5: calls=[[0,0],[0,1],[0,2],[1,0],[1,1]]
+    elif num==6: calls=[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]
+    elif num==7: calls=[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1]]
+    elif num==8: calls=[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]]
+    return calls
+
 # '''
 # ### Calculate Wilson confidence intervals
 # def confinterval(hits,total,sig=1):

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>joebvp</class>
+ <widget class="QMainWindow" name="joebvp">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>joebvp</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
@@ -53,7 +53,20 @@
         <height>16777215</height>
        </size>
       </property>
-      <layout class="QVBoxLayout" name="mplvl"/>
+      <layout class="QVBoxLayout" name="mplvl">
+       <property name="leftMargin">
+        <number>3</number>
+       </property>
+       <property name="topMargin">
+        <number>3</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
+       <property name="bottomMargin">
+        <number>3</number>
+       </property>
+      </layout>
      </widget>
     </item>
     <item row="0" column="1">
@@ -76,85 +89,12 @@
         <height>16777215</height>
        </size>
       </property>
-      <widget class="QTableWidget" name="lineList">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>40</y>
-         <width>421</width>
-         <height>391</height>
-        </rect>
-       </property>
-       <property name="sortingEnabled">
-        <bool>true</bool>
-       </property>
-       <property name="rowCount">
-        <number>0</number>
-       </property>
-       <property name="columnCount">
-        <number>9</number>
-       </property>
-       <attribute name="horizontalHeaderCascadingSectionResizes">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>72</number>
-       </attribute>
-       <attribute name="horizontalHeaderMinimumSectionSize">
-        <number>15</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>Wavelength</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>z</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Species</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>N</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>sig(N)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>b</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>sig(b)</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>v</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>sig(v)</string>
-        </property>
-       </column>
-      </widget>
       <widget class="QLabel" name="label">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>11</x>
          <y>20</y>
-         <width>111</width>
+         <width>66</width>
          <height>16</height>
         </rect>
        </property>
@@ -175,59 +115,85 @@
         <string>Fit Lines</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="boxFitpix">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>520</y>
-         <width>131</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Pixels used in fit</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="boxLineLabel">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>500</y>
-         <width>131</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Line labels</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="boxResiduals">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>540</y>
-         <width>131</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Residuals</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
       <widget class="QTableView" name="tableView">
        <property name="geometry">
         <rect>
-         <x>180</x>
-         <y>510</y>
-         <width>256</width>
-         <height>192</height>
+         <x>10</x>
+         <y>41</y>
+         <width>421</width>
+         <height>391</height>
         </rect>
+       </property>
+      </widget>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>470</y>
+         <width>131</width>
+         <height>81</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Display Options</string>
+       </property>
+       <widget class="QCheckBox" name="boxLineLabel">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>20</y>
+          <width>131</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Line labels</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="boxFitpix">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>40</y>
+          <width>131</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Pixels used in fit</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="boxResiduals">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>60</y>
+          <width>131</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Residuals</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QPushButton" name="loadParsButton">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>430</y>
+         <width>177</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Load New Parameters</string>
        </property>
       </widget>
      </widget>

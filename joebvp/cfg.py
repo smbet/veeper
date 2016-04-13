@@ -81,7 +81,7 @@ defaultb=20.0
 defaultvlim=100.
 
 # Plotting
-ylim = (-0.2, 1.2)
+ylim = (-0.2, 1.4)
 xtick_fontsize = 'small'
 ytick_fontsize = 'small'
 xy_fontsize = 'small'
