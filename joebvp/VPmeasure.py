@@ -222,7 +222,7 @@ class Main(QMainWindow, Ui_MainWindow):
             #print sg[i][0],sg[i][1]
             #self.spls.append(plt.subplot(gs[sg[i][0],sg[i][1]]))
             pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
-            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps')
+            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps-mid')
             if self.fitpars!=None:
                 self.spls[i].plot(self.wave,model,'r')
             self.spls[i].set_xlim(self.wave[pixs[0]],self.wave[pixs[-1]])
@@ -315,7 +315,7 @@ class Main(QMainWindow, Ui_MainWindow):
     
                 if ((len(self.fitpars[0])>0)):
     
-                    sp.plot(self.wave,self.normflux,linestyle='steps')
+                    sp.plot(self.wave,self.normflux,linestyle='steps-mid')
                     if self.pixtog==1:
                         sp.plot(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],'gs',markersize=4,mec='green')
                     model=joebvpfit.voigtfunc(self.wave,self.fitpars)
@@ -333,8 +333,8 @@ class Main(QMainWindow, Ui_MainWindow):
                             sp.text(labelloc, cfg.label_ypos, label, rotation=90, withdash=True, ha='center', va='bottom', clip_on=True, fontsize=cfg.label_fontsize)
                 
     
-                sp.plot(self.wave,self.normsig,linestyle='steps',color='red', lw=0.5)
-                sp.plot(self.wave,-self.normsig,linestyle='steps',color='red', lw=0.5)
+                sp.plot(self.wave,self.normsig,linestyle='steps-mid',color='red', lw=0.5)
+                sp.plot(self.wave,-self.normsig,linestyle='steps-mid',color='red', lw=0.5)
                 sp.set_ylim(cfg.ylim)
                 sp.set_xlim(self.wave[prange[0]],self.wave[prange[-1]])
                 sp.set_xlabel('wavelength (A)', fontsize=cfg.xy_fontsize, labelpad=cfg.x_labelpad)
