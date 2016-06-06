@@ -21,8 +21,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
-    
-Ui_MainWindow, QMainWindow = loadUiType('mainvpwindow.ui')
+
+modpath=os.path.dirname(__file__)
+Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
 c=cfg.c/1e5
 
