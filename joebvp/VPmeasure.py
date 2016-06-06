@@ -22,7 +22,8 @@ from matplotlib.backends.backend_qt4agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
-modpath=os.path.dirname(__file__)
+modpath=os.path.abspath(os.path.dirname(__file__))
+print os.path.abspath(os.path.dirname(__file__))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
 c=cfg.c/1e5
@@ -362,31 +363,21 @@ class Main(QMainWindow, Ui_MainWindow):
         self.mplvl.removeWidget(self.toolbar)
         self.toolbar.close()
 
+def go(specfilename,parfilename):
+    import sys
+    from PyQt4 import QtGui
+    import numpy as np
+    from astropy.io import fits as pf
+    from astropy.io import ascii
+    from linetools.spectra.io import readspec
 
+    app = QtGui.QApplication(sys.argv)
+    main = Main(specfilename, parfilename)
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
         import sys
-        from PyQt4 import QtGui
-        import numpy as np
-        from astropy.io import fits as pf
-        from astropy.io import ascii
-        from linetools.spectra.io import readspec
-
-
         specfilename=str(sys.argv[1])
         parfilename=str(sys.argv[5])
-
-
-
-
-
-        app = QtGui.QApplication(sys.argv)
-        main = Main(specfilename,parfilename)
-        #main.addfig('One plot',fig1)
-        #main.addfig('Two Plots',fig2)
-        #main.addfig('Pcolormesh',fig3)
-        main.show()
-        sys.exit(app.exec_())
-
-
-
+        go(specfilename,parfilename)
