@@ -6,6 +6,7 @@ Created on Mon Mar 21 22:50:45 2016
 """
 
 from PyQt4.uic import loadUiType
+from PyQt4 import QtGui
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import joebvp.atomicdata as atomicdata
@@ -365,7 +366,6 @@ class Main(QMainWindow, Ui_MainWindow):
 
 def go(specfilename,parfilename):
     import sys
-    from PyQt4 import QtGui
     import numpy as np
     from astropy.io import fits as pf
     from astropy.io import ascii
