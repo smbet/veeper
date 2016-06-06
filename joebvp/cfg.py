@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 wave=0
 flux=0
@@ -70,6 +71,11 @@ multiplets=[lyseries,NIseries,NIIseries,NIIIseries,NIVseries,NVseries,OIseries,O
 wavegroups=[]
 wgidxs=[]
 uqwgidxs=[]
+
+#Atomic data
+lams=np.array([])
+fosc=np.array([])
+gam=np.array([])
 
 outputdir='./'
 

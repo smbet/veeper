@@ -15,7 +15,7 @@ from astropy import constants as const
 import sys,os
 import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
-
+from astropy.table import Table
 
 ln2=np.log(2)
 c=const.c.value/1e3
@@ -64,12 +64,16 @@ def cosvoigt(vwave,vpars):
 def voigt(waves,line,coldens,bval,z,vels):
 	tau=[]
 	lam=[]
+	#lams,fs,gs=getdata(line)
 	for i in range(len(coldens)):
 		#thatfactor=(1.+z[i])*(1.+vels[i]/c)
 		thatfactor=(1.+z[i])
-		lam0=restwave(line[i])
-		gam=gamma(line[i])
-		fosc=osc(line[i])
+		#lam0=restwave(line[i])
+		#gam=gamma(line[i])
+		#fosc=osc(line[i])
+		lam0=cfg.lams[i]
+		gam=cfg.gam[i]
+		fosc=cfg.fosc[i]
 		#thatfactor=1
 		#lam.append(arange(lam0-5.,lam0+5.,step=.001))
 		lam.append(waves/thatfactor)
@@ -87,7 +91,10 @@ def voigt(waves,line,coldens,bval,z,vels):
 
 
 def convolvecos(wave,profile,lines,zs):
-	fitwaves=wave
+	if len(wave)>len(cfg.fitidx):
+		fitwaves=wave[cfg.fitidx]
+	else:
+		fitwaves=wave
 	if cfg.wavegroups==[]:
 		X = np.array(zip(fitwaves,np.zeros(len(fitwaves))), dtype=float)
 		ms = MeanShift(bandwidth=25.)

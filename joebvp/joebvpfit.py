@@ -6,8 +6,29 @@ import joebgoodies as jbg
 from stsci.tools import nmpfit
 import makevoigt
 import cfg
+from linetools.lists import parse as lilp
+from linetools.spectralline import AbsLine
+import astropy.units as u
+
+# A start to using the linetools atomic data framework
+adata=lilp.parse_morton03()
+vdata=lilp.parse_verner96()
 
 c=299792.458
+
+def setatomicdata(lines):
+	lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
+	for i,ll in enumerate(lines):
+		try:
+			al=AbsLine(ll*u.AA)
+			lam[i]=al.data['wrest'].value ; fosc[i]=al.data['f'] ; gam[i]=al.data['gamma'].value
+		except:
+			idx=jbg.closest(adata['wrest'],ll)
+			lam[i]=adata['wrest'][idx] ; fosc[i]=adata['f'][idx] ; gam[i]=adata['gamma'][idx]
+		if abs(lam[i]-ll)>0.01:
+			idx = jbg.closest(vdata['wrest'], ll)
+			lam[i] = vdata['wrest'][idx].value; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx].value
+	return lam,fosc,gam
 
 def foldpars(pars,numpars=5):
 	rows=len(pars)/numpars
@@ -129,7 +150,11 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 
 def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 
-	### Look for mult\iplet membership of each line
+	### Set atomic data for each line
+	lam,fosc,gam=setatomicdata(restwaves)
+	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
+
+	### Look for multiplet membership of each line
 	seriesassoc=np.zeros(len(restwaves))-99
 	for i in range(len(restwaves)):
 		for j in range(len(cfg.multiplets)):

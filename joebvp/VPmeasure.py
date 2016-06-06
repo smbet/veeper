@@ -13,7 +13,9 @@ import joebvp.joebgoodies as jbg
 from joebvp import cfg
 from joebvp import joebvpfit
 import os
-
+from linetools.spectra.io import readspec
+from astropy.io import ascii
+import numpy as np
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg import (
@@ -209,6 +211,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.spls=[]
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
         else: waveidx1=jbg.closest(wave,wave1)
+        if self.fitpars!=None:
+                model=joebvpfit.voigtfunc(self.wave,self.datamodel.fitpars)
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
@@ -216,6 +220,8 @@ class Main(QMainWindow, Ui_MainWindow):
             #self.spls.append(plt.subplot(gs[sg[i][0],sg[i][1]]))
             pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
             self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps')
+            if self.fitpars!=None:
+                self.spls[i].plot(self.wave,model,'r')
             self.spls[i].set_xlim(self.wave[pixs[0]],self.wave[pixs[-1]])
             self.spls[i].set_ylim(cfg.ylim)
             self.spls[i].set_xlabel('wavelength',labelpad=0)
@@ -261,7 +267,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def fitlines(self):
         print 'Fitting line profile(s)...'
         self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
-        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,)
+        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
         self.updateplot()
 
 

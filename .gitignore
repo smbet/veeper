@@ -1,0 +1,12 @@
+joebvp/pg1407contin_apr15.fits
+joebvp/unblended.dat
+joebvp/pg1407_vpinput_2.dat
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
