@@ -59,7 +59,8 @@ def voigterrfunc(p,x,y,err,fjac=None):
 	fp=foldpars(p)
 	model=voigtfunc(x,fp)
 	status=0
-	return([status,(y-model)/err])
+	#return([status,(y-model)/err])
+	return([status,(y[cfg.fitidx]-model[cfg.fitidx])/err[cfg.fitidx]])
 
 def fitpix(wave,pararr):
 	ll=pararr[0]

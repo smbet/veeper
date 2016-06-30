@@ -269,7 +269,8 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def fitlines(self):
         print 'Fitting line profile(s)...'
-        self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
+        #self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
+        self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
         self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
         self.updateplot()
 
@@ -374,7 +375,9 @@ def go(specfilename,parfilename):
     app = QtGui.QApplication(sys.argv)
     main = Main(specfilename, parfilename)
     main.show()
+
     sys.exit(app.exec_())
+    app.quit()
 
 if __name__ == '__main__':
         import sys

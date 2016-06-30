@@ -11,11 +11,13 @@ import joebgoodies as jbg
 import numpy as np  
 from scipy.signal import convolve
 from scipy.special import wofz
+import scipy.stats
 from astropy import constants as const
 import sys,os
 import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from astropy.table import Table
+import pdb
 
 ln2=np.log(2)
 c=const.c.value/1e3
@@ -93,6 +95,7 @@ def voigt(waves,line,coldens,bval,z,vels):
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
 		fitwaves=wave[cfg.fitidx]
+		#profile=profile[cfg.fitidx]
 	else:
 		fitwaves=wave
 	if cfg.wavegroups==[]:
@@ -102,10 +105,25 @@ def convolvecos(wave,profile,lines,zs):
 		cfg.wgidxs = ms.labels_
 		cfg.wavegroups = ms.cluster_centers_
 		cfg.uqwgidxs=np.unique(cfg.wgidxs)
-
+		# Identify groups of fitidxs
+		buf=4
+		df=cfg.fitidx[1:]-cfg.fitidx[:-1]
+		dividers = np.where(df > buf)[0]
+		#print dividers[:-1]
+		fgs=[np.arange(0,dividers[0])]
+		for i, idx in enumerate(dividers[:-1]):
+			fgs.append(np.arange(idx,dividers[i+1]))
+		fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
+		# Check fitpix line groups to see if any fall in separate wavegroups
+		#pdb.set_trace()
+		for i, gg in enumerate(fgs):
+			if len(np.unique(cfg.wgidxs[gg]))!=1:
+				domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
+				tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
+				cfg.wgidxs[gg[tochange]] = domuq
 	convprof=profile
-	for ll in cfg.uqwgidxs[:-3]:
-		matches=np.where(cfg.wgidxs==ll)[0]
+	for ll in cfg.uqwgidxs:
+		matches=cfg.fitidx[np.where(cfg.wgidxs==ll)[0]]
 		lamobs=cfg.wavegroups[ll,0]
 		if (lamobs<=1175): lsf=w1150
 		elif (lamobs>1175) & (lamobs<=1225): lsf=w1200
@@ -120,9 +138,12 @@ def convolvecos(wave,profile,lines,zs):
 		elif (lamobs>1625) & (lamobs<=1675): lsf=w1650
 		elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
 		elif (lamobs>1725): lsf=w1750
-		convprof[matches]=convolve(profile[matches],lsf,mode='same')
-		convprof[matches[:16]]=[1.]*16 ; convprof[matches[-16:]]=[1.]*16
-
+		paddedprof=np.insert(profile[matches],0,[1.]*16)
+		paddedprof=np.append(paddedprof,[1.]*16)
+		#convprof[matches]=convolve(profile[matches],lsf,mode='same')[16:-16]
+		convprof[matches] = convolve(paddedprof, lsf, mode='same')[16:-16]
+		#convprof[matches[:16]]=[1.]*16 ; convprof[matches[-16:]]=[1.]*16
+	#pdb.set_trace()
 	return convprof
 
 '''

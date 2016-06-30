@@ -1,0 +1,9 @@
+Basic usage for GUI:
+
+from joebvp import VPmeasure
+VPmeasure.go([specfile],[paramfile])
+
+[specfile] is of the format output by the fit_continuum() method of linetools.spectra objects.
+[paramfile] contains input parameters for lines to be fit.
+The columns of the [paramfile]:
+specfile|restwave|zsys|col|bval|vel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans
