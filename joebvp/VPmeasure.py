@@ -101,6 +101,7 @@ class LineParTableModel(QAbstractTableModel):
     def flags(self,index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
+
     def setData(self,index,value,role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
@@ -121,6 +122,27 @@ class LineParTableModel(QAbstractTableModel):
 
         return False
 
+
+    def addLine(self,wave,newrestwave,newz,newcol,newb,newvel,newvel1,newvel2):
+        ### Setup new parameters and append them to main arrays of the data model
+        newpars=[[newrestwave],[newcol],[newb],[newz],[newvel],[newvel1],[newvel2]]
+        fitpars=np.hstack((self.fitpars,newpars))
+        newerrors=[[-99],[-99],[-99],[-99],[-99]]
+        fiterrors=np.hstack((self.fiterrors,newerrors))
+        newindex=np.max(self.parinfo[1])+1
+        newinfo=[[1],[newindex],[newindex],[1],[newindex]]
+        parinfo=np.hstack((self.parinfo,newinfo))
+        ### Call initlinepars to set atomic data in cfg.fosc, etc.
+        junk,junk=joebvpfit.initlinepars(fitpars[3],fitpars[0],initvals=fitpars,initinfo=parinfo)
+        ### Do the update
+        midx=QModelIndex()  # Needed for 'beginInsertRows'
+        self.beginInsertRows(midx,len(self.fitpars[0]),len(self.fitpars[0]))
+        self.updatedata(fitpars,fiterrors,parinfo)
+        self.endInsertRows()
+        ### Reset pixels for fit and wavegroups for convolution
+        cfg.fitidx=joebvpfit.fitpix(wave,fitpars) #Reset pixels for fit
+        cfg.wavegroups=[]
+    '''
     def insertRows(self,position,rows,parent=QModelIndex()):
         self.beginInsertRows(parent,position,position+rows-1)
         if isinstance(newrestwave,float):
@@ -139,7 +161,7 @@ class LineParTableModel(QAbstractTableModel):
             defaultParinfo = [[0] * len(self.parinfo)]
             self.fitpars.insert(position,defaultFitpars)
         self.endInsertRows()
-
+    '''
 
     def updatedata(self,fitpars,fiterrors,parinfo):
         self.fitpars=fitpars
@@ -147,10 +169,89 @@ class LineParTableModel(QAbstractTableModel):
         self.parinfo=parinfo
         self.dataChanged.emit(self.index(0,0),self.index(self.rowCount(self)-1,self.columnCount(self)-1))
 
+
     def headerData(self,section,orientation,role):
         if role == Qt.DisplayRole:
             if orientation==Qt.Horizontal:
                 return self.headers[section]
+
+class newLineDialog(QDialog):
+    def __init__(self, parent = None):
+        super(newLineDialog,self).__init__(parent)
+
+        layout = QGridLayout(self)
+
+        self.lamLabel=QLabel(self)
+        self.lamLabel.setText('Rest Wavelength:')
+        layout.addWidget(self.lamLabel,0,0)
+        self.lamBox = QLineEdit(self)
+        #self.lamBox.setMaximumWidth = 30
+        self.lamBox.editingFinished.connect(self.validateWavelength)
+        layout.addWidget(self.lamBox,1,0)
+        self.zLabel=QLabel(self)
+        self.zLabel.setText('z:')
+        layout.addWidget(self.zLabel,0,1)
+        self.zBox = QLineEdit(self)
+        #self.lamBox.setMaximumWidth = 30
+        layout.addWidget(self.zBox,1,1)
+        self.ionLabel = QLabel(self)
+        layout.addWidget(self.ionLabel, 1, 2)
+        
+        self.colLabel=QLabel(self)
+        self.colLabel.setText('N:')
+        layout.addWidget(self.colLabel,2,0)
+        self.colBox = QLineEdit(self)
+        self.colBox.setMaximumWidth = 30
+        layout.addWidget(self.colBox,3,0)
+        self.bLabel=QLabel(self)
+        self.bLabel.setText('b:')
+        layout.addWidget(self.bLabel,2,1)
+        self.bBox = QLineEdit(self)
+        layout.addWidget(self.bBox,3,1)
+        self.velLabel=QLabel(self)
+        self.velLabel.setText('vel:')
+        layout.addWidget(self.velLabel,2,2)
+        self.velBox = QLineEdit(self)
+        layout.addWidget(self.velBox,3,2)
+        
+        
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        layout.addWidget(buttons)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        #import pdb
+        #pdb.set_trace()
+
+    def validateWavelength(self):
+        ### Handle approximate wavelength entries by looking up precise values on focus exit
+        if self.lamBox.text()!='':
+            restlam=self.lamBox.text()
+            restlam=float(restlam)
+            try:
+                lam,fosc,gam=joebvpfit.setatomicdata([restlam],precise=False)
+                self.lamBox.setText(str(lam[0]))
+                self.ionLabel.setText(atomicdata.lam2ion(lam[0]))
+            except:
+                pass
+
+    def lineParams(self):
+        vel=float(self.velBox.text())
+        vel1=vel-cfg.defaultvlim ; vel2=vel+cfg.defaultvlim
+        return self.lamBox.text(),self.zBox.text(),self.colBox.text(),self.bBox.text(),self.velBox.text(),vel1,vel2
+
+    @staticmethod
+    def get_newline(parent = None):
+        dialog = newLineDialog(parent)
+        result = dialog.exec_()
+        if result == 1:
+            newlam,newz,newcol,newb,newvel,newvel1,newvel2 = dialog.lineParams()
+            return newlam,newz,newcol,newb,newvel,newvel1,newvel2
+        else:
+            return 0
 
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self,specfilename,parfilename=None,wave1=None,wave2=None,numchunks=8):
@@ -168,6 +269,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.labeltog = 1
         self.pixtog = 0
         self.restog = 1
+        self.lastclick=1334.
 
         ### Read in spectrum and list of lines to fit
         self.specfilename=specfilename
@@ -186,6 +288,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.boxFitpix.clicked.connect(self.togfitpix)
         self.boxResiduals.clicked.connect(self.togresiduals)
         self.loadParsButton.clicked.connect(self.openParFileDialog)
+        self.addLineButton.clicked.connect(self.addLineDialog)
         self.writeParsButton.clicked.connect(self.writeParFileDialog)
 
         ### Initialize spectral plots
@@ -193,8 +296,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fig=fig
         self.initplot(fig)
 
+        ### Initializea side plot
+        sidefig=Figure(figsize=(5.25,2))
+        self.sidefig = sidefig
+        self.addsidempl(self.sidefig)
+        self.sideplot(self.lastclick)  #Dummy initial cenwave setting
 
 
+
+    '''
     def poptable(self):
         ### Populate the line parameter table
         for i in range(len(self.fitpars[0])):
@@ -207,7 +317,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.lineList.setItem(i,6,QTableWidgetItem(jbg.decimalplaces(self.fiterrors[2][i],3)))
             self.lineList.setItem(i,7,QTableWidgetItem(jbg.decimalplaces(self.fitpars[4][i],3)))
             self.lineList.setItem(i,8,QTableWidgetItem(jbg.decimalplaces(self.fiterrors[4][i],3)))
-
+    '''
 
     def initplot(self,fig,numchunks=8):
         wlen=len(self.spectrum.wavelength)/numchunks
@@ -264,15 +374,49 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fitpars,self.parinfo=joebvpfit.initlinepars(zs,restwaves,initpars,initinfo=initinfo)
         self.fiterrors=np.ones([5,len(self.fitpars[0])])*-99 #Initialize errors to junk
         cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
+        cfg.wavegroups=[]
         self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
         self.tableView.setModel(self.datamodel)
+
+    def sideplot(self,cenwave,wavebuf=3):
+        if len(self.sidefig.axes)==0:
+            self.sideax=self.sidefig.add_subplot(111)
+        self.sideax.clear()
+        self.sideax.plot(self.wave, self.normflux, linestyle='steps-mid')
+        if self.pixtog == 1:
+            self.sideax.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
+        model = joebvpfit.voigtfunc(self.wave, self.fitpars)
+        res = self.normflux - model
+        self.sideax.plot(self.wave, model, 'r')
+        if self.restog == 1:
+            self.sideax.plot(self.wave, -res, '.', color='black', ms=2)
+        self.sideax.plot(self.wave, [0] * len(self.wave), color='gray')
+
+        ### label lines we are trying to fit
+        if self.labeltog == 1:
+            for j in range(len(self.fitpars[0])):
+                labelloc = self.fitpars[0][j] * (1. + self.fitpars[3][j]) + self.fitpars[4][j] / c * \
+                                                                            self.fitpars[0][j] * (
+                                                                            1. + self.fitpars[3][j])
+                label = ' {:.1f}_\nz{:.4f}'.format(self.fitpars[0][j], self.fitpars[3][j])
+                self.sideax.text(labelloc, cfg.label_ypos, label, rotation=90, withdash=True, ha='center', va='bottom',
+                        clip_on=True, fontsize=cfg.label_fontsize)
+
+        self.sideax.plot(self.wave, self.normsig, linestyle='steps-mid', color='red', lw=0.5)
+        self.sideax.plot(self.wave, -self.normsig, linestyle='steps-mid', color='red', lw=0.5)
+        self.sideax.set_xlim(cenwave-wavebuf,cenwave+wavebuf)
+        self.sideax.set_ylim(cfg.ylim)
+        self.changesidefig(self.sidefig)
 
     def fitlines(self):
         print 'Fitting line profile(s)...'
         #self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
+        print len(self.fitpars[0]),len(self.fiterrors[0])
         self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
         self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
+        self.tableView.resizeColumnsToContents()
         self.updateplot()
+        self.sideplot(self.lastclick)
 
 
     def toglabels(self):
@@ -300,11 +444,25 @@ class Main(QMainWindow, Ui_MainWindow):
         if fname != '':
             self.initialpars(fname)
 
+        self.updateplot()
+
     def writeParFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
             self.datamodel.writelinepars(fname,self.specfilename)
+
+    def addLineDialog(self):
+        dlgOutput=newLineDialog.get_newline()
+        if (dlgOutput != 0):
+            if '' not in dlgOutput:
+                newlam,newz,newcol,newb,newvel,newvel1,newvel2 = dlgOutput
+                self.datamodel.addLine(self.wave,float(newlam), float(newz), float(newcol), float(newb), float(newvel), float(newvel1), float(newvel2))        #dialog=newLineDialog(parent=None)
+                self.fitpars = self.datamodel.fitpars
+                self.fiterrors = self.datamodel.fiterrors
+                self.parinfo = self.datamodel.parinfo
+                self.tableView.setModel(self.datamodel)
+
 
     def updateplot(self):
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
@@ -346,24 +504,49 @@ class Main(QMainWindow, Ui_MainWindow):
         #text = str(item.text())
         self.rmmpl()
         self.addmpl(self.fig)
+
+    def changesidefig(self, item):
+        #text = str(item.text())
+        self.rmsidempl()
+        self.addsidempl(self.sidefig)
         
         
-    def addfig(self, name, fig):
-        self.fig_dict[name] = fig
-        #self.mplfigs.addItem(name)
+    def on_click(self, event):
+        self.lastclick=event.xdata
+        self.sideplot(self.lastclick)
         
     def addmpl(self, fig):
         self.canvas = FigureCanvas(fig)
+        self.canvas.mpl_connect('button_press_event',self.on_click)
         self.mplvl.addWidget(self.canvas)
         self.canvas.draw()
         self.toolbar = NavigationToolbar(self.canvas,self.mplwindow,coordinates=True)
         self.mplvl.addWidget(self.toolbar)
+
+    def addsidempl(self, sidefig):
+        self.sidecanvas = FigureCanvas(sidefig)
+        self.sidecanvas.setParent(self.sideMplWindow)
+        if len(self.sidefig.axes) == 0:
+            self.sidemplvl = QVBoxLayout()
+        if len(self.sidefig.axes) != 0:
+            self.sidemplvl.addWidget(self.sidecanvas)
+        if len(self.sidefig.axes) == 0:
+            self.sideMplWindow.setLayout(self.sidemplvl)
+        self.sidecanvas.draw()
+
         
     def rmmpl(self,):
         self.mplvl.removeWidget(self.canvas)
         self.canvas.close()
         self.mplvl.removeWidget(self.toolbar)
         self.toolbar.close()
+
+    def rmsidempl(self, ):
+        self.sidemplvl.removeWidget(self.sidecanvas)
+        self.sidecanvas.close()
+        #self.sideMplWindow.setLayout(None)
+        #self.mplvl.removeWidget(self.toolbar)
+        #self.toolbar.close()
 
 def go(specfilename,parfilename):
     import sys
@@ -375,9 +558,9 @@ def go(specfilename,parfilename):
     app = QtGui.QApplication(sys.argv)
     main = Main(specfilename, parfilename)
     main.show()
-
+    #app.exec_()
     sys.exit(app.exec_())
-    app.quit()
+    #app.quit()
 
 if __name__ == '__main__':
         import sys

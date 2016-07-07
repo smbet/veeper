@@ -95,7 +95,6 @@ def voigt(waves,line,coldens,bval,z,vels):
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
 		fitwaves=wave[cfg.fitidx]
-		#profile=profile[cfg.fitidx]
 	else:
 		fitwaves=wave
 	if cfg.wavegroups==[]:

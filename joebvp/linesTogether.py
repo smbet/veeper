@@ -1,3 +1,11 @@
+###################################################
+#
+#  Script for producing line input files for joebvp
+#
+#  Quick usage: linesTogether.processFile([paramfile])
+###################################################
+
+
 import numpy as np
 from astropy.io import ascii
 from goodies import closest
@@ -193,10 +201,8 @@ def initfile(filename,wave1=None,wave2=None,**kwargs):
 	
 def processfile(filename,outputprefix='vpinput_',smallgroup=1,**kwargs):
 	linepars,comps,blends=initfile(filename,**kwargs)
-	#pdb.set_trace()
 	fgs=findfitgroups(linepars,comps,blends)
 	fgs=np.array(fgs)
-	#pdb.set_trace()
 	lengths=np.zeros(len(fgs))
 	for i,gr in enumerate(fgs):
 		lengths[i]=len(gr)
@@ -215,12 +221,4 @@ def findunblended(filename,outputfile='unblended.dat',**kwargs):
 
 
 filename='pg1407testsyslines.dat'
-
-
-
-
-
-
-
-#pdb.set_trace()
 
