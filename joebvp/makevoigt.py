@@ -16,6 +16,7 @@ from astropy import constants as const
 import sys,os
 import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
+import joebvpfit
 from astropy.table import Table
 import pdb
 
@@ -32,23 +33,6 @@ if cfg.lsf=='COS_LP1':
 else:
 	raise('Error: Only COS LP1 is supported at this time')
 
-atomdata=np.genfromtxt(modpath+'/atomicdata/LineListUVgam.dat',dtype=None,delimiter='|')
-atomlam=jbg.arrfromcol(atomdata,0)
-atomtrans=jbg.arrfromcol(atomdata,1)
-atomosc=jbg.arrfromcol(atomdata,2)
-atomgam=jbg.arrfromcol(atomdata,3)
-
-def osc(line):
-	match=jbg.closest(atomlam,line)
-	return atomosc[match]
-
-def gamma(line):
-	match=jbg.closest(atomlam,line)
-	return atomgam[match]
-
-def restwave(line):
-	match=jbg.closest(atomlam,line)
-	return atomlam[match]
 
 def Hfunc(x,a):
 	z=x+1j*a
@@ -57,6 +41,10 @@ def Hfunc(x,a):
 
 
 def cosvoigt(vwave,vpars):
+	if isinstance(cfg.fitidx,int):
+		pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
+		cfg.fitidx=joebvpfit.fitpix(vwave,pars)
+
 	vflux=np.zeros(len(vwave))+1.
 	factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
 	convfactor=convolvecos(vwave,factor,vpars[0],vpars[3])
@@ -73,9 +61,12 @@ def voigt(waves,line,coldens,bval,z,vels):
 		#lam0=restwave(line[i])
 		#gam=gamma(line[i])
 		#fosc=osc(line[i])
-		lam0=cfg.lams[i]
-		gam=cfg.gam[i]
-		fosc=cfg.fosc[i]
+		try:
+			lam0=cfg.lams[i]
+			gam=cfg.gam[i]
+			fosc=cfg.fosc[i]
+		except:
+			lam0,gam,fosc=joebvpfit.setatomicdata(line)
 		#thatfactor=1
 		#lam.append(arange(lam0-5.,lam0+5.,step=.001))
 		lam.append(waves/thatfactor)
@@ -113,7 +104,7 @@ def convolvecos(wave,profile,lines,zs):
 		for i, idx in enumerate(dividers[:-1]):
 			fgs.append(np.arange(idx,dividers[i+1]))
 		fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
-		# Check fitpix line groups to see if any fall in separate wavegroups
+		# Check joebvpfit.fitpix line groups to see if any fall in separate wavegroups
 		#pdb.set_trace()
 		for i, gg in enumerate(fgs):
 			if len(np.unique(cfg.wgidxs[gg]))!=1:
