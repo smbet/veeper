@@ -47,6 +47,7 @@ class LineParTableModel(QAbstractTableModel):
     def writelinepars(self, outfilename,specfilename):
         fitpars = self.fitpars
         fiterrors = self.fiterrors
+        parinfo = self.parinfo
         bigfiletowrite = cfg.largeVPparfile
         filetowrite = outfilename
 
@@ -56,10 +57,22 @@ class LineParTableModel(QAbstractTableModel):
         else:
             VPparfile = open(filetowrite, 'wb')
             bigparfile = open(bigfiletowrite, 'wb')
+        header='specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
+        VPparfile.write(header)
+        bigparfile.write(header)
         for i in range(len(fitpars[0])):
-            towrite = jbg.pipedelimrow(
-                [specfilename, fitpars[0][i], round(fitpars[3][i],5), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
-                round(fitpars[4][i],3), round(fiterrors[4][i],3)])
+            zline=fitpars[3][i]
+            vlim1=fitpars[5][i] ; vlim2=fitpars[6][i]
+            restwave=fitpars[0][i]
+            wobs1=restwave*(1+zline+vlim1/299792.458)
+            wobs2=restwave*(1+zline+vlim2/299792.458)
+            pix1=jbg.closest(cfg.wave,wobs1)
+            pix2=jbg.closest(cfg.wave,wobs2)
+            trans=atomicdata.lam2ion(fitpars[0][i])
+            towrite=jbg.pipedelimrow([cfg.filename,restwave,round(zline,5),round(fitpars[1][i],3),round(fiterrors[1][i],3),round(fitpars[2][i],3),round(fiterrors[2][i],3),round(fitpars[4][i],3), round(fiterrors[4][i],3),parinfo[1][i],parinfo[2][i],parinfo[4][i],vlim1,vlim2,wobs1,wobs2,pix1,pix2,trans])
+            #towrite = jbg.pipedelimrow(
+                #[specfilename, fitpars[0][i], round(fitpars[3][i],5), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
+                #round(fitpars[4][i],3), round(fiterrors[4][i],3)])
             VPparfile.write(towrite)
             bigparfile.write(towrite)
         VPparfile.close()
@@ -277,6 +290,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.wave=self.spectrum.wavelength.value
         self.normflux=self.spectrum.flux/self.spectrum.co
         self.normsig=self.spectrum.sig/self.spectrum.co
+        cfg.wave=self.wave
+        cfg.filename=self.specfilename
 
         if not parfilename==None:
             self.linelist = self.initialpars(parfilename)
@@ -329,8 +344,6 @@ class Main(QMainWindow, Ui_MainWindow):
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
-            #print sg[i][0],sg[i][1]
-            #self.spls.append(plt.subplot(gs[sg[i][0],sg[i][1]]))
             pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
             self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps-mid')
             if self.fitpars!=None:

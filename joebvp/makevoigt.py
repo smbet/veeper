@@ -99,18 +99,19 @@ def convolvecos(wave,profile,lines,zs):
 		buf=4
 		df=cfg.fitidx[1:]-cfg.fitidx[:-1]
 		dividers = np.where(df > buf)[0]
-		#print dividers[:-1]
-		fgs=[np.arange(0,dividers[0])]
-		for i, idx in enumerate(dividers[:-1]):
-			fgs.append(np.arange(idx,dividers[i+1]))
-		fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
-		# Check joebvpfit.fitpix line groups to see if any fall in separate wavegroups
-		#pdb.set_trace()
-		for i, gg in enumerate(fgs):
-			if len(np.unique(cfg.wgidxs[gg]))!=1:
-				domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
-				tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
-				cfg.wgidxs[gg[tochange]] = domuq
+		if len(dividers)==0:
+			fgs=cfg.fitidx
+		else:
+			fgs=[np.arange(0,dividers[0])]
+			for i, idx in enumerate(dividers[:-1]):
+				fgs.append(np.arange(idx,dividers[i+1]))
+			fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
+			# Check joebvpfit.fitpix line groups to see if any fall in separate wavegroups
+			for i, gg in enumerate(fgs):
+				if len(np.unique(cfg.wgidxs[gg]))!=1:
+					domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
+					tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
+					cfg.wgidxs[gg[tochange]] = domuq
 	convprof=profile
 	for ll in cfg.uqwgidxs:
 		matches=cfg.fitidx[np.where(cfg.wgidxs==ll)[0]]
