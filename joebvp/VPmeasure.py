@@ -70,9 +70,6 @@ class LineParTableModel(QAbstractTableModel):
             pix2=jbg.closest(cfg.wave,wobs2)
             trans=atomicdata.lam2ion(fitpars[0][i])
             towrite=jbg.pipedelimrow([cfg.filename,restwave,round(zline,5),round(fitpars[1][i],3),round(fiterrors[1][i],3),round(fitpars[2][i],3),round(fiterrors[2][i],3),round(fitpars[4][i],3), round(fiterrors[4][i],3),parinfo[1][i],parinfo[2][i],parinfo[4][i],vlim1,vlim2,wobs1,wobs2,pix1,pix2,trans])
-            #towrite = jbg.pipedelimrow(
-                #[specfilename, fitpars[0][i], round(fitpars[3][i],5), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
-                #round(fitpars[4][i],3), round(fiterrors[4][i],3)])
             VPparfile.write(towrite)
             bigparfile.write(towrite)
         VPparfile.close()
