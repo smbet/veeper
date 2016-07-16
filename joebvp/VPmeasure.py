@@ -58,7 +58,7 @@ class LineParTableModel(QAbstractTableModel):
             bigparfile = open(bigfiletowrite, 'wb')
         for i in range(len(fitpars[0])):
             towrite = jbg.pipedelimrow(
-                [specfilename, fitpars[0][i], round(fitpars[3][i],3), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
+                [specfilename, fitpars[0][i], round(fitpars[3][i],5), round(fitpars[1][i],3), round(fiterrors[1][i],3), round(fitpars[2][i],3), round(fiterrors[2][i],3),
                 round(fitpars[4][i],3), round(fiterrors[4][i],3)])
             VPparfile.write(towrite)
             bigparfile.write(towrite)
