@@ -85,6 +85,7 @@ largeVPparfile=outputdir+'_VP_log.dat'
 defaultcol=13.1
 defaultb=20.0
 defaultvlim=100.
+lowblim=6.
 
 # Plotting
 ylim = (-0.2, 1.4)
