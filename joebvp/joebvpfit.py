@@ -107,7 +107,7 @@ def prepparinfo(linepars,parflags):
 		if lymatch:
 			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10],150.)]
 		else:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10],85.)]
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10],cfg.upperblim)]
 		#else: parinfo[numpars*i+2]['limits']=[1.,150.]
 	#parinfo[numpars*i+2]['maxstep']=5.
 		parinfo[numpars*i+2]['step']=0.5

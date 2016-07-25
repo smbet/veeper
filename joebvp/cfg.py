@@ -86,6 +86,7 @@ defaultcol=13.1
 defaultb=20.0
 defaultvlim=100.
 lowblim=6.
+upperblim=85.
 
 # Plotting
 ylim = (-0.2, 1.4)
