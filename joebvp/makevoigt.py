@@ -19,6 +19,7 @@ from sklearn.cluster import MeanShift, estimate_bandwidth
 import joebvpfit
 from astropy.table import Table
 import pdb
+from linetools.spectra.lsf import LSF
 
 ln2=np.log(2)
 c=const.c.value/1e3
@@ -82,6 +83,28 @@ def voigt(waves,line,coldens,bval,z,vels):
 		tautot+=taus[i]
 	return np.exp(-tautot)
 
+#TODO: retrieve lsf from linetools, compare with tabulated versions
+def get_lsfs():
+	cfg.lsfs=[]
+	for ll in cfg.uqwgidxs:
+		#if cfg.
+		#lsfobj=LSF()
+		lamobs=cfg.wavegroups[ll,0]
+		if (lamobs<=1175): lsf=w1150
+		elif (lamobs>1175) & (lamobs<=1225): lsf=w1200
+		elif (lamobs>1225) & (lamobs<=1275): lsf=w1250
+		elif (lamobs>1275) & (lamobs<=1325): lsf=w1300
+		elif (lamobs>1325) & (lamobs<=1375): lsf=w1350
+		elif (lamobs>1375) & (lamobs<=1425): lsf=w1400
+		elif (lamobs>1425) & (lamobs<=1475): lsf=w1450
+		elif (lamobs>1475) & (lamobs<=1525): lsf=w1500
+		elif (lamobs>1525) & (lamobs<=1575): lsf=w1550
+		elif (lamobs>1575) & (lamobs<=1625): lsf=w1600
+		elif (lamobs>1625) & (lamobs<=1675): lsf=w1650
+		elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
+		elif (lamobs>1725): lsf=w1750
+		cfg.lsfs.append(lsf)
+
 
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
@@ -112,27 +135,14 @@ def convolvecos(wave,profile,lines,zs):
 					domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
 					tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
 					cfg.wgidxs[gg[tochange]] = domuq
+		get_lsfs()
 	convprof=profile
-	for ll in cfg.uqwgidxs:
+	for i,ll in enumerate(cfg.uqwgidxs):
 		matches=cfg.fitidx[np.where(cfg.wgidxs==ll)[0]]
-		lamobs=cfg.wavegroups[ll,0]
-		if (lamobs<=1175): lsf=w1150
-		elif (lamobs>1175) & (lamobs<=1225): lsf=w1200
-		elif (lamobs>1225) & (lamobs<=1275): lsf=w1250
-		elif (lamobs>1275) & (lamobs<=1325): lsf=w1300
-		elif (lamobs>1325) & (lamobs<=1375): lsf=w1350
-		elif (lamobs>1375) & (lamobs<=1425): lsf=w1400
-		elif (lamobs>1425) & (lamobs<=1475): lsf=w1450
-		elif (lamobs>1475) & (lamobs<=1525): lsf=w1500
-		elif (lamobs>1525) & (lamobs<=1575): lsf=w1550
-		elif (lamobs>1575) & (lamobs<=1625): lsf=w1600
-		elif (lamobs>1625) & (lamobs<=1675): lsf=w1650
-		elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
-		elif (lamobs>1725): lsf=w1750
 		paddedprof=np.insert(profile[matches],0,[1.]*16)
 		paddedprof=np.append(paddedprof,[1.]*16)
 		#convprof[matches]=convolve(profile[matches],lsf,mode='same')[16:-16]
-		convprof[matches] = convolve(paddedprof, lsf, mode='same')[16:-16]
+		convprof[matches] = convolve(paddedprof, cfg.lsfs[i], mode='same')[16:-16]
 		#convprof[matches[:16]]=[1.]*16 ; convprof[matches[-16:]]=[1.]*16
 	#pdb.set_trace()
 	return convprof

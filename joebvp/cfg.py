@@ -71,6 +71,7 @@ multiplets=[lyseries,NIseries,NIIseries,NIIIseries,NIVseries,NVseries,OIseries,O
 wavegroups=[]
 wgidxs=[]
 uqwgidxs=[]
+lsfs=[]
 
 #Atomic data
 lams=np.array([])
