@@ -20,6 +20,10 @@ homedir=os.path.expanduser('~')
 resourcedir=homedir+'/Dropbox/Code/resources/'
 specdir=homedir+'/civ/alldata_work/allspec/'
 lsf='COS_LP1'
+instr=['COS','COS','COS']
+gratings=['G130M','G160M','G185M']
+lsfranges=np.array([[1100,1500],[1500,1800],[1800,4000]])
+lps=['1','1','1']
 echarge=4.803204505713468e-10
 m_e=9.10938291e-28
 c=29979245800.0
@@ -72,6 +76,7 @@ wavegroups=[]
 wgidxs=[]
 uqwgidxs=[]
 lsfs=[]
+fgs=[]
 
 #Atomic data
 lams=np.array([])

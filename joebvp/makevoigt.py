@@ -17,8 +17,7 @@ import sys,os
 import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
 import joebvpfit
-from astropy.table import Table
-import pdb
+import astropy.units as u
 from linetools.spectra.lsf import LSF
 
 ln2=np.log(2)
@@ -85,10 +84,31 @@ def voigt(waves,line,coldens,bval,z,vels):
 
 #TODO: retrieve lsf from linetools, compare with tabulated versions
 def get_lsfs():
+	lsfobjs=[]
+	for i,inst in enumerate(cfg.instr):
+		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i])))
 	cfg.lsfs=[]
+
+
+	for fg in cfg.fgs:
+
+		import pdb
+		pdb.set_trace()
+
+		if isinstance(fg,int):
+			lamobs=cfg.wave[fg]
+			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA)
+			cfg.lsfs.append(lsf['kernel']/np.sum(lsf['kernel']))
+			break
+		else:
+			lamobs=cfg.wave[fg[0]]
+			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
+			cfg.lsfs.append(lsf['kernel']/np.sum(lsf['kernel']))
+	'''
 	for ll in cfg.uqwgidxs:
-		#if cfg.
-		#lsfobj=LSF()
+
 		lamobs=cfg.wavegroups[ll,0]
 		if (lamobs<=1175): lsf=w1150
 		elif (lamobs>1175) & (lamobs<=1225): lsf=w1200
@@ -104,6 +124,7 @@ def get_lsfs():
 		elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
 		elif (lamobs>1725): lsf=w1750
 		cfg.lsfs.append(lsf)
+	'''
 
 
 def convolvecos(wave,profile,lines,zs):
@@ -122,21 +143,24 @@ def convolvecos(wave,profile,lines,zs):
 		buf=4
 		df=cfg.fitidx[1:]-cfg.fitidx[:-1]
 		dividers = np.where(df > buf)[0]
+		#dividers = cfg.fitidx[np.where(df > buf)[0]]
 		if len(dividers)==0:
-			fgs=cfg.fitidx
+			cfg.fgs=cfg.fitidx
 		else:
-			fgs=[np.arange(0,dividers[0])]
+			cfg.fgs=[np.arange(cfg.fitidx[0],cfg.fitidx[dividers[0]])]
 			for i, idx in enumerate(dividers[:-1]):
-				fgs.append(np.arange(idx,dividers[i+1]))
-			fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
+				cfg.fgs.append(np.arange(cfg.fitidx[idx],cfg.fitidx[dividers[i+1]]))
+			#cfg.fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
+			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]))
 			# Check joebvpfit.fitpix line groups to see if any fall in separate wavegroups
-			for i, gg in enumerate(fgs):
-				if len(np.unique(cfg.wgidxs[gg]))!=1:
-					domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
-					tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
-					cfg.wgidxs[gg[tochange]] = domuq
+			#for i, gg in enumerate(cfg.fgs):
+			#	if len(np.unique(cfg.wgidxs[gg]))!=1:
+			#		domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
+			#		tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
+			#		cfg.wgidxs[gg[tochange]] = domuq
 		get_lsfs()
 	convprof=profile
+	'''
 	for i,ll in enumerate(cfg.uqwgidxs):
 		matches=cfg.fitidx[np.where(cfg.wgidxs==ll)[0]]
 		paddedprof=np.insert(profile[matches],0,[1.]*16)
@@ -144,7 +168,22 @@ def convolvecos(wave,profile,lines,zs):
 		#convprof[matches]=convolve(profile[matches],lsf,mode='same')[16:-16]
 		convprof[matches] = convolve(paddedprof, cfg.lsfs[i], mode='same')[16:-16]
 		#convprof[matches[:16]]=[1.]*16 ; convprof[matches[-16:]]=[1.]*16
-	#pdb.set_trace()
+	'''
+	for i,ll in enumerate(cfg.fgs):
+		if isinstance(ll,int):
+			lsfwidth=len(cfg.fgs)/2+1
+			paddedprof = np.insert(profile[cfg.fgs], 0, [1.] * lsfwidth)
+			paddedprof = np.append(paddedprof, [1.] * lsfwidth)
+			convprof[cfg.fgs] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
+			break
+		else:
+
+			lsfwidth=len(ll)/2+1
+			paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
+			paddedprof=np.append(paddedprof,[1.]*lsfwidth)
+			convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
+
+
 	return convprof
 
 '''
