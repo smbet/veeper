@@ -92,8 +92,8 @@ def get_lsfs():
 
 	for fg in cfg.fgs:
 
-		import pdb
-		pdb.set_trace()
+		#import pdb
+		#pdb.set_trace()
 
 		if isinstance(fg,int):
 			lamobs=cfg.wave[fg]
