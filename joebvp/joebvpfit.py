@@ -77,7 +77,12 @@ def fitpix(wave,pararr):
 		w2=ll[i]*(1.+lz[i]+lv2[i]/c)
 		p1=jbg.closest(wave,w1)
 		p2=jbg.closest(wave,w2)
-		relpix.extend(range(p1-10,p2+10))
+		if ((p1>=10) & (p2<=(len(wave)-1-10))):
+			relpix.extend(range(p1-10,p2+10))
+		elif (p1<10):
+			relpix.extend(range(0, p2 + 10))
+		else:
+			relpix.extend(range(p1 - 10, len(wave)-1))
 		rp=np.unique(np.array(relpix))
 	return rp
 
@@ -163,7 +168,7 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	seriesassoc=np.zeros(len(restwaves))-99
 	for i in range(len(restwaves)):
 		for j in range(len(cfg.multiplets)):
-			currmult=cfg.multiplets[j]
+			currmult=np.array(cfg.multiplets[j])
 			if (abs(restwaves[i]-currmult[jbg.closest(currmult,restwaves[i])]) < 0.01):
 				seriesassoc[i]=j
 

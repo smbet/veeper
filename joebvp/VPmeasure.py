@@ -568,8 +568,8 @@ def go(specfilename,parfilename):
     app = QtGui.QApplication(sys.argv)
     main = Main(specfilename, parfilename)
     main.show()
-    #app.exec_()
-    sys.exit(app.exec_())
+    app.exec_()
+    #sys.exit(app.exec_())
     #app.quit()
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ def cosvoigt(vwave,vpars):
 	if isinstance(cfg.fitidx,int):
 		pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
 		cfg.fitidx=joebvpfit.fitpix(vwave,pars)
-
+	cfg.wave=vwave
 	vflux=np.zeros(len(vwave))+1.
 	factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
 	convfactor=convolvecos(vwave,factor,vpars[0],vpars[3])
@@ -89,7 +89,9 @@ def get_lsfs():
 		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i])))
 	cfg.lsfs=[]
 
-
+	print cfg.fgs
+	import pdb
+	#pdb.set_trace()
 	for fg in cfg.fgs:
 
 		#import pdb
@@ -99,13 +101,15 @@ def get_lsfs():
 			lamobs=cfg.wave[fg]
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA)
-			cfg.lsfs.append(lsf['kernel']/np.sum(lsf['kernel']))
+			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
-			lamobs=cfg.wave[fg[0]]
+			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
-			cfg.lsfs.append(lsf['kernel']/np.sum(lsf['kernel']))
+
+			#if jbg.between(1360,cfg.wave[fg[0]],cfg.wave[fg[-1]]): pdb.set_trace()
+			cfg.lsfs.append(lsf['kernel'])
 	'''
 	for ll in cfg.uqwgidxs:
 
@@ -125,7 +129,6 @@ def get_lsfs():
 		elif (lamobs>1725): lsf=w1750
 		cfg.lsfs.append(lsf)
 	'''
-
 
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
