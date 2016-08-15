@@ -41,9 +41,8 @@ def Hfunc(x,a):
 
 
 def cosvoigt(vwave,vpars):
-	if isinstance(cfg.fitidx,int):
-		pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
-		cfg.fitidx=joebvpfit.fitpix(vwave,pars)
+	pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
+	cfg.fitidx=joebvpfit.fitpix(vwave,pars)
 	cfg.wave=vwave
 	vflux=np.zeros(len(vwave))+1.
 	factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])

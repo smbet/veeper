@@ -164,14 +164,6 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	lam,fosc,gam=setatomicdata(restwaves)
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 
-	### Look for multiplet membership of each line
-	seriesassoc=np.zeros(len(restwaves))-99
-	for i in range(len(restwaves)):
-		for j in range(len(cfg.multiplets)):
-			currmult=np.array(cfg.multiplets[j])
-			if (abs(restwaves[i]-currmult[jbg.closest(currmult,restwaves[i])]) < 0.01):
-				seriesassoc[i]=j
-
 	initpars=[[],[],[],[],[],[],[]]
 	parinfo=[[],[],[],[],[]]
 	matches=[]
@@ -211,6 +203,15 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	parinfo[0]=parinfo[0]+1
 	parinfo[3]=parinfo[3]+1
 	if ((initinfo==[])&(initvals==[])):
+
+		### Look for multiplet membership of each line
+		seriesassoc = np.zeros(len(restwaves)) - 99
+		for i in range(len(restwaves)):
+			for j in range(len(cfg.multiplets)):
+				currmult = np.array(cfg.multiplets[j])
+				if (abs(restwaves[i] - currmult[jbg.closest(currmult, restwaves[i])]) < 0.01):
+					seriesassoc[i] = j
+
 		uqions=np.unique(seriesassoc).tolist()
 
 		if -99 in uqions: uqions.remove(-99)
@@ -250,6 +251,15 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 		parinfo[2]=initinfo[1]
 		parinfo[4]=initinfo[2]
 	elif ((initinfo==[])&(initvals!=[])):
+
+		### Look for multiplet membership of each line
+		seriesassoc = np.zeros(len(restwaves)) - 99
+		for i in range(len(restwaves)):
+			for j in range(len(cfg.multiplets)):
+				currmult = np.array(cfg.multiplets[j])
+				if (abs(restwaves[i] - currmult[jbg.closest(currmult, restwaves[i])]) < 0.01):
+					seriesassoc[i] = j
+
 		### Fix measurements that are imported
 		for i in range(len(restwaves)):
 			if ((initpars[1][i]!=defaultcol)&(initpars[2][i]!=defaultb)):
