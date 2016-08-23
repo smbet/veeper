@@ -87,14 +87,7 @@ def get_lsfs():
 	for i,inst in enumerate(cfg.instr):
 		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i])))
 	cfg.lsfs=[]
-
-	print cfg.fgs
-	import pdb
-	#pdb.set_trace()
 	for fg in cfg.fgs:
-
-		#import pdb
-		#pdb.set_trace()
 
 		if isinstance(fg,int):
 			lamobs=cfg.wave[fg]
@@ -106,8 +99,6 @@ def get_lsfs():
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
-
-			#if jbg.between(1360,cfg.wave[fg[0]],cfg.wave[fg[-1]]): pdb.set_trace()
 			cfg.lsfs.append(lsf['kernel'])
 	'''
 	for ll in cfg.uqwgidxs:
@@ -144,22 +135,14 @@ def convolvecos(wave,profile,lines,zs):
 		# Identify groups of fitidxs
 		buf=4
 		df=cfg.fitidx[1:]-cfg.fitidx[:-1]
-		dividers = np.where(df > buf)[0]
-		#dividers = cfg.fitidx[np.where(df > buf)[0]]
+		dividers = np.where(df > buf)[0] #These are the last indices of each group
 		if len(dividers)==0:
 			cfg.fgs=cfg.fitidx
 		else:
-			cfg.fgs=[np.arange(cfg.fitidx[0],cfg.fitidx[dividers[0]])]
-			for i, idx in enumerate(dividers[:-1]):
-				cfg.fgs.append(np.arange(cfg.fitidx[idx],cfg.fitidx[dividers[i+1]]))
-			#cfg.fgs.append(np.arange(dividers[-1],len(cfg.fitidx)))
-			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]))
-			# Check joebvpfit.fitpix line groups to see if any fall in separate wavegroups
-			#for i, gg in enumerate(cfg.fgs):
-			#	if len(np.unique(cfg.wgidxs[gg]))!=1:
-			#		domuq=scipy.stats.mode(cfg.wgidxs[gg])[0][0]
-			#		tochange=np.where(cfg.wgidxs[gg]!=domuq)[0]
-			#		cfg.wgidxs[gg[tochange]] = domuq
+			cfg.fgs=[np.arange(cfg.fitidx[0],cfg.fitidx[dividers[0]])] #1st group
+			for i, idx in enumerate(dividers[1:-1]):
+				cfg.fgs.append(np.arange(cfg.fitidx[idx+1],cfg.fitidx[dividers[i+2]])) # 'i+2' b/c 1st group handled separately
+			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]))  #last group
 		get_lsfs()
 	convprof=profile
 	'''

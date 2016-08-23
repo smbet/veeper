@@ -264,8 +264,9 @@ class newLineDialog(QDialog):
             return 0
 
 class Main(QMainWindow, Ui_MainWindow):
-    def __init__(self,specfilename,parfilename=None,wave1=None,wave2=None,numchunks=8):
-        super(Main,self).__init__()
+    def __init__(self,specfilename,parfilename=None,wave1=None,wave2=None,numchunks=8,parent=None):
+        QtGui.QMainWindow.__init__(self, parent)
+        #super(Main,self).__init__()
         self.setupUi(self)
 
         ### Initialize stuff
@@ -414,10 +415,12 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.sideax.plot(self.wave, self.normsig, linestyle='steps-mid', color='red', lw=0.5)
         self.sideax.plot(self.wave, -self.normsig, linestyle='steps-mid', color='red', lw=0.5)
-        self.sideax.set_xlim(cenwave-wavebuf,cenwave+wavebuf)
-        self.sideax.set_ylim(cfg.ylim)
-        self.changesidefig(self.sidefig)
-
+        try:
+            self.sideax.set_xlim(cenwave-wavebuf,cenwave+wavebuf)
+            self.sideax.set_ylim(cfg.ylim)
+            self.changesidefig(self.sidefig)
+        except TypeError:
+            pass
     def fitlines(self):
         print 'Fitting line profile(s)...'
         #self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
