@@ -1,0 +1,17 @@
+08/24/2016
+
+Basic usage:
+
+from joebvp import fixLines
+fixLines.fixinput(parfile,output)
+
+parfile: the output model parameters from VPmeasure
+output: the desired new output file
+
+Options:
+The optional keyword 'fixpars' enables one to fix only certain parameters.  Example:
+
+fixLines.fixinput('_VP.dat','_VP_fixed.dat',fixpars=['n','b'])
+
+This command would fix only the column density and Doppler b-values while leaving velocity to
+vary as in the fit.
