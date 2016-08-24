@@ -232,6 +232,25 @@
         </rect>
        </property>
       </widget>
+      <widget class="QPushButton" name="writeModelButton">
+       <property name="geometry">
+        <rect>
+         <x>330</x>
+         <y>520</y>
+         <width>111</width>
+         <height>32</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Write model</string>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>

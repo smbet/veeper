@@ -51,34 +51,28 @@ def cosvoigt(vwave,vpars):
 	return vflux
 
 def voigt(waves,line,coldens,bval,z,vels):
-	tau=[]
-	lam=[]
-	#lams,fs,gs=getdata(line)
+	tautot=np.zeros(len(waves))
+	if len(cfg.lams)==0:
+		lam,fosc,gam=setatomicdata(restwaves)
+		cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	for i in range(len(coldens)):
 		#thatfactor=(1.+z[i])*(1.+vels[i]/c)
 		thatfactor=(1.+z[i])
-		#lam0=restwave(line[i])
-		#gam=gamma(line[i])
-		#fosc=osc(line[i])
-		try:
-			lam0=cfg.lams[i]
-			gam=cfg.gam[i]
-			fosc=cfg.fosc[i]
-		except:
-			lam0,gam,fosc=joebvpfit.setatomicdata(line)
+
+		lam0=cfg.lams[i]
+		gam=cfg.gam[i]
+		fosc=cfg.fosc[i]
+
 		#thatfactor=1
 		#lam.append(arange(lam0-5.,lam0+5.,step=.001))
-		lam.append(waves/thatfactor)
+		lam = waves/thatfactor
 		dlam=bval[i]*lam0/c  #Doppler param in wavelength
-		x=(lam[i]-lam0-lam0*vels[i]/c)/dlam
+		x=(lam-lam0-lam0*vels[i]/c)/dlam
 		a=gam/(4.*np.pi*(c*1e13/lam0**2*dlam))
 		vp=Hfunc(x,a)
 		tauval=np.sqrt(np.pi)*cfg.echarge**2/cfg.m_e/cfg.c**2*(lam0*1e-8)**2/dlam*1e8*(10**coldens[i])*fosc*vp
-		tau.append(tauval)
-	taus=tau
-	tautot=np.zeros(len(waves))
-	for i in range(len(taus)):
-		tautot+=taus[i]
+		#tau.append(tauval)
+		tautot+=tauval
 	return np.exp(-tautot)
 
 #TODO: retrieve lsf from linetools, compare with tabulated versions

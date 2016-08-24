@@ -77,6 +77,15 @@ class LineParTableModel(QAbstractTableModel):
         print 'Line parameters written to:'
         print filetowrite
 
+    def writeVPmodel(self, outfile, wave,fitpars,normflux,normsig):
+        from astropy.table import Table
+        model = joebvpfit.voigtfunc(wave, fitpars)
+        modeltab=Table([wave,model,normflux,normsig],names=['wavelength','model','normflux','normsig'])
+        modeltab.write(outfile,format='fits')
+        print 'Voigt profile model written to:'
+        print outfile
+
+
     def data(self,index,role):
 
         if role == Qt.EditRole:
@@ -303,6 +312,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.loadParsButton.clicked.connect(self.openParFileDialog)
         self.addLineButton.clicked.connect(self.addLineDialog)
         self.writeParsButton.clicked.connect(self.writeParFileDialog)
+        self.writeModelButton.clicked.connect(self.writeModelFileDialog)
 
         ### Initialize spectral plots
         fig=Figure()
@@ -464,6 +474,12 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = str(fname)
         if fname != '':
             self.datamodel.writelinepars(fname,self.specfilename)
+
+    def writeModelFileDialog(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
+        fname = str(fname)
+        if fname != '':
+            self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()

@@ -86,6 +86,7 @@ gam=np.array([])
 outputdir='./'
 
 VPparoutfile=outputdir+field+'_VP.dat'
+VPmodeloutfile=outputdir+field+'VPmodel.fits'
 contoutfile=outputdir+'continua.dat'
 largeVPparfile=outputdir+'_VP_log.dat'
 defaultcol=13.1
