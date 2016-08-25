@@ -114,8 +114,6 @@ def get_lsfs():
 		elif (lamobs>1725): lsf=w1750
 		cfg.lsfs.append(lsf)
 	'''
-	import pdb
-	pdb.set_trace()
 
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
