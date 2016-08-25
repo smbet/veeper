@@ -90,6 +90,7 @@ def get_lsfs():
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
+			print fg
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
@@ -113,6 +114,8 @@ def get_lsfs():
 		elif (lamobs>1725): lsf=w1750
 		cfg.lsfs.append(lsf)
 	'''
+	import pdb
+	pdb.set_trace()
 
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):
@@ -134,8 +137,8 @@ def convolvecos(wave,profile,lines,zs):
 			cfg.fgs=cfg.fitidx
 		else:
 			cfg.fgs=[np.arange(cfg.fitidx[0],cfg.fitidx[dividers[0]])] #1st group
-			for i, idx in enumerate(dividers[1:-1]):
-				cfg.fgs.append(np.arange(cfg.fitidx[idx+1],cfg.fitidx[dividers[i+2]])) # 'i+2' b/c 1st group handled separately
+			for i, idx in enumerate(dividers[:-1]):
+				cfg.fgs.append(np.arange(cfg.fitidx[idx+1],cfg.fitidx[dividers[i+1]])) # 'i+2' b/c 1st group handled separately
 			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]))  #last group
 		get_lsfs()
 	convprof=profile
