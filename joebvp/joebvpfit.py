@@ -73,10 +73,14 @@ def fitpix(wave,pararr):
 	lv2=pararr[6]
 	relpix=[]
 	for i in range(len(ll)):
-		w1=ll[i]*(1.+lz[i]+lv1[i]/c)
-		w2=ll[i]*(1.+lz[i]+lv2[i]/c)
-		p1=jbg.closest(wave,w1)
-		p2=jbg.closest(wave,w2)
+		vels=jbg.veltrans(lz[i],wave,ll[i])
+		#w1=ll[i]*(1.+lz[i]+lv1[i]/c)
+		#w2=ll[i]*(1.+lz[i]+lv2[i]/c)
+		#p1=jbg.closest(wave,w1)
+		#p2=jbg.closest(wave,w2)
+		p1=jbg.closest(vels,lv1[i])
+		p2=jbg.closest(vels,lv2[i])
+
 		if ((p1>=10) & (p2<=(len(wave)-1-10))):
 			relpix.extend(range(p1-10,p2+10))
 		elif (p1<10):
@@ -148,6 +152,7 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	fitpars=foldpars(m.params)
 	# Add velocity windows back to parameter array
 	fitpars.append(vlim1) ; fitpars.append(vlim2)
+	#import pdb; pdb.set_trace()
 	fiterrors=foldpars(m.perror)
 
 	print '\nFit results: \n'

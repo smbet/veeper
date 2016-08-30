@@ -18,6 +18,8 @@ import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
 import joebvpfit
 import astropy.units as u
+from astropy.io import ascii
+from astropy.table import Table
 from linetools.spectra.lsf import LSF
 
 ln2=np.log(2)
@@ -77,6 +79,12 @@ def voigt(waves,line,coldens,bval,z,vels):
 
 #TODO: retrieve lsf from linetools, compare with tabulated versions
 def get_lsfs():
+
+	### Temporary debugging: try loading in LSF directly
+	G225file=modpath+'/LSF/COS_LP1/nuv_all_lp1_rebin.txt'
+	G225dat=ascii.read(G225file,data_start=1)
+	G225lsf=G225dat['col4']
+
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):
 		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i])))
@@ -90,9 +98,11 @@ def get_lsfs():
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
-			print fg
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+			#if lsfobjs[lsfmatch].instr_config['grating']=='G225M':
+			#	cfg.lsfs.append(G225lsf)
+			#else:
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
 			cfg.lsfs.append(lsf['kernel'])
 	'''
@@ -161,6 +171,16 @@ def convolvecos(wave,profile,lines,zs):
 			lsfwidth=len(ll)/2+1
 			paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
 			paddedprof=np.append(paddedprof,[1.]*lsfwidth)
+			'''
+			tab2write=Table([cfg.wave[ll]],names=['wave'])
+			ascii.write(tab2write, output='wave_'+str(i)+'.dat')
+			tab2write=Table([cfg.lsfs[i]],names=['lsf'])
+			ascii.write(tab2write, output='lsf'+str(i)+'.dat')
+			tab2write=Table([paddedprof],names=['paddedprof'])
+			ascii.write(tab2write, output='padprof_'+str(i)+'.dat')
+			tab2write=Table([cfg.normflux[ll]],names=['flux'])
+			ascii.write(tab2write, output='flux_'+str(i)+'.dat')
+			'''
 			convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
 
 

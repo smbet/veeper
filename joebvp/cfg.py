@@ -17,8 +17,6 @@ origparinfo=0
 filename=''
 field=''
 homedir=os.path.expanduser('~')
-resourcedir=homedir+'/Dropbox/Code/resources/'
-specdir=homedir+'/civ/alldata_work/allspec/'
 lsf='COS_LP1'
 instr=['COS','COS','COS']
 gratings=['G130M','G160M','G225M']
@@ -91,7 +89,7 @@ contoutfile=outputdir+'continua.dat'
 largeVPparfile=outputdir+'_VP_log.dat'
 defaultcol=13.1
 defaultb=20.0
-defaultvlim=100.
+defaultvlim=200.
 lowblim=4.
 upperblim=85.
 
