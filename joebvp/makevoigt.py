@@ -80,10 +80,6 @@ def voigt(waves,line,coldens,bval,z,vels):
 #TODO: retrieve lsf from linetools, compare with tabulated versions
 def get_lsfs():
 
-	### Temporary debugging: try loading in LSF directly
-	G225file=modpath+'/LSF/COS_LP1/nuv_all_lp1_rebin.txt'
-	G225dat=ascii.read(G225file,data_start=1)
-	G225lsf=G225dat['col4']
 
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):
