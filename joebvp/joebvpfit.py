@@ -168,14 +168,36 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 
 
 def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
+	'''
+
+	Parameters
+	----------
+	zs : numpy vector of floats
+		Redshifts of lines (this parameter will be fixed during fitting)
+	restwaves : numpy vector of floats
+		Rest frame wavelengths of lines to be fitted
+	initvals : list of numpy vectors, optional
+		Contains the following (in order): [restwaves,linecol,lineb,zs,linevel,linevlim1,linevlim2]
+		Will default to values set in cfg.py if not set
+	initinfo : list of numpy vectors, optional
+		Contains the flags for fitting (in order): [colflag,bflag,velflag]
+		Parameters with flags = 0 and 1 will freely value and fixed, respectively
+		If 2 or more lines have the same flag value for the same parameter, the parameters will
+			be tied to one another.
+
+	Returns
+	-------
+	initpars : list of lists
+		Parameters for fit ready for fitter!
+	parinfo : array of arrays
+		Flags to be used in fit
+	'''
 
 	### Set atomic data for each line
 	lam,fosc,gam=setatomicdata(restwaves)
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 
 	initpars=[[],[],[],[],[],[],[]]
-	parinfo=[[],[],[],[],[]]
-	matches=[]
 	defaultcol=cfg.defaultcol
 	defaultb=cfg.defaultb
 	if initvals==[]:
@@ -371,6 +393,29 @@ def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
 	return mcpararr,chisq
 
 def readpars(filename,wave1=None,wave2=None):
+	'''
+
+	Parameters
+	----------
+	filename : str
+		Name of parameter input (or joebvp output) file
+		File should at least have following columns:
+			specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2
+	wave1 : float, optional
+		Beginning of wavelength range over which to load lines (must be set with wave2)
+	wave2 : float, optional
+		End of wavelength range over which to load lines (must be set with wave1)
+
+	Returns
+	-------
+	fitpars : list of lists
+		Parameters for fit ready for fitter!
+	fiterrors : array of numpy vectors
+		Error array for the fitting initialized to '0' for each param
+	parinfo : array of arrays
+		Flags to be used in fit
+	'''
+
 	linelist = ascii.read(filename)
 	linerestwave = linelist['restwave'].data
 	linez = linelist['zsys'].data

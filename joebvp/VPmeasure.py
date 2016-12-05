@@ -320,7 +320,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fig=fig
         self.initplot(fig)
 
-        ### Initializea side plot
+        ### Initialize side plot
         sidefig=Figure(figsize=(5.25,2))
         self.sidefig = sidefig
         self.addsidempl(self.sidefig)
@@ -331,7 +331,7 @@ class Main(QMainWindow, Ui_MainWindow):
         wlen=len(self.spectrum.wavelength)/numchunks
         self.spls=[]
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
-        else: waveidx1=jbg.closest(wave,wave1)
+        else: waveidx1=jbg.closest(self.wave,self.wave1)
         if self.fitpars!=None:
                 model=joebvpfit.voigtfunc(self.wave,self.datamodel.fitpars)
         sg=jbg.subplotgrid(numchunks)
@@ -357,7 +357,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.wave1==None:
             lineshere=np.where((lineobswave>self.wave[0])&(lineobswave<self.wave[-1]))[0]
         else:
-            lineshere=np.where((lineobswave>wave1)&(lineobswave<wave2))[0]
+            lineshere=np.where((lineobswave>self.wave1)&(lineobswave<self.wave2))[0]
         zs=self.linelist['zsys'][lineshere]
         restwaves=linerestwave[lineshere]
         linecol=self.linelist['col'][lineshere]
