@@ -568,36 +568,43 @@ def batch_fit(spec,filelist):
 
     '''
     if isinstance(spec,str):
-        spectofit = readspec
+        spectofit = readspec(spec)
     else:
         spectofit = spec
 
-    spectofit=readspec(readspec)
     wave=spectofit.wavelength.value
-    normflux=spectofit.flux.value/spec.co.value
-    normsig=spectofit.sig.value/spec.co.value
-
+    normflux=spectofit.flux.value/spectofit.co.value
+    normsig=spectofit.sig.value/spectofit.co.value
+    cfg.wave=wave
 
     for i,ff in enumerate(filelist):
         i+=1
         okay=1
 
         fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
+        cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # Set pixels for fit
+        cfg.wavegroups = []
 
-        oldfitpars = np.zeros([5, len(fitpars[0])]) - 99
-        while(np.max(np.abs(fitpars-oldfitpars))>0.01):
+        oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
+        ctr=0
+        while(np.max(np.abs(fitpars-oldfitpars))>0.0001):
+            ctr+=1
+
             try:
+                oldfitpars=fitpars
                 fitpars, fiterrors = joebvpfit.joebvpfit(wave, normflux, normsig,
                                                           fitpars, parinfo)
-                print 'Iteration',str(i),'-',ff
+                fitpars=np.array(fitpars)
+                print 'Iteration',ctr,'-',ff
+
             except:
                 print 'Fitting error:',ff
                 okay=0
                 break
         if okay != 0:
             print 'Fit converged:',ff
-            paroutfilename=ff[:-2] + 'VP'
-            modeloutfilename = ff[:-3] + '_VPmodel.fits'
+            paroutfilename=ff[:-6] + 'VP'
+            modeloutfilename = ff[:-7] + '_VPmodel.fits'
             joebvpfit.writelinepars(fitpars,fiterrors,parinfo,paroutfilename)
             joebvpfit.writeVPmodel(modeloutfilename,wave,fitpars,normflux,normsig)
 

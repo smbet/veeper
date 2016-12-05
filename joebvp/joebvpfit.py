@@ -482,6 +482,7 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 		Parameter output filename
 
 	'''
+	import os
 	bigfiletowrite = cfg.largeVPparfile
 	filetowrite = outfilename
 
@@ -496,7 +497,7 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 	bigparfile.write(header)
 	for i in range(len(fitpars[0])):
 		zline = fitpars[3][i]
-		vlim1 = fitpars[5][i];
+		vlim1 = fitpars[5][i]
 		vlim2 = fitpars[6][i]
 		restwave = fitpars[0][i]
 		wobs1 = restwave * (1 + zline + vlim1 / 299792.458)
@@ -518,8 +519,8 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 
 def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	from astropy.table import Table
-	model = joebvpfit.voigtfunc(wave, fitpars)
+	model = voigtfunc(wave, fitpars)
 	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
-	modeltab.write(outfile, format='fits')
+	modeltab.write(outfile, format='fits', overwrite=True)
 	print 'Voigt profile model written to:'
 	print outfile
