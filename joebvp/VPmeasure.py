@@ -430,12 +430,15 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            self.datamodel.writelinepars(fname,self.specfilename)
+            # TODO: ensure the move to joebvpfit works correctly and remove datamodel method
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, fname)
+            #self.datamodel.writelinepars(fname, self.specfilename)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
         fname = str(fname)
         if fname != '':
+            #TODO: ensure the move to joebvpfit works correctly and remove datamodel method
             self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def addLineDialog(self):
@@ -547,6 +550,59 @@ def go(specfilename,parfilename):
     app.exec_()
     #sys.exit(app.exec_())
     #app.quit()
+
+def batch_fit(spec,filelist):
+    '''
+    Takes a number of input files and fits the lines in them.  The fitting algorithm will
+    be run until convergence for each input file.
+
+    Parameters
+    ----------
+    spec : string or XSpectrum1D
+        The spectrum to be fitted with the input lines
+
+    filelist : list of strings
+        This list should contain the names of VP input files.
+        See joebvpfit.readpars for details of file format
+
+    '''
+    if isinstance(spec,str):
+        spectofit = readspec
+    else:
+        spectofit = spec
+
+    spectofit=readspec(readspec)
+    wave=spectofit.wavelength.value
+    normflux=spectofit.flux.value/spec.co.value
+    normsig=spectofit.sig.value/spec.co.value
+
+
+    for i,ff in enumerate(filelist):
+        i+=1
+        okay=1
+
+        fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
+
+        oldfitpars = np.zeros([5, len(fitpars[0])]) - 99
+        while(np.max(np.abs(fitpars-oldfitpars))>0.01):
+            try:
+                fitpars, fiterrors = joebvpfit.joebvpfit(wave, normflux, normsig,
+                                                          fitpars, parinfo)
+                print 'Iteration',str(i),'-',ff
+            except:
+                print 'Fitting error:',ff
+                okay=0
+                break
+        if okay != 0:
+            print 'Fit converged:',ff
+            paroutfilename=ff[:-2] + 'VP'
+            modeloutfilename = ff[:-3] + '_VPmodel.fits'
+            joebvpfit.writelinepars(fitpars,fiterrors,parinfo,paroutfilename)
+
+
+
+
+
 
 if __name__ == '__main__':
         import sys
