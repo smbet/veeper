@@ -439,7 +439,8 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = str(fname)
         if fname != '':
             #TODO: ensure the move to joebvpfit works correctly and remove datamodel method
-            self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+            #self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+            joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()
@@ -598,6 +599,7 @@ def batch_fit(spec,filelist):
             paroutfilename=ff[:-2] + 'VP'
             modeloutfilename = ff[:-3] + '_VPmodel.fits'
             joebvpfit.writelinepars(fitpars,fiterrors,parinfo,paroutfilename)
+            joebvpfit.writeVPmodel(modeloutfilename,wave,fitpars,normflux,normsig)
 
 
 
