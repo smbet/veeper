@@ -6,9 +6,13 @@ import joebgoodies as jbg
 from stsci.tools import nmpfit
 import makevoigt
 import cfg
+import atomicdata
 from linetools.lists import parse as lilp
 from linetools.spectralline import AbsLine
 import astropy.units as u
+from astropy.io import ascii
+from scipy import random
+import warnings
 
 # A start to using the linetools atomic data framework
 adata=lilp.parse_morton03()
@@ -306,3 +310,112 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 								complistsort[j].remove(clidx)
 							flagctr+=1
 	return initpars,parinfo
+
+def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
+	cfg.wave=wave
+	cfg.flux=flux
+	cfg.sigup=err
+	numiter=numiter
+	colflags=parinfo[1]
+	bflags=parinfo[2]
+	velflags=parinfo[4]
+	uqcfs=np.unique(colflags)
+	uqbfs=np.unique(bflags)
+	uqvfs=np.unique(velflags)
+	
+	colerrs=fiterrors[1]
+	berrs = fiterrors[2]
+	velerrs = fiterrors[4]
+	
+	# Set up arrays to hold initial parameters and widths of random deviations
+	mcpararr=np.transpose(np.array([fitpars[1],fitpars[2],fitpars[3]]))
+	diffarr=np.transpose(np.array([sig*fiterrors[1],sig*fiterrors[2],sig*fiterrors[4]]))
+	# Build array of random numbers (final array will be this shape)
+	randarr = random.random_sample(size=(numiter,len(fitpars[0]),3))
+	# Deviate parameters
+	mcpararr=(mcpararr-diffarr)+2.*diffarr*randarr
+	
+	# Some lines' parameters are tied to other lines'; also fits sometime top or bottom out b-values
+	for i,ff in enumerate(uqcfs):
+		theselines=np.where(colflags==ff)[0]
+		thiswitherr=np.where((colflags==ff)&(colerrs>0))[0]
+		if len(thiswitherr)==0:
+			diff = 5.
+		else:
+			diff = sig*colerrs[thiswitherr]
+		mcpararr[:,theselines,0]=(mcpararr[:,theselines,0]-diff)+2.*diff*randarr[:,theselines,0]
+	for i,ff in enumerate(uqbfs):
+		theselines=np.where(bflags==ff)[0]
+		thiswitherr=np.where((bflags==ff)&(berrs>0))[0]
+		if len(thiswitherr)==0:
+			diff = 5.
+		else:
+			diff = sig*berrs[thiswitherr]
+		mcpararr[:,theselines,1]=(mcpararr[:,theselines,1]-diff)+2.*diff*randarr[:,theselines,1]
+	for i,ff in enumerate(uqvfs):
+		theselines=np.where(velflags==ff)[0]
+		thiswitherr=np.where((velflags==ff)&(velerrs>0))[0]
+		if len(thiswitherr)==0:
+			diff = 5.
+		else:
+			diff = sig*velerrs[thiswitherr]
+		mcpararr[:,theselines,2]=(mcpararr[:,theselines,2]-diff)+2.*diff*randarr[:,theselines,2]
+
+
+	chisq=np.zeros(numiter)
+	for i in range(numiter):
+		mcpars=[fitpars[0],mcpararr[i,:,0],mcpararr[i,:,1],fitpars[3],mcpararr[i,:,2],fitpars[5],fitpars[6]]
+		cfg.fitidx=fitpix(wave,mcpars)
+		vef= voigterrfunc(unfoldpars(mcpars),wave,flux,err,fjac=None)
+		chisq[i]=np.sum(vef[1]**2)
+	return mcpararr,chisq
+
+def readpars(filename,wave1=None,wave2=None):
+	linelist = ascii.read(filename)
+	linerestwave = linelist['restwave'].data
+	linez = linelist['zsys'].data
+	if (wave1 == None)&(wave2 == None):
+		lineshere = range(len(linelist))
+	elif ((wave1 == None)|(wave2 == None))|(wave1>=wave2):
+		lineshere = range(len(linelist))
+		warnings.warn('Note that both \'wave1\' and \'wave2\' must be declared or neither must be. \n Loading all lines in list.')
+	else:
+		lineobswave = linerestwave * (1. + linez)
+		lineshere = np.where((lineobswave > wave1) & (lineobswave < wave2))[0]
+	zs = linelist['zsys'][lineshere]
+	restwaves = linerestwave[lineshere]
+	linecol = linelist['col'][lineshere]
+	lineb = linelist['bval'][lineshere]
+	linevel = linelist['vel'][lineshere]
+	linevlim1 = linelist['vlim1'][lineshere]
+	linevlim2 = linelist['vlim2'][lineshere]
+	colflag = linelist['nflag'][lineshere]
+	bflag = linelist['bflag'][lineshere]
+	velflag = linelist['vflag'][lineshere]
+	colsig = linelist['sigcol'][lineshere]
+	bsig = linelist['sigbval'][lineshere]
+	velsig = linelist['sigvel'][lineshere]
+	allpars = np.core.records.fromarrays(
+		[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
+		 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
+		formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
+	allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
+	linerestwave = allpars['lamrest']
+	zs = allpars['z']
+	linecol = allpars['col']
+	lineb = allpars['b']
+	linevel = allpars['vel']
+	linevlim1 = allpars['vlim1']
+	linevlim2 = allpars['vlim2']
+	colflag = allpars['colflag']
+	bflag = allpars['bflag']
+	velflag = allpars['velflag']
+	restwaves = linerestwave
+	initinfo = [colflag, bflag, velflag]
+	initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
+	fitpars, parinfo = initlinepars(zs, restwaves, initpars, initinfo=initinfo)
+	fiterrors = np.zeros([5, len(fitpars[0])])  # Initialize errors to zero
+	fiterrors[1] = colsig
+	fiterrors[2] = bsig
+	fiterrors[4] = velsig
+	return fitpars,fiterrors,parinfo

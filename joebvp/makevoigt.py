@@ -77,9 +77,7 @@ def voigt(waves,line,coldens,bval,z,vels):
 		tautot+=tauval
 	return np.exp(-tautot)
 
-#TODO: retrieve lsf from linetools, compare with tabulated versions
 def get_lsfs():
-
 
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):

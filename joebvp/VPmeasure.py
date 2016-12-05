@@ -327,22 +327,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sideplot(self.lastclick)  #Dummy initial cenwave setting
 
 
-
-    '''
-    def poptable(self):
-        ### Populate the line parameter table
-        for i in range(len(self.fitpars[0])):
-            self.lineList.setItem(i,0,QTableWidgetItem(str(self.fitpars[0][i])))
-            self.lineList.setItem(i,1,QTableWidgetItem(jbg.decimalplaces(self.fitpars[3][i],3)))
-            self.lineList.setItem(i,2,QTableWidgetItem(atomicdata.lam2ion(self.fitpars[0][i])))
-            self.lineList.setItem(i,3,QTableWidgetItem(jbg.decimalplaces(self.fitpars[1][i],3)))
-            self.lineList.setItem(i,4,QTableWidgetItem(jbg.decimalplaces(self.fiterrors[1][i],3)))
-            self.lineList.setItem(i,5,QTableWidgetItem(jbg.decimalplaces(self.fitpars[2][i],3)))
-            self.lineList.setItem(i,6,QTableWidgetItem(jbg.decimalplaces(self.fiterrors[2][i],3)))
-            self.lineList.setItem(i,7,QTableWidgetItem(jbg.decimalplaces(self.fitpars[4][i],3)))
-            self.lineList.setItem(i,8,QTableWidgetItem(jbg.decimalplaces(self.fiterrors[4][i],3)))
-    '''
-
     def initplot(self,fig,numchunks=8):
         wlen=len(self.spectrum.wavelength)/numchunks
         self.spls=[]
