@@ -437,9 +437,9 @@ def readpars(filename,wave1=None,wave2=None):
 	colflag = linelist['nflag'][lineshere]
 	bflag = linelist['bflag'][lineshere]
 	velflag = linelist['vflag'][lineshere]
-	colsig = linelist['sigcol'][lineshere]
-	bsig = linelist['sigbval'][lineshere]
-	velsig = linelist['sigvel'][lineshere]
+	#colsig = linelist['sigcol'][lineshere]
+	#bsig = linelist['sigbval'][lineshere]
+	#velsig = linelist['sigvel'][lineshere]
 	allpars = np.core.records.fromarrays(
 		[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
 		 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
@@ -460,7 +460,67 @@ def readpars(filename,wave1=None,wave2=None):
 	initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
 	fitpars, parinfo = initlinepars(zs, restwaves, initpars, initinfo=initinfo)
 	fiterrors = np.zeros([5, len(fitpars[0])])  # Initialize errors to zero
-	fiterrors[1] = colsig
-	fiterrors[2] = bsig
-	fiterrors[4] = velsig
+	#fiterrors[1] = colsig
+	#fiterrors[2] = bsig
+	#fiterrors[4] = velsig
 	return fitpars,fiterrors,parinfo
+
+
+def writelinepars(fitpars,fiterrors,parinfo, outfilename):
+	'''
+	Write fit parameters out to file.
+
+	Parameters
+	----------
+	fitpars : list of lists
+		Parameters for fit ready for fitter!
+	fiterrors : array of numpy vectors
+		Error array for the fitting initialized to '0' for each param
+	parinfo : array of arrays
+		Flags to be used in fit
+	outfilename : str
+		Parameter output filename
+
+	'''
+	import os
+	bigfiletowrite = cfg.largeVPparfile
+	filetowrite = outfilename
+
+	if os.path.isfile(filetowrite):
+		VPparfile = open(filetowrite, 'wb')
+		bigparfile = open(bigfiletowrite, 'ab')
+	else:
+		VPparfile = open(filetowrite, 'wb')
+		bigparfile = open(bigfiletowrite, 'wb')
+	header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
+	VPparfile.write(header)
+	bigparfile.write(header)
+	for i in range(len(fitpars[0])):
+		zline = fitpars[3][i]
+		vlim1 = fitpars[5][i]
+		vlim2 = fitpars[6][i]
+		restwave = fitpars[0][i]
+		wobs1 = restwave * (1 + zline + vlim1 / 299792.458)
+		wobs2 = restwave * (1 + zline + vlim2 / 299792.458)
+		pix1 = jbg.closest(cfg.wave, wobs1)
+		pix2 = jbg.closest(cfg.wave, wobs2)
+		trans = atomicdata.lam2ion(fitpars[0][i])
+		towrite = jbg.pipedelimrow(
+			[cfg.filename, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+			 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
+			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, trans])
+		VPparfile.write(towrite)
+		bigparfile.write(towrite)
+	VPparfile.close()
+	bigparfile.close()
+	print 'Line parameters written to:'
+	print filetowrite
+
+
+def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
+	from astropy.table import Table
+	model = voigtfunc(wave, fitpars)
+	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
+	modeltab.write(outfile, format='fits', overwrite=True)
+	print 'Voigt profile model written to:'
+	print outfile

@@ -302,7 +302,7 @@ class Main(QMainWindow, Ui_MainWindow):
         cfg.filename=self.specfilename
 
         if not parfilename==None:
-            self.linelist = self.initialpars(parfilename)
+            self.initialpars(parfilename)
 
 
         ### Connect signals to slots
@@ -350,35 +350,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def initialpars(self,parfilename):
         ### Deal with initial parameters from line input file
-        self.linelist = ascii.read(parfilename)
-        linerestwave=self.linelist['restwave'].data
-        linez=self.linelist['zsys'].data
-        lineobswave=linerestwave*(1.+linez)
-        if self.wave1==None:
-            lineshere=np.where((lineobswave>self.wave[0])&(lineobswave<self.wave[-1]))[0]
-        else:
-            lineshere=np.where((lineobswave>self.wave1)&(lineobswave<self.wave2))[0]
-        zs=self.linelist['zsys'][lineshere]
-        restwaves=linerestwave[lineshere]
-        linecol=self.linelist['col'][lineshere]
-        lineb=self.linelist['bval'][lineshere]
-        linevel=self.linelist['vel'][lineshere]
-        linevlim1=self.linelist['vlim1'][lineshere] ; linevlim2=self.linelist['vlim2'][lineshere]
-        colflag=self.linelist['nflag'][lineshere];bflag=self.linelist['bflag'][lineshere];velflag=self.linelist['vflag'][lineshere]
-        allpars=np.core.records.fromarrays([restwaves,linecol,lineb,zs,linevel,atomicdata.lam2ion(restwaves),linevlim1,linevlim2,colflag,bflag,velflag],names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
-        allpars.sort(order=['ion','z','vel','lamrest'])
-        linerestwave=allpars['lamrest']
-        zs=allpars['z']
-        linecol=allpars['col']
-        lineb=allpars['b']
-        linevel=allpars['vel']
-        linevlim1=allpars['vlim1'] ; linevlim2=allpars['vlim2']
-        colflag=allpars['colflag'] ; bflag=allpars['bflag'] ; velflag=allpars['velflag']
-        restwaves=linerestwave
-        initinfo=[colflag,bflag,velflag]
-        initpars=[restwaves,linecol,lineb,zs,linevel,linevlim1,linevlim2]
-        self.fitpars,self.parinfo=joebvpfit.initlinepars(zs,restwaves,initpars,initinfo=initinfo)
-        self.fiterrors=np.ones([5,len(self.fitpars[0])])*-99 #Initialize errors to junk
+        self.fitpars,self.fiterrors,self.parinfo = joebvpfit.readpars(parfilename)
         cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
         cfg.wavegroups=[]
         self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
@@ -458,13 +430,15 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            self.datamodel.writelinepars(fname,self.specfilename)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, fname)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
         fname = str(fname)
         if fname != '':
-            self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+            #TODO: ensure the move to joebvpfit works correctly and remove datamodel method
+            #self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+            joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()
@@ -575,6 +549,81 @@ def go(specfilename,parfilename):
     app.exec_()
     #sys.exit(app.exec_())
     #app.quit()
+
+def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
+    '''
+    Takes a number of input files and fits the lines in them.  The fitting algorithm will
+    be run until convergence for each input file.
+
+    Parameters
+    ----------
+    spec : string or XSpectrum1D
+        The spectrum to be fitted with the input lines
+
+    filelist : list of strings or str
+        This should be a list containing the names of VP input files or a string referring to a file simply
+        listing the input files.
+        See joebvpfit.readpars for details of file format
+
+    maxiter : int
+        Maximum number of times to run the fit while striving for convergence
+
+    itertol : float
+        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
+        any difference in the measurements exceeds itertol.
+
+    '''
+    if isinstance(spec,str):
+        spectofit = readspec(spec)
+    else:
+        spectofit = spec
+
+    if isinstance(filelist, str):
+        lstarr=np.genfromtxt(filelist,dtype=None)
+        listofiles=lstarr.tolist()
+    else:
+        listofiles=filelist
+
+    wave=spectofit.wavelength.value
+    normflux=spectofit.flux.value/spectofit.co.value
+    normsig=spectofit.sig.value/spectofit.co.value
+    cfg.wave=wave
+
+    for i,ff in enumerate(listofiles):
+        i+=1
+        okay=1
+
+        fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
+        cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # Set pixels for fit
+        cfg.wavegroups = []
+
+        oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
+        ctr=0
+        while((np.max(np.abs(fitpars-oldfitpars))>itertol)&(ctr<maxiter)):
+            ctr+=1
+
+            try:
+                oldfitpars=fitpars
+                fitpars, fiterrors = joebvpfit.joebvpfit(wave, normflux, normsig,
+                                                          fitpars, parinfo)
+                fitpars=np.array(fitpars)
+                print 'Iteration',ctr,'-',ff
+
+            except:
+                print 'Fitting error:',ff
+                okay=0
+                break
+        if okay != 0:
+            print 'Fit converged:',ff
+            paroutfilename=ff[:-6] + 'VP'
+            modeloutfilename = ff[:-7] + '_VPmodel.fits'
+            joebvpfit.writelinepars(fitpars,fiterrors,parinfo,paroutfilename)
+            joebvpfit.writeVPmodel(modeloutfilename,wave,fitpars,normflux,normsig)
+
+
+
+
+
 
 if __name__ == '__main__':
         import sys
