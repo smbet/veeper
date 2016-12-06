@@ -430,9 +430,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            # TODO: ensure the move to joebvpfit works correctly and remove datamodel method
             joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, fname)
-            #self.datamodel.writelinepars(fname, self.specfilename)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
@@ -552,7 +550,7 @@ def go(specfilename,parfilename):
     #sys.exit(app.exec_())
     #app.quit()
 
-def batch_fit(spec,filelist):
+def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
     '''
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file.
@@ -562,9 +560,17 @@ def batch_fit(spec,filelist):
     spec : string or XSpectrum1D
         The spectrum to be fitted with the input lines
 
-    filelist : list of strings
-        This list should contain the names of VP input files.
+    filelist : list of strings or str
+        This should be a list containing the names of VP input files or a string referring to a file simply
+        listing the input files.
         See joebvpfit.readpars for details of file format
+
+    maxiter : int
+        Maximum number of times to run the fit while striving for convergence
+
+    itertol : float
+        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
+        any difference in the measurements exceeds itertol.
 
     '''
     if isinstance(spec,str):
@@ -572,12 +578,18 @@ def batch_fit(spec,filelist):
     else:
         spectofit = spec
 
+    if isinstance(filelist, str):
+        lstarr=np.genfromtxt(filelist,dtype=None)
+        listofiles=lstarr.tolist()
+    else:
+        listofiles=filelist
+
     wave=spectofit.wavelength.value
     normflux=spectofit.flux.value/spectofit.co.value
     normsig=spectofit.sig.value/spectofit.co.value
     cfg.wave=wave
 
-    for i,ff in enumerate(filelist):
+    for i,ff in enumerate(listofiles):
         i+=1
         okay=1
 
@@ -587,7 +599,7 @@ def batch_fit(spec,filelist):
 
         oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
         ctr=0
-        while(np.max(np.abs(fitpars-oldfitpars))>0.0001):
+        while((np.max(np.abs(fitpars-oldfitpars))>itertol)&(ctr<maxiter)):
             ctr+=1
 
             try:
