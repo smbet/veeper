@@ -94,9 +94,6 @@ def get_lsfs():
 		else:
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-			#if lsfobjs[lsfmatch].instr_config['grating']=='G225M':
-			#	cfg.lsfs.append(G225lsf)
-			#else:
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
 			cfg.lsfs.append(lsf['kernel'])
 	'''
@@ -140,8 +137,35 @@ def convolvecos(wave,profile,lines,zs):
 		else:
 			cfg.fgs=[np.arange(cfg.fitidx[0],cfg.fitidx[dividers[0]])] #1st group
 			for i, idx in enumerate(dividers[:-1]):
-				cfg.fgs.append(np.arange(cfg.fitidx[idx+1],cfg.fitidx[dividers[i+1]])) # 'i+2' b/c 1st group handled separately
-			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]))  #last group
+				cfg.fgs.append(np.arange(cfg.fitidx[idx+1],cfg.fitidx[dividers[i+1]])) # 'i+1' b/c 1st group handled separately
+			cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1]+1],cfg.fitidx[-1]+1))  #last group
+			newfgs=[]
+			### Deal with wavegroups that may have huge jumps in wavelength between pixels
+			for i,fg in enumerate(cfg.fgs):
+
+				diffs=cfg.wave[fg[1:]]-cfg.wave[fg[:-1]]
+				outlier=np.where(diffs>(30.*np.median(diffs)))[0]
+
+				if len(outlier)>0:
+					if len(outlier)==1:
+						cfg.fgs[i]=np.arange(fg[0],fg[outlier+1])
+						newfgs.append(np.arange(fg[outlier]+1,fg[-1]))
+						if len(newfgs[-1])<15:
+							nummorepix=15-len(newfgs)
+							newfgs[-1]=np.concatenate([newfgs[-1],np.arange(fg[-1],fg[-1]+nummorepix+1)])  #add 1 to 2nd arg to make sure this val is included
+					else:
+						cfg.fgs[i]=np.arange(fg[0],fg[outlier[0]])
+						for j,out in enumerate(outlier):
+							if out==outlier[-1]:
+								newfgs.append(np.arange(fg[out]+1,fg[-1]+1)) #add 1 to 2nd arg to make sure this val is included
+							else:
+								newfgs.append(np.arange(fg[out]+1,fg[outlier[j+1]]+1))   #add 1 to 2nd arg to make sure this val is included
+							if len(newfgs[-1])<15:
+								nummorepix=15-len(newfgs)
+								newfgs[-1]=np.concatenate([newfgs[-1],np.arange(fg[-1],fg[-1]+nummorepix+1)]) #add 1 to 2nd arg to make sure this val is included
+
+			for fg in newfgs:
+				cfg.fgs.append(fg)
 		get_lsfs()
 	convprof=profile
 	'''

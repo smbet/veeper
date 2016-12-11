@@ -89,6 +89,9 @@
         <height>16777215</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Repeat fitting until parameters converge</string>
+      </property>
       <widget class="QLabel" name="label">
        <property name="geometry">
         <rect>
@@ -199,8 +202,8 @@
       <widget class="QPushButton" name="writeParsButton">
        <property name="geometry">
         <rect>
-         <x>270</x>
-         <y>480</y>
+         <x>265</x>
+         <y>491</y>
          <width>171</width>
          <height>41</height>
         </rect>
@@ -235,8 +238,8 @@
       <widget class="QPushButton" name="writeModelButton">
        <property name="geometry">
         <rect>
-         <x>330</x>
-         <y>520</y>
+         <x>326</x>
+         <y>523</y>
          <width>111</width>
          <height>32</height>
         </rect>
@@ -248,6 +251,22 @@
         <bool>false</bool>
        </property>
        <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="fitConvBox">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>473</y>
+         <width>151</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Fit to convergence</string>
+       </property>
+       <property name="checked">
         <bool>false</bool>
        </property>
       </widget>

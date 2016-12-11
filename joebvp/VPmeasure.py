@@ -289,6 +289,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.labeltog = 1
         self.pixtog = 0
         self.restog = 1
+        self.fitconvtog = 0
         self.lastclick=1334.
 
         ### Read in spectrum and list of lines to fit
@@ -307,6 +308,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         ### Connect signals to slots
         self.fitButton.clicked.connect(self.fitlines)
+        self.fitConvBox.clicked.connect(self.togfitconv)
         self.boxLineLabel.clicked.connect(self.toglabels)
         self.boxFitpix.clicked.connect(self.togfitpix)
         self.boxResiduals.clicked.connect(self.togresiduals)
@@ -392,11 +394,21 @@ class Main(QMainWindow, Ui_MainWindow):
         print 'Fitting line profile(s)...'
         #self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
         print len(self.fitpars[0]),len(self.fiterrors[0])
-        self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
+        if self.fitconvtog:
+            self.fitpars, self.fiterrors = joebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
+                                                               self.datamodel.fitpars, self.datamodel.parinfo)
+        else:
+            self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
         self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
         self.tableView.resizeColumnsToContents()
         self.updateplot()
         self.sideplot(self.lastclick)
+
+    def togfitconv(self):
+        if self.fitconvtog==1: self.fitconvtog=0
+        else: self.fitconvtog=1
+
+
 
 
     def toglabels(self):
@@ -550,7 +562,7 @@ def go(specfilename,parfilename):
     #sys.exit(app.exec_())
     #app.quit()
 
-def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
+def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     '''
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file.
@@ -565,12 +577,8 @@ def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
         listing the input files.
         See joebvpfit.readpars for details of file format
 
-    maxiter : int
-        Maximum number of times to run the fit while striving for convergence
-
-    itertol : float
-        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
-        any difference in the measurements exceeds itertol.
+    **kwargs : maxiter, itertol
+        These are fed on to the joebvp.fit_to_convergence() function
 
     '''
     if isinstance(spec,str):
@@ -594,9 +602,8 @@ def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
         okay=1
 
         fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
-        cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # Set pixels for fit
         cfg.wavegroups = []
-
+        '''
         oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
         ctr=0
         while((np.max(np.abs(fitpars-oldfitpars))>itertol)&(ctr<maxiter)):
@@ -613,12 +620,18 @@ def batch_fit(spec,filelist,maxiter=50,itertol=0.0001):
                 print 'Fitting error:',ff
                 okay=0
                 break
-        if okay != 0:
-            print 'Fit converged:',ff
-            paroutfilename=ff[:-6] + 'VP'
+            '''
+        try:
+            fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
+            print 'Fit converged:', ff
+            paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
-            joebvpfit.writelinepars(fitpars,fiterrors,parinfo,paroutfilename)
-            joebvpfit.writeVPmodel(modeloutfilename,wave,fitpars,normflux,normsig)
+            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, paroutfilename)
+            joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
+        except:
+            print 'Fitting failed:',ff
+
+
 
 
 

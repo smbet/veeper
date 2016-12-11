@@ -149,15 +149,19 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	parinfo=prepparinfo(partofit,flags)
 	# Save the velocity windows to add back to the parameter array
 	vlim1=linepars[5] ; vlim2=linepars[6]
+	# Set fit regions
+	cfg.fitidx=fitpix(wave,linepars)
+	# Prep parameters for fitter
 	partofit=unfoldpars(partofit)
 	modelvars={'x':wave,'y':flux,'err':sig}
+	# Do the fit and translate the parameters back into the received format
 	m=nmpfit.mpfit(voigterrfunc,partofit,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=1e-10,xtol=xtol,gtol=gtol)
 	if m.status <= 0: print 'Fitting error:',m.errmsg
 	fitpars=foldpars(m.params)
+	fiterrors = foldpars(m.perror)
 	# Add velocity windows back to parameter array
 	fitpars.append(vlim1) ; fitpars.append(vlim2)
-	#import pdb; pdb.set_trace()
-	fiterrors=foldpars(m.perror)
+
 
 	print '\nFit results: \n'
 	for i in range(len(fitpars[0])):
@@ -524,3 +528,51 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	modeltab.write(outfile, format='fits', overwrite=True)
 	print 'Voigt profile model written to:'
 	print outfile
+
+def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001):
+	'''
+
+	Parameters
+	----------
+	wave
+	flux
+	sig
+	linepars
+	parinfo
+
+    maxiter : int
+        Maximum number of times to run the fit while striving for convergence
+
+    itertol : float
+        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
+        any difference in the measurements exceeds itertol.
+
+
+	Returns
+	-------
+
+	'''
+	fitpars = linepars
+	oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
+	ctr = 0
+	okay = 1
+	while ((np.max(np.abs(fitpars - oldfitpars)) > itertol) & (ctr < maxiter)):
+		ctr += 1
+
+		try:
+			oldfitpars = fitpars
+			fitpars, fiterrors = joebvpfit(wave, flux, sig,
+												 fitpars, parinfo)
+			fitpars = np.array(fitpars)
+			print 'Iteration', ctr, '-'
+
+		except:
+			print 'Fitting error!'
+			okay = 0
+			break
+
+		if okay != 0:
+			print 'Fit converged after',ctr,'iterations.'
+			return fitpars, fiterrors
+		else:
+			return linepars,fiterrors
