@@ -621,11 +621,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
                 okay=0
                 break
             '''
-        maxb=np.max(fitpars[2][:])
-        minb=np.min(fitpars[2][:])
 
-        if maxb>cfg.upperblim: cfg.upperblim=maxb + 10.
-        if minb<cfg.lowblim: cfg.lowblim=minb - 2.
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
             print 'Fit converged:', ff

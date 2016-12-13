@@ -234,6 +234,13 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 				initpars[5].extend([initvals[5][i]])
 				initpars[6].extend([initvals[6][i]])
 
+	### If hard limits on Doppler b-value are smaller or greater than cfg.lowblim or cfg.upperblim,
+	### modify those limits
+	maxb=np.max(initpars[2][:])
+	minb=np.min(initpars[2][:])
+	if maxb>cfg.upperblim: cfg.upperblim=maxb + 10.
+	if minb<cfg.lowblim: cfg.lowblim=minb - 2.
+
 	parinfo=np.zeros([5,len(restwaves)],dtype=int)
 	parinfo[0]=parinfo[0]+1
 	parinfo[3]=parinfo[3]+1
@@ -335,6 +342,7 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 								parinfo[4][clidx]=flagctr
 								complistsort[j].remove(clidx)
 							flagctr+=1
+
 	return initpars,parinfo
 
 def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
