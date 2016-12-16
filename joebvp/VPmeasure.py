@@ -603,25 +603,6 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
 
         fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
         cfg.wavegroups = []
-        '''
-        oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
-        ctr=0
-        while((np.max(np.abs(fitpars-oldfitpars))>itertol)&(ctr<maxiter)):
-            ctr+=1
-
-            try:
-                oldfitpars=fitpars
-                fitpars, fiterrors = joebvpfit.joebvpfit(wave, normflux, normsig,
-                                                          fitpars, parinfo)
-                fitpars=np.array(fitpars)
-                print 'Iteration',ctr,'-',ff
-
-            except:
-                print 'Fitting error:',ff
-                okay=0
-                break
-            '''
-
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
             print 'Fit converged:', ff

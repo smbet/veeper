@@ -118,11 +118,9 @@ def prepparinfo(linepars,parflags):
 		lydiff=abs(linepars[0][i]-cfg.lyseries)
 		lymatch = np.where(abs(lydiff)<=0.05)[0]
 		if lymatch:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10],150.)]
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,150.])]
 		else:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10],cfg.upperblim)]
-		#else: parinfo[numpars*i+2]['limits']=[1.,150.]
-	#parinfo[numpars*i+2]['maxstep']=5.
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,cfg.upperblim])]
 		parinfo[numpars*i+2]['step']=0.5
 		parinfo[numpars*i+2]['mpside']=2
 		#parinfo[numpars*i+2]['relstep']=0.0001
@@ -238,7 +236,8 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	### modify those limits
 	maxb=np.max(initpars[2][:])
 	minb=np.min(initpars[2][:])
-	if maxb>cfg.upperblim: cfg.upperblim=maxb + 10.
+	if maxb>cfg.upperblim:
+		cfg.upperblim=maxb + 10.
 	if minb<cfg.lowblim: cfg.lowblim=minb - 2.
 
 	parinfo=np.zeros([5,len(restwaves)],dtype=int)
@@ -567,17 +566,20 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 	while ((np.max(np.abs(fitpars - oldfitpars)) > itertol) & (ctr < maxiter)):
 		ctr += 1
 
-		try:
-			oldfitpars = fitpars
-			fitpars, fiterrors = joebvpfit(wave, flux, sig,
-												 fitpars, parinfo)
-			fitpars = np.array(fitpars)
-			print 'Iteration', ctr, '-'
+		#try:
+		oldfitpars = fitpars
+		fitpars, fiterrors = joebvpfit(wave, flux, sig,
+											 fitpars, parinfo)
+		fitpars = np.array(fitpars)
+		print 'Iteration', ctr, '-'
 
-		except:
-			print 'Fitting error!'
-			okay = 0
-			break
+		#except:
+		#	print 'Fitting error!'
+		#	print "Unexpected error:", sys.exc_info()[0]
+		#	raise
+
+			#okay = 0
+			#break
 
 		if okay != 0:
 			print 'Fit converged after',ctr,'iterations.'
