@@ -32,23 +32,15 @@ def compose_model(spec,filelist,outfile):
     else:
         specobj = spec
 
-    if isinstance(filelist, str):
-        lstarr=np.genfromtxt(filelist,dtype=None)
-        listofiles=lstarr.tolist()
-    else:
-        listofiles=filelist
-
     ### Load essentials from spectrum
     wave = specobj.wavelength.value
     normsig=specobj.sig.value/specobj.co.value
     cfg.wave = wave
 
-    ### Loop through and concatenate all the parameter arrays
-    tabs=[]
-    for i, ff in enumerate(listofiles):
-        tabs.append(ascii.read(ff))
-    bigpartable=vstack(tabs)
-    ascii.write(bigpartable,output='compiledVPinputs.dat',delimiter='|')  # write out compiled table
+    ### Concatenate all the parameter tables
+    concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat')
+
+    ### Make the model!
     fitpars, fiterrors, parinfo = joebvpfit.readpars('compiledVPinputs.dat')  # read this back in to load params
     cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # set the pixels in the line regions
     model = joebvpfit.voigtfunc(wave,fitpars)  # generate the Voigt profiles of all lines
@@ -57,3 +49,30 @@ def compose_model(spec,filelist,outfile):
     outspec=XSpectrum1D.from_tuple((wave,model,normsig))
     outspec.write_to_fits(outfile)
 
+def concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat'):
+    '''
+    Compiles the output from several fitting runs into a single table
+
+    Parameters
+    ----------
+    filelist : list of strings or str
+        This should be a list containing the names of VP input files or a string referring to a file simply
+        listing the input files.
+        See joebvpfit.readpars for details of file format
+
+    outtablefile : str
+        Name of compiled model parameter output file
+
+    '''
+
+    if isinstance(filelist, str):
+        lstarr=np.genfromtxt(filelist,dtype=None)
+        listofiles=lstarr.tolist()
+    else:
+        listofiles=filelist
+
+    tabs = []
+    for i, ff in enumerate(listofiles):
+        tabs.append(ascii.read(ff))
+    bigpartable = vstack(tabs)
+    ascii.write(bigpartable, output=outtablefile, delimiter='|')  # write out compiled table
