@@ -566,23 +566,24 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 	while ((np.max(np.abs(fitpars - oldfitpars)) > itertol) & (ctr < maxiter)):
 		ctr += 1
 
-		#try:
-		oldfitpars = fitpars
-		fitpars, fiterrors = joebvpfit(wave, flux, sig,
+		try:
+			oldfitpars = fitpars
+			fitpars, fiterrors = joebvpfit(wave, flux, sig,
 											 fitpars, parinfo)
-		fitpars = np.array(fitpars)
-		print 'Iteration', ctr, '-'
+			fitpars = np.array(fitpars)
+			print 'Iteration', ctr, '-'
 
-		#except:
-		#	print 'Fitting error!'
-		#	print "Unexpected error:", sys.exc_info()[0]
-		#	raise
+		except:
+			print 'Fitting error!'
+			print "Unexpected error:", sys.exc_info()[0]
+			okay = 0
+			raise
 
-			#okay = 0
+
 			#break
 
-		if okay != 0:
-			print 'Fit converged after',ctr,'iterations.'
-			return fitpars, fiterrors
-		else:
-			return linepars,fiterrors
+	if okay != 0:
+		print 'Fit converged after',ctr,'iterations.'
+		return fitpars, fiterrors
+	else:
+		return linepars,fiterrors

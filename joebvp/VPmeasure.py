@@ -589,6 +589,8 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     if isinstance(filelist, str):
         lstarr=np.genfromtxt(filelist,dtype=None)
         listofiles=lstarr.tolist()
+        if isinstance(listofiles,str):  # In case 'listofiles' is only 1 file
+            listofiles=[listofiles]
     else:
         listofiles=filelist
 
@@ -599,8 +601,6 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
 
     for i,ff in enumerate(listofiles):
         i+=1
-        okay=1
-
         fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
         cfg.wavegroups = []
         try:
