@@ -613,13 +613,6 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
         except:
             print 'Fitting failed:',ff
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
         import sys
         specfilename=str(sys.argv[1])

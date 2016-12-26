@@ -156,7 +156,7 @@ def get_errors(partable,idx2check):
             colerr=row['sigcol'] # No rows tied to this one; accept value from table read in
     else:
         colerr=row['sigcol'] # This row has nonzero errors; accept value from table read in
-        
+
     if row['sigbval']==0:
         simulfit=np.where((partable['bflag']==row['bflag'])&(partable['zsys']!=row['zsys']))[0]
         if len(simulfit)>0:
@@ -185,7 +185,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
     
-#def inspect_fits(parfile):
+def inspect_fits(parfile):
     '''
     Produce pdf of fitting results  for quality check.
 
@@ -198,7 +198,12 @@ def get_errors(partable,idx2check):
     -------
 
     '''
+    all=abslines_from_VPfile(parfile)
 
+    ### Populate array with redshifts
+    zarr=np.zeros_like(all)
+    for i,absline in enumerate(all):
+        zarr[i]=absline.z
 
 
 
