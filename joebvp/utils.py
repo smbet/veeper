@@ -116,6 +116,14 @@ def abslines_from_VPfile(parfile,ra=None,dec=None):
         line.attrib['sig_N'] = colerr
         line.attrib['b'] = row['bval']
         line.attrib['sig_b'] = berr
+        ### Attach the spectrum to this AbsLine but check first to see if this one is same as previous
+        if i==0:
+            spec=readspec(row['specfile'])
+        elif row['specfile']!=linetab['specfile'][i-1]:
+            spec=readspec(row['specfile'])
+        else:
+            pass
+        line.analy['spec']=spec
         ### Add it to the list and go on
         abslinelist.append(line)
     return abslinelist
@@ -186,37 +194,36 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
     
-def inspect_fits(parfile):
+def inspect_fits(parfile,output='FitInspection.pdf'):
     '''
-    Produce pdf of fitting results  for quality check.
+    Produce pdf of fitting results for quality check.
 
     Parameters
     ----------
     parfile : str
         Name of the parameter file in the joebvp format
 
+    output : str
+        Name of file to write stackplots output
+
     Returns
     -------
 
     '''
 
+    from matplotlib.backends.backend_pdf import PdfPages
+    pp=PdfPages(output)
+
     all=abslines_from_VPfile(parfile) # Instantiate AbsLine objects and make list
-    acl=abscomponents_from_abslines(all)  # Instantiate AbsComponent objects from this list
+    acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
+
+    ### Make a stackplot for each component
     for comp in acl:
-
-
-    ### Populate array with redshifts
-    zarr=np.zeros_like(all)
-    varr=np.zeros_like(all)
-    sparr=np.chararray(len(all),itemsize=6)
-    for i,absline in enumerate(all):
-        zarr[i]=absline.z
-        varr[i]=np.mean(absline.limits.vlim.value)
-        sparr[i]=atomicdata.lam2ion(absline.wrest.value)
-
-    uqzs=np.unique(zarr)
-    uqzidx=np.where(zarr)
-    return zarr,varr,sparr
+        fig=comp.stack_plot(show=False,return_fig=True, tight_layout=True)
+        title=comp.name
+        fig.suptitle(title)
+        fig.savefig(pp,format='pdf')
+    pp.close()
 
 def abscomponents_from_abslines(abslinelist, **kwargs):
     '''
