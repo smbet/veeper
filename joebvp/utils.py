@@ -1,6 +1,7 @@
 import numpy as np
 import joebvpfit
 import makevoigt
+import atomicdata
 from linetools.spectra.io import readspec
 from linetools.spectra.xspectrum1d import XSpectrum1D
 from astropy.table import Table,vstack
@@ -198,12 +199,79 @@ def inspect_fits(parfile):
     -------
 
     '''
-    all=abslines_from_VPfile(parfile)
+
+    all=abslines_from_VPfile(parfile) # Instantiate AbsLine objects and make list
+    acl=abscomponents_from_abslines(all)  # Instantiate AbsComponent objects from this list
+    for comp in acl:
+
 
     ### Populate array with redshifts
     zarr=np.zeros_like(all)
+    varr=np.zeros_like(all)
+    sparr=np.chararray(len(all),itemsize=6)
     for i,absline in enumerate(all):
         zarr[i]=absline.z
+        varr[i]=np.mean(absline.limits.vlim.value)
+        sparr[i]=atomicdata.lam2ion(absline.wrest.value)
 
+    uqzs=np.unique(zarr)
+    uqzidx=np.where(zarr)
+    return zarr,varr,sparr
+
+def abscomponents_from_abslines(abslinelist, **kwargs):
+    '''
+    Organizes list of AbsLines into components based on the following order: redshift, velocity, and species
+
+    Parameters
+    ----------
+    abslinelist : list
+        List of AbsLine objects
+
+    Returns
+    -------
+    complist : list
+        List AbsComponent objects
+    '''
+    ### Import machine learning clustering algorithm for velocity grouping
+    from sklearn.cluster import MeanShift, estimate_bandwidth
+    from linetools.isgm.abscomponent import AbsComponent
+
+    ### Populate arrays with line redshifts, velocity centroids, and name of species
+    zarr=np.zeros(len(abslinelist))
+    varr=np.zeros(len(abslinelist))
+    sparr=np.chararray(len(abslinelist),itemsize=6)
+    for i,absline in enumerate(abslinelist):
+        zarr[i]=absline.z
+        varr[i]=np.mean(absline.limits.vlim.value)
+        sparr[i]=atomicdata.lam2ion(absline.wrest.value)
+
+    abslinelist=np.array(abslinelist) # Convert to array for the indexing used below
+
+    ### Group lines with the same redshifts and similar velocities
+    complines=[]
+    uqzs=np.unique(zarr)
+    for uqz in uqzs:
+        ### Identify velocity groups
+        thesez = np.where(zarr==uqz)[0]
+        X = np.array(zip(varr[thesez],np.zeros(len(varr[thesez]))), dtype=float)
+        ms = MeanShift(bandwidth=7.)
+        ms.fit(X)
+        vidxs = ms.labels_
+        vs = ms.cluster_centers_
+        uqvidxs=np.unique(vidxs)
+        ### Make lists of lines that will belong to each component
+        for idx in uqvidxs:
+            theseuqvs=thesez[np.where(vidxs==idx)[0]] # isolate velocity-grouped lines with this redshift
+            uqsp=np.unique(sparr[theseuqvs]) # identify the unique species with lines in this group
+            ### Get lines belonging to each species and add them to become components
+            for sp in uqsp:
+                spidx=theseuqvs[np.where(sparr[theseuqvs]==sp)]
+                complines.append(abslinelist[spidx])
+    ### Instantiate the AbsComponents
+    comps=[]
+    for lst in complines:
+        thiscomp=AbsComponent.from_abslines(lst.tolist(), **kwargs)
+        comps.append(thiscomp)
+    return comps
 
 
