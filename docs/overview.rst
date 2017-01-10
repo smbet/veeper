@@ -32,7 +32,7 @@ Using joebvp
 ============
 
 As stated above, `joebvp` may be used for Voigt profile fitting using either a
-GUI or a noninteractive batch mode.  Both modes of operation require a
+GUI or a non-interactive batch mode.  Both modes of operation require a
 continuum-fitted spectrum file as output by the `fit_continuum()` method of
 `linetools.spectra` objects and a line parameter input file, which is
 described below.  Also, both are accessed via the `VPmeasure` module, with each
@@ -47,7 +47,7 @@ Then to access the GUI mode::
 
     >VPmeasure.go(specfile, paramfile)
 
-where both `specfile` and `paramfile` should be enclosed in quotes.
+where both `specfile` and `paramfile` should be strings.
 
 Batch mode::
 
@@ -64,7 +64,7 @@ The starting parameter values for the lines to fit are defined in an input file
 that is read in using the `astropy.io.ascii.read()` function.  The columns are
 shown below as pipe-delimited, but the file need not be as long as the format
 is readable by `astropy.io.ascii.read()`.  Each row in the table should define
-one line.
+one line, corresponding to a single atomic transition.
 
 The columns of the `paramfile`::
 
@@ -76,10 +76,10 @@ Column definitions:
         Name of the spectrum file used for this fit
 
     restwave
-        Restframe wavelength of the transition
+        Restframe wavelength of the transition in angstroms
 
     zsys
-        Redshift of the absorption line system that includes this line
+        Redshift of the absorption system that includes this line transition
 
     col
         Initial guess for the column density
@@ -88,7 +88,7 @@ Column definitions:
         Initial guess for the Doppler b parameter
 
     vel
-        Initial guess for the velocity centroid of the line
+        Initial guess for the velocity centroid of the line with respect to zsys
 
     nflag, bflag, vflag
         Indicators to set behavior during fit for the column density, Doppler b,
@@ -106,16 +106,16 @@ Column definitions:
         lines.
 
     vlim1, vlim2
-        Lower and upper extents of the velocity range containing this line.
-        These values will determine the range of pixels used to fit this
+        Lower and upper extents of the velocity range containing this line w/r
+        to sys. These values will determine the range of pixels used to fit this
         line.  The fitter will minimize chi-squared evaluated for the union
         of pixel ranges set for all lines in the parameter input file.
 
     wobs1, wobs2
-        Mininum and maximum wavelengths containing absorption from this line
+        Mininum and maximum observed wavelengths containing absorption from this line
 
     pix1, pix2
         First and last pixel in `specfile` showing absorption from this line
 
     trans
-        Name of the transition, such as 'H I', 'Si II' or 'C IV'
+        Name of the transition, such as 'H I', 'Si II', 'C IV', etc.
