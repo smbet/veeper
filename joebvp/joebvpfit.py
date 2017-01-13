@@ -3,7 +3,8 @@
 
 import numpy as np
 import joebgoodies as jbg
-from stsci.tools import nmpfit
+# from stsci.tools import nmpfit
+from joebvp import nmpfit
 import makevoigt
 import cfg
 import atomicdata
