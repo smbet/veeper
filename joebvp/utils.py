@@ -50,7 +50,7 @@ def compose_model(spec,filelist,outfile):
     outspec=XSpectrum1D.from_tuple((wave,model,normsig))
     outspec.write_to_fits(outfile)
 
-def concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat'):
+def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
     '''
     Compiles the output from several fitting runs into a single table
 
