@@ -263,7 +263,4 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs
     sigEWc_tot = np.sum(sigEWc)
     sigNc_tot = np.sum(sigNc)
 
-
-    import pdb
-    pdb.set_trace()
     return EW,sigEWf_tot,sigEWc_tot,N,sigNf_tot,sigNc_tot
