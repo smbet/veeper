@@ -12,6 +12,7 @@ import numpy as np
 from scipy.signal import convolve
 from scipy.special import wofz
 import scipy.stats
+import joebvp.atomicdata as atomicdata
 from astropy import constants as const
 import sys,os
 import cfg
@@ -64,7 +65,7 @@ def cosvoigt_cont(vwave,cont,vpars):
 def voigt(waves,line,coldens,bval,z,vels):
 	tautot=np.zeros(len(waves))
 	if len(cfg.lams)==0:
-		lam,fosc,gam=setatomicdata(restwaves)
+		lam,fosc,gam=atomicdata.setatomicdata(line)
 		cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	for i in range(len(coldens)):
 		#thatfactor=(1.+z[i])*(1.+vels[i]/c)

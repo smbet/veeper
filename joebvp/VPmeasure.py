@@ -251,7 +251,7 @@ class newLineDialog(QDialog):
             restlam=self.lamBox.text()
             restlam=float(restlam)
             try:
-                lam,fosc,gam=joebvpfit.setatomicdata([restlam],precise=False)
+                lam,fosc,gam=atomicdata.setatomicdata([restlam],precise=False)
                 self.lamBox.setText(str(lam[0]))
                 self.ionLabel.setText(atomicdata.lam2ion(lam[0]))
             except:

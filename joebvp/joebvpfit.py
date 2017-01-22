@@ -7,37 +7,13 @@ import joebgoodies as jbg
 from joebvp import nmpfit
 import makevoigt
 import cfg
-import atomicdata
-from linetools.lists import parse as lilp
-from linetools.spectralline import AbsLine
-import astropy.units as u
+import joebvp.atomicdata as atomicdata
 from astropy.io import ascii
 from scipy import random
 import warnings
-
-# A start to using the linetools atomic data framework
-adata=lilp.parse_morton03()
-vdata=lilp.parse_verner96()
-
+import sys
 
 c=299792.458
-
-def setatomicdata(lines,precise=True):
-	lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
-	for i,ll in enumerate(lines):
-		try:
-			al=AbsLine(ll*u.AA,closest=True)
-			lam[i]=al.data['wrest'].value ; fosc[i]=al.data['f'] ; gam[i]=al.data['gamma'].value
-		except:
-			idx=jbg.closest(adata['wrest'],ll)
-			lam[i]=adata['wrest'][idx] ; fosc[i]=adata['f'][idx] ; gam[i]=adata['gamma'][idx]
-		if ((abs(lam[i]-ll)>0.01)&(precise==True)):
-			idx = jbg.closest(vdata['wrest'], ll)
-			try:
-				lam[i] = vdata['wrest'][idx].value; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx].value
-			except:
-				lam[i] = vdata['wrest'][idx]; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx]
-	return lam,fosc,gam
 
 def foldpars(pars,numpars=5):
 	rows=len(pars)/numpars
@@ -197,7 +173,7 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	'''
 
 	### Set atomic data for each line
-	lam,fosc,gam=setatomicdata(restwaves)
+	lam,fosc,gam=atomicdata.setatomicdata(restwaves)
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 
 	initpars=[[],[],[],[],[],[],[]]
