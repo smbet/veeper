@@ -327,12 +327,12 @@ def vel_moment(spec,restlam,zabs,vellim=[-50,50]):
     ### Transform to velocity space
     vel=joebgoodies.veltrans(zabs,wave,restlam)
     velidx=np.where((vel>=vellim[0])&(vel<=vellim[1]))[0]
-    velup = vel[velidx+1]
-    veldown = vel[velidx]
+
 
     ### Calculate moments
-    moment0 = np.sum(Npix)
-    moment1 = np.sum(vel[velidx]*Npix)
+    moment0 = np.sum(np.abs(Npix))
+    moment1 = np.sum(vel[velidx]*np.abs(Npix))
+
 
     ### Mean velocity
     meanv = moment1/moment0
