@@ -297,7 +297,7 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50]):
 
     return EW,sigEWf_tot,sigEWc_tot,N,sigNf_tot,sigNc_tot
 
-def vel_moment(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwargs):
+def vel_moment_fitcont(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwargs):
     ### Fit the continuum in the line-free regions
     wave,cont,conterr=contFitLegendreAboutLine(wave,flux,sig,restlam,zabs,continuumregions)
     EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc = EW_ACD_array(wave,flux,sig,cont,conterr,
@@ -307,7 +307,6 @@ def vel_moment(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwa
     velidx=np.where((vel>=vellim[0])&(vel<=vellim[1]))[0]
     velup = vel[velidx+1]
     veldown = vel[velidx]
-    dv = np.abs(velup-veldown)
 
     ### Calculate moments
     moment0 = np.sum(Npix)
@@ -316,6 +315,31 @@ def vel_moment(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwa
     ### Mean velocity
     meanv = moment1/moment0
     return meanv
+
+def vel_moment(spec,restlam,zabs,vellim=[-50,50]):
+    wave=spec.wavelength.value
+    flux=spec.flux.value
+    sig=spec.sig.value
+    cont=spec.co
+    conterr=np.zeros_like(sig) # Continuum errors will be garbage
+    EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc = EW_ACD_array(wave,flux,sig,cont,conterr,
+                                            restlam,zabs,vellim=vellim)
+    ### Transform to velocity space
+    vel=joebgoodies.veltrans(zabs,wave,restlam)
+    velidx=np.where((vel>=vellim[0])&(vel<=vellim[1]))[0]
+    velup = vel[velidx+1]
+    veldown = vel[velidx]
+
+    ### Calculate moments
+    moment0 = np.sum(Npix)
+    moment1 = np.sum(vel[velidx]*Npix)
+
+    ### Mean velocity
+    meanv = moment1/moment0
+    return meanv
+
+
+
 
 
 
