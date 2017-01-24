@@ -5,7 +5,7 @@ import numpy.polynomial.legendre as L
 import cfg
 from scipy import stats
 
-def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=False):
+def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True):
     '''
     Fits a continuum over a spectral region using the formalism of Sembach
     & Savage 1992, estimating the uncertainty at each point of the continuum.
@@ -205,11 +205,42 @@ def basisMatrixLegendre(x,order):
 
     return legmtx
 
-def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs):
+def EW_ACD_array(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs):
     '''
-    Calculates the equivalent width, apparent column density, and their
-    associated errors a la Sembach & Savage 1992.
+    Returns arrays of equivalent width and apparent column density per pixel as
+    well as their associated uncertainties due to continuum placement and flux errors.
 
+    Parameters
+    ----------
+    wave: 1D float array
+    flux: 1D float array
+    ferr: 1D float array
+        Error in flux
+    cont: 1D float array
+        Continuum fitted to data such as that from contFitLegendreAboutLine()
+    conterr: 1D float array
+        Uncertainty in continuum placement at each pixel
+    restlam: float
+        Rest-frame wavelength of transition to measure
+    zabs: float
+        Redshift of the the absorption system
+    vellim: 2-element list
+        Lower and upper bounds over which to compute arrays
+
+    Returns
+    -------
+    EWpix: 1D float array
+        Equivalent width in each pixel
+    sigEWf: 1D float array
+        EW uncertainty in each pixel due to flux errors
+    sigEWc: 1D float array
+        EW uncertainty in each pixel due to continuum placement errors
+    Npix: 1D float array
+        Apparent column density (N) in each pixel
+    sigNf: 1D float array
+        Uncertainty in N due to flux errors
+    sigNc: 1D float array
+        Uncertainty in N due to continuum placement errors
     '''
 
     ### Set atomic data and constants
@@ -220,25 +251,14 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs
     ### Transform to velocity space
     vel=joebgoodies.veltrans(zabs,wave,restlam)
     velidx=np.where((vel>=vellim[0])&(vel<=vellim[1]))[0]
-    #import pdb
-    #pdb.set_trace()
     velup = vel[velidx+1]
     veldown = vel[velidx]
     dv = np.abs(velup-veldown)
-
-
-    EW=0.
-    N=0.
-    sigsqN=0.
-    sigsqEWf=0.
-    sigEWc=0. # Pixels of the continuum fit are correlated -> not added in quadrature
 
     ### Identify pixels where flux level is below noise level & replace w/noise
     effflux = flux
     belowerr = np.where(flux<ferr)[0]
     effflux[belowerr] = ferr[belowerr]
-    #import pdb
-    #pdb.set_trace()
 
     ### Calculate EW and errors due to flux and continuum placement
     EWpix = dv * (1.-effflux[velidx]/cont[velidx])*restlam/c
@@ -253,6 +273,18 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs
     sigNf = 1./2.654e-15/restlam/osc*dv*tauverr_f
     sigNc=1./2.654e-15/restlam/osc*dv*tauverr_c
 
+    return EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc
+
+def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50]):
+    '''
+    Calculates the equivalent width, apparent column density, and their
+    associated errors a la Sembach & Savage 1992.
+
+    '''
+
+    EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc = EW_ACD_array(wave,flux,ferr,cont,conterr,
+                                            restlam,zabs,vellim=vellim)
+
     ### Totals and errors from each contribution
     EW = np.sum(EWpix)
     N = np.sum(Npix)
@@ -264,3 +296,26 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwargs
     sigNc_tot = np.sum(sigNc)
 
     return EW,sigEWf_tot,sigEWc_tot,N,sigNf_tot,sigNc_tot
+
+def vel_moment(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwargs):
+    ### Fit the continuum in the line-free regions
+    wave,cont,conterr=contFitLegendreAboutLine(wave,flux,sig,restlam,zabs,continuumregions)
+    EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc = EW_ACD_array(wave,flux,sig,cont,conterr,
+                                            restlam,zabs,vellim=vellim)
+    ### Transform to velocity space
+    vel=joebgoodies.veltrans(zabs,wave,restlam)
+    velidx=np.where((vel>=vellim[0])&(vel<=vellim[1]))[0]
+    velup = vel[velidx+1]
+    veldown = vel[velidx]
+    dv = np.abs(velup-veldown)
+
+    ### Calculate moments
+    moment0 = np.sum(Npix)
+    moment1 = np.sum(vel[velidx]*Npix)
+
+    ### Mean velocity
+    meanv = moment1/moment0
+    return meanv
+
+
+

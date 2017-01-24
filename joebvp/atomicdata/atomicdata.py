@@ -42,6 +42,11 @@ def setatomicdata(lines,precise=True):
 				lam[i] = vdata['wrest'][idx]; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx]
 	return lam,fosc,gam
 
+def closestlam(restwave):
+    lam,fosc,gam = setatomicdata(restwave)
+
+    return lam[0]
+
 def lam2ion(restwave):
     if (isinstance(restwave,int))|(isinstance(restwave,float)):
         return vernion[jbg.closest(vernlam,restwave)].strip()
