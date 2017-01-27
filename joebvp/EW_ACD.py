@@ -5,7 +5,7 @@ import numpy.polynomial.legendre as L
 import cfg
 from scipy import stats
 
-def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True):
+def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True,**kwargs):
     '''
     Fits a continuum over a spectral region using the formalism of Sembach
     & Savage 1992, estimating the uncertainty at each point of the continuum.
@@ -34,7 +34,7 @@ def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True)
 
     if uniform != True:
         fitsol,err,parsol,errmtx,scalefac = fitLegendre(vels[fitidxs],flux[fitidxs],
-                                           sig=err[fitidxs])
+                                           sig=err[fitidxs],**kwargs)
     else:
         fitsol,err,parsol,errmtx,scalefac = fitLegendre(vels[fitidxs],flux[fitidxs])
 
@@ -236,7 +236,7 @@ def EW_ACD_array(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwar
     sigEWc: 1D float array
         EW uncertainty in each pixel due to continuum placement errors
     Npix: 1D float array
-        Apparent column density (N) in each pixel
+        Apparent column density * dv (N) in each pixel
     sigNf: 1D float array
         Uncertainty in N due to flux errors
     sigNc: 1D float array
@@ -299,7 +299,7 @@ def EW_SS92err(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50]):
 
 def vel_moment_fitcont(wave,flux,sig,restlam,zabs,continuumregions,vellim=[-50,50],**kwargs):
     ### Fit the continuum in the line-free regions
-    wave,cont,conterr=contFitLegendreAboutLine(wave,flux,sig,restlam,zabs,continuumregions)
+    wave,cont,conterr=contFitLegendreAboutLine(wave,flux,sig,restlam,zabs,continuumregions,**kwargs)
     EWpix,sigEWf,sigEWc,Npix,sigNf,sigNc = EW_ACD_array(wave,flux,sig,cont,conterr,
                                             restlam,zabs,vellim=vellim)
     ### Transform to velocity space
@@ -330,8 +330,8 @@ def vel_moment(spec,restlam,zabs,vellim=[-50,50]):
 
 
     ### Calculate moments
-    moment0 = np.sum(np.abs(Npix))
-    moment1 = np.sum(vel[velidx]*np.abs(Npix))
+    moment0 = np.sum(Npix)
+    moment1 = np.sum(vel[velidx]*Npix)
 
 
     ### Mean velocity
