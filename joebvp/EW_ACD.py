@@ -36,7 +36,7 @@ def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True,
         fitsol,err,parsol,errmtx,scalefac = fitLegendre(vels[fitidxs],flux[fitidxs],
                                            sig=err[fitidxs],**kwargs)
     else:
-        fitsol,err,parsol,errmtx,scalefac = fitLegendre(vels[fitidxs],flux[fitidxs])
+        fitsol,err,parsol,errmtx,scalefac = fitLegendre(vels[fitidxs],flux[fitidxs],**kwargs)
 
     ### Normalize x so that domain of fit is -1 to +1
     vscale = vels/scalefac # must scale to fitted domain
@@ -97,7 +97,7 @@ def fitLegendre(x, y, sig=None, minord=1, maxord=8):
     sumsqdiffs=[]
     dfs=[]
     errmtxs=[]
-
+    print minord
     ### Loop through possible orders between minord and maxord
     for ord in range(minord,maxord+1):
 
