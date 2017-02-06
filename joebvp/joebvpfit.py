@@ -91,11 +91,11 @@ def prepparinfo(linepars,parflags):
 		parinfo[numpars*i+1]['limited']=[1,1]
 		parinfo[numpars*i+1]['limits']=[round(col-5.,2),round(col+5.,2)]
 		parinfo[numpars*i+2]['limited']=[1,1]
-		### adjust b-value limits based on species
+		### adjust b-value limits to allow for broadened HI features
 		lydiff=abs(linepars[0][i]-cfg.lyseries)
 		lymatch = np.where(abs(lydiff)<=0.05)[0]
 		if lymatch:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,150.])]
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,cfg.upperblim_HI])]
 		else:
 			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,cfg.upperblim])]
 		parinfo[numpars*i+2]['step']=0.5
