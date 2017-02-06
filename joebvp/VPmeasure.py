@@ -548,7 +548,7 @@ class Main(QMainWindow, Ui_MainWindow):
         #self.mplvl.removeWidget(self.toolbar)
         #self.toolbar.close()
 
-def go(specfilename,parfilename):
+def go(specfilename, parfilename):
     import sys
     import numpy as np
     from astropy.io import fits as pf
