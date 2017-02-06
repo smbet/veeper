@@ -90,9 +90,10 @@ contoutfile=outputdir+'continua.dat'
 largeVPparfile=outputdir+'_VP_log.dat'
 defaultcol=13.1
 defaultb=20.0
-defaultvlim=200.
+defaultvlim=1000.
 lowblim=4.
 upperblim=85.
+upperblim_HI=210.
 
 # Plotting
 ylim = (-0.2, 1.4)

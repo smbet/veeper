@@ -251,7 +251,7 @@ class newLineDialog(QDialog):
             restlam=self.lamBox.text()
             restlam=float(restlam)
             try:
-                lam,fosc,gam=joebvpfit.setatomicdata([restlam],precise=False)
+                lam,fosc,gam=atomicdata.setatomicdata([restlam],precise=False)
                 self.lamBox.setText(str(lam[0]))
                 self.ionLabel.setText(atomicdata.lam2ion(lam[0]))
             except:
@@ -392,8 +392,7 @@ class Main(QMainWindow, Ui_MainWindow):
             pass
     def fitlines(self):
         print 'Fitting line profile(s)...'
-        #self.fitpars,self.fiterrors=joebvpfit.joebvpfit(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],self.normsig[cfg.fitidx],self.datamodel.fitpars,self.datamodel.parinfo)
-        print len(self.fitpars[0]),len(self.fiterrors[0])
+        print len(self.fitpars[0]),'lines loaded for fitting.'
         if self.fitconvtog:
             self.fitpars, self.fiterrors = joebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
                                                                self.datamodel.fitpars, self.datamodel.parinfo)

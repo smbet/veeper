@@ -1,10 +1,13 @@
 from .. import joebgoodies as jbg
 import numpy as np
-import os
+from linetools.spectralline import AbsLine
+from linetools.lists import parse as lilp
+import astropy.units as u
+import imp
 
-modpath=os.path.dirname(__file__)
+jbvp_path = imp.find_module('joebvp')[1]
 
-vernerlist=np.genfromtxt(modpath+'/verner6.txt',dtype=None,delimiter=[10,8,3,4,3,2,9,6])
+vernerlist=np.genfromtxt(jbvp_path+'/atomicdata/verner6.txt',dtype=None,delimiter=[10,8,3,4,3,2,9,6])
 vernlam=jbg.arrfromcol(vernerlist,0)
 vernion=jbg.arrfromcol(vernerlist,1)
 vernzatom=jbg.arrfromcol(vernerlist,2)
@@ -14,8 +17,41 @@ verngu=jbg.arrfromcol(vernerlist,5)
 vernosc=jbg.arrfromcol(vernerlist,6)
 vernp=jbg.arrfromcol(vernerlist,7)
 
+# A start to using the linetools atomic data framework
+adata=lilp.parse_morton03()
+vdata=lilp.parse_verner96()
+
 for i in range(len(vernion)):
     vernion[i]=vernion[i].strip()
+
+def setatomicdata(lines,precise=True):
+    #if isinstance(lines,float):
+    #    lines = [lines]
+    lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
+    for i,ll in enumerate(lines):
+        try:
+            al=AbsLine(ll*u.AA,closest=True)
+            lam[i]=al.data['wrest'].value ; fosc[i]=al.data['f'] ; gam[i]=al.data['gamma'].value
+        except:
+            idx=jbg.closest(adata['wrest'],ll)
+            lam[i]=adata['wrest'][idx] ; fosc[i]=adata['f'][idx] ; gam[i]=adata['gamma'][idx]
+        if ((abs(lam[i]-ll)>0.01)&(precise==True)):
+            idx = jbg.closest(vdata['wrest'], ll)
+            try:
+                lam[i] = vdata['wrest'][idx].value; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx].value
+            except:
+                lam[i] = vdata['wrest'][idx]; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx]
+    #if len(lam)==1:
+    #    lam = lam[0]
+    #    fosc = fosc[0]
+    #    gam = gam[0]
+
+    return lam,fosc,gam
+
+def closestlam(restwave):
+    lam,fosc,gam = setatomicdata(restwave)
+
+    return lam[0]
 
 def lam2ion(restwave):
     if (isinstance(restwave,int))|(isinstance(restwave,float)):
@@ -26,7 +62,9 @@ def lam2ion(restwave):
         return ions
 
 def lam2osc(restwave):
-    return round(vernosc[jbg.closest(vernlam,restwave)],3)
+    #return round(vernosc[jbg.closest(vernlam,restwave)],3)
+    lam,fosc,gam = setatomicdata(restwave)
+    return fosc[0]
 
 def lam2vernp(restwave):
     if (isinstance(restwave,int)|isinstance(restwave,float)):

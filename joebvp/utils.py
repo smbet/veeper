@@ -50,7 +50,7 @@ def compose_model(spec,filelist,outfile):
     outspec=XSpectrum1D.from_tuple((wave,model,normsig))
     outspec.write_to_fits(outfile)
 
-def concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat'):
+def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
     '''
     Compiles the output from several fitting runs into a single table
 
@@ -78,7 +78,7 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat'):
     bigpartable = vstack(tabs)
     ascii.write(bigpartable, output=outtablefile, delimiter='|')  # write out compiled table
 
-def abslines_from_VPfile(parfile,ra=None,dec=None):
+def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
     '''
     Takes a joebvp parameter file and builds a list of linetools AbsLines from the measurements therein.
 
@@ -98,6 +98,8 @@ def abslines_from_VPfile(parfile,ra=None,dec=None):
     '''
     from linetools.spectralline import AbsLine
     import astropy.units as u
+    if specfile!=None:
+        spec=readspec(specfile) # Allow spectrum file to be declared in call
     linetab = ascii.read(parfile) # Read parameters from file
     abslinelist = [] # Initiate list to populate
     for i,row in enumerate(linetab):
@@ -117,12 +119,13 @@ def abslines_from_VPfile(parfile,ra=None,dec=None):
         line.attrib['b'] = row['bval']
         line.attrib['sig_b'] = berr
         ### Attach the spectrum to this AbsLine but check first to see if this one is same as previous
-        if i==0:
-            spec=readspec(row['specfile'])
-        elif row['specfile']!=linetab['specfile'][i-1]:
-            spec=readspec(row['specfile'])
-        else:
-            pass
+        if specfile==None:
+            if i==0:
+                spec=readspec(row['specfile'])
+            elif row['specfile']!=linetab['specfile'][i-1]:
+                spec=readspec(row['specfile'])
+            else:
+                pass
         line.analy['spec']=spec
         ### Add it to the list and go on
         abslinelist.append(line)
@@ -194,7 +197,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
     
-def inspect_fits(parfile,output='FitInspection.pdf'):
+def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
     '''
     Produce pdf of fitting results for quality check.
 
@@ -214,12 +217,22 @@ def inspect_fits(parfile,output='FitInspection.pdf'):
     from matplotlib.backends.backend_pdf import PdfPages
     pp=PdfPages(output)
 
-    all=abslines_from_VPfile(parfile) # Instantiate AbsLine objects and make list
+    all=abslines_from_VPfile(parfile,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
+    fitpars,fiterrors,parinfo = joebvpfit.readpars(parfile)
 
     ### Make a stackplot for each component
     for comp in acl:
         fig=comp.stack_plot(show=False,return_fig=True, tight_layout=True)
+        stackaxes = fig.axes
+        #import pdb
+        #pdb.set_trace()
+        for i,ax in enumerate(stackaxes):
+            line = comp._abslines[i]
+            model=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,fitpars)
+            axlin=ax.get_lines()
+            veldat=axlin[0].get_data()[0]
+            ax.plot(veldat,model,color='red')
         title=comp.name
         fig.suptitle(title)
         fig.savefig(pp,format='pdf')

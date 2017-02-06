@@ -12,6 +12,7 @@ import numpy as np
 from scipy.signal import convolve
 from scipy.special import wofz
 import scipy.stats
+import joebvp.atomicdata as atomicdata
 from astropy import constants as const
 import sys,os
 import cfg
@@ -42,7 +43,6 @@ def Hfunc(x,a):
 	I=wofz(z).real
 	return I
 
-
 def cosvoigt(vwave,vpars):
 	pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
 	cfg.fitidx=joebvpfit.fitpix(vwave,pars)
@@ -53,10 +53,20 @@ def cosvoigt(vwave,vpars):
 	vflux*=convfactor
 	return vflux
 
+def cosvoigt_cont(vwave,cont,vpars):
+	pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
+	cfg.fitidx=joebvpfit.fitpix(vwave,pars)
+	cfg.wave=vwave
+	vflux=np.zeros(len(vwave))+1.
+	factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
+	convfactor=convolvecos(vwave,factor*cont,vpars[0],vpars[3])
+	vflux*=convfactor
+	return vflux
+
 def voigt(waves,line,coldens,bval,z,vels):
 	tautot=np.zeros(len(waves))
 	if len(cfg.lams)==0:
-		lam,fosc,gam=setatomicdata(restwaves)
+		lam,fosc,gam=atomicdata.setatomicdata(line)
 		cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	for i in range(len(coldens)):
 		#thatfactor=(1.+z[i])*(1.+vels[i]/c)
