@@ -298,6 +298,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.wave=self.spectrum.wavelength.value
         self.normflux=self.spectrum.flux/self.spectrum.co
         self.normsig=self.spectrum.sig/self.spectrum.co
+        cfg.spectrum = self.spectrum
         cfg.wave=self.wave
         cfg.normflux=self.normflux
         cfg.filename=self.specfilename

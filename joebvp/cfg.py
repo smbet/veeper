@@ -17,6 +17,7 @@ origparinfo=0
 filename=''
 field=''
 homedir=os.path.expanduser('~')
+spectrum = []
 lsf='COS_LP1'
 instr=['COS','COS','COS']
 gratings=['G130M','G160M','G225M']
