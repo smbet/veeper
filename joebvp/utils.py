@@ -78,6 +78,45 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
     bigpartable = vstack(tabs)
     ascii.write(bigpartable, output=outtablefile, delimiter='|')  # write out compiled table
 
+def abslines_from_fitpars(fitpars,ra=None,dec=None):
+    '''
+    Takes a joebvp parameter array and builds a list of linetools AbsLines from the measurements
+
+    Parameters
+    ----------
+    fitpars : list of lists
+        The joebvp parameter array that includes line measurements
+    ra : float, optional
+        Right Ascension of the QSO in decimal degrees
+    dec : float, optional
+        Declination of the QSO in decimal degress
+
+    Returns
+    -------
+    abslinelist: list
+        List of AbsLine objects
+    '''
+    from linetools.spectralline import AbsLine
+    import astropy.units as u
+    abslinelist = [] # Initiate list to populate
+    for i,rw in enumerate(fitpars[0]):
+        vcent = fitpars[4][i]
+        v1 = vcent + fitpars[5][i]
+        v2 = vcent + fitpars[6][i]
+
+        line=AbsLine(fitpars[0][i]*u.AA, z=fitpars[3][i])
+        vlims=[v1,v2]*u.km/u.s
+        line.limits.set(vlims)
+        ### Set other parameters
+        line.attrib['logN'] = fitpars[1][i]
+        #line.attrib['sig_N'] = colerr
+        line.attrib['b'] = fitpars[2][i]
+        #line.attrib['sig_b'] = berr
+        line.analy['spec']=cfg.spectrum
+        ### Add it to the list and go on
+        abslinelist.append(line)
+    return abslinelist
+
 def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
     '''
     Takes a joebvp parameter file and builds a list of linetools AbsLines from the measurements therein.
