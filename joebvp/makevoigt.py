@@ -28,13 +28,14 @@ c=const.c.value/1e3
 
 modpath=os.path.dirname(__file__)
 
-if cfg.lsf=='COS_LP1':
-	G130file=modpath+'/LSF/COS_LP1/G130M.REBIN.LSF.dat'
-	relpix,w1150,w1200,w1250,w1300,w1350,w1400,w1450=np.loadtxt(G130file,unpack=True,skiprows=1)
-	G160file=modpath+'/LSF/COS_LP1/G160M.REBIN.LSF.dat'
-	relpix,w1450,w1500,w1550,w1600,w1650,w1700,w1750=np.loadtxt(G160file,unpack=True,skiprows=1)
-else:
-	raise('Error: Only COS LP1 is supported at this time')
+
+# if cfg.lsf=='COS_LP1':
+# 	G130file=modpath+'/LSF/COS_LP1/G130M.REBIN.LSF.dat'
+# 	relpix,w1150,w1200,w1250,w1300,w1350,w1400,w1450=np.loadtxt(G130file,unpack=True,skiprows=1)
+# 	G160file=modpath+'/LSF/COS_LP1/G160M.REBIN.LSF.dat'
+# 	relpix,w1450,w1500,w1550,w1600,w1650,w1700,w1750=np.loadtxt(G160file,unpack=True,skiprows=1)
+# else:
+# 	raise('Error: Only COS LP1 is supported at this time')
 
 
 def Hfunc(x,a):
@@ -91,7 +92,7 @@ def get_lsfs():
 
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):
-		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i])))
+		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i])))
 	cfg.lsfs=[]
 	for fg in cfg.fgs:
 
