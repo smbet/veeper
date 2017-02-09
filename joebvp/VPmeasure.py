@@ -452,10 +452,15 @@ class Main(QMainWindow, Ui_MainWindow):
             joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def writeModelCompFileDialog(self):
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to files split by components', cfg.VPmodeloutfile)
-        fname = str(fname)
-        if fname != '':
-            joebvpfit.writeVPmodelByComp(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+        dirDialog = QtGui.QFileDialog(self)
+
+        dirDialog.setFileMode(dirDialog.Directory)
+        dirDialog.setOption(dirDialog.ShowDirsOnly, True)
+        defDirName = cfg.VPmodeloutfile[:-5]
+        dname = dirDialog.getSaveFileName(self, 'Save model to files split by components',defDirName)
+        dname = str(dname)
+        if dname != '':
+            joebvpfit.writeVPmodelByComp(dname, self.spectrum,self.fitpars)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()

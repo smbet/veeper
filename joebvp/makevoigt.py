@@ -107,25 +107,6 @@ def get_lsfs():
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
 			cfg.lsfs.append(lsf['kernel'])
-	'''
-	for ll in cfg.uqwgidxs:
-
-		lamobs=cfg.wavegroups[ll,0]
-		if (lamobs<=1175): lsf=w1150
-		elif (lamobs>1175) & (lamobs<=1225): lsf=w1200
-		elif (lamobs>1225) & (lamobs<=1275): lsf=w1250
-		elif (lamobs>1275) & (lamobs<=1325): lsf=w1300
-		elif (lamobs>1325) & (lamobs<=1375): lsf=w1350
-		elif (lamobs>1375) & (lamobs<=1425): lsf=w1400
-		elif (lamobs>1425) & (lamobs<=1475): lsf=w1450
-		elif (lamobs>1475) & (lamobs<=1525): lsf=w1500
-		elif (lamobs>1525) & (lamobs<=1575): lsf=w1550
-		elif (lamobs>1575) & (lamobs<=1625): lsf=w1600
-		elif (lamobs>1625) & (lamobs<=1675): lsf=w1650
-		elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
-		elif (lamobs>1725): lsf=w1750
-		cfg.lsfs.append(lsf)
-	'''
 
 def convolvecos(wave,profile,lines,zs):
 	if len(wave)>len(cfg.fitidx):

@@ -264,8 +264,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
     for comp in acl:
         fig=comp.stack_plot(show=False,return_fig=True, tight_layout=True)
         stackaxes = fig.axes
-        #import pdb
-        #pdb.set_trace()
+
         for i,ax in enumerate(stackaxes):
             line = comp._abslines[i]
             model=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,fitpars)

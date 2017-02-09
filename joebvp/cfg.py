@@ -10,7 +10,6 @@ normsig=0
 fitidx=0
 fitcoeff=0
 fitcovmtx=0
-fitpars=0
 fiterrors=0
 origpars=0
 origparinfo=0

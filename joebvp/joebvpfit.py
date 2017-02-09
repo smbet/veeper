@@ -41,19 +41,10 @@ def voigtfunc(vwave,vpars):
 	vflux*=convfactor
 	return vflux
 
-def voigtfunc_AbsComp(vwave,abscomp):
-	vflux=np.zeros(len(vwave))+1.
-
-	factor=makevoigt.voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
-	convfactor=makevoigt.convolvecos(vwave,factor,vpars[0],vpars[3])
-	vflux*=convfactor
-	return vflux
-
 def voigterrfunc(p,x,y,err,fjac=None):
 	fp=foldpars(p)
 	model=voigtfunc(x,fp)
 	status=0
-	#return([status,(y-model)/err])
 	return([status,(y[cfg.fitidx]-model[cfg.fitidx])/err[cfg.fitidx]])
 
 def fitpix(wave,pararr):
@@ -522,21 +513,59 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	print 'Voigt profile model written to:'
 	print outfile
 
-def writeVPmodelByComp(outfile, wave, fitpars, normflux, normsig):
+def writeVPmodelByComp(outdir, spectrum, fitpars):
 	import copy
-	### TODO: Find a way to get a velocity centroid from the AbsComponent
+	import os
+	os.mkdir(outdir)
 	linelist = utils.abslines_from_fitpars(fitpars)
 	complist = utils.abscomponents_from_abslines(linelist)
 	for comp in complist:
-		model = voigtfunc(wave)
+		wave,model = modelFromAbsComp(cfg.spectrum,comp)
 		spec = copy.deepcopy(cfg.spectrum)
+		spec.flux = model
+		fname = comp.name+'_VPmodel.fits'
+		spec.write_to_fits(outdir+'/'+fname)
+	print 'Voigt profile models written to directory:', outdir
 
-	from astropy.table import Table
-	model = voigtfunc(wave, fitpars)
-	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
-	modeltab.write(outfile, format='fits', overwrite=True)
-	print 'Voigt profile model written to:'
-	print outfile
+def modelFromAbsComp(spectrum,abscomp):
+	'''
+	Generate Voigt profile using
+	Parameters
+	----------
+	spectrum: linetools XSpectrum1D
+		Spectrum to provide wavelength input for Voigt profile evaluation
+	abscomp: linetools AbsComponent
+		Component objects whose AbsLines will be used to generate profile
+
+	Returns
+	-------
+	spectrum.wavelength: 1D array
+		Wavelength vector corresponding to profile
+	profile: 1D array
+		Model consisting of Voigt profiles across spectrum
+
+	'''
+	restwaves = []
+	zs = []
+	cols = []
+	bs = []
+	vels = []
+	vlim1s = []
+	vlim2s = []
+
+	for absline in abscomp._abslines:
+		### Grab parameters from AbsLine object
+		restwaves.append(absline.wrest.value)
+		zs.append(absline.z)
+		cols.append(absline.attrib['logN'])
+		bs.append(absline.attrib['b'])
+		vels.append(np.mean(absline.limits.vlim).value)
+		vlim1s.append(absline.limits.vlim[0].value)
+		vlim2s.append(absline.limits.vlim[1].value)
+	pars = [restwaves,cols,bs,zs,vels,vlim1s,vlim2s]
+	profile = voigtfunc(spectrum.wavelength.value, pars)
+	return spectrum.wavelength.value,profile
+
 
 def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001):
 	'''
