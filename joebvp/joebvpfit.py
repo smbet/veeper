@@ -5,6 +5,7 @@ import numpy as np
 import joebgoodies as jbg
 # from stsci.tools import nmpfit
 from joebvp import nmpfit
+import utils
 import makevoigt
 import cfg
 import joebvp.atomicdata as atomicdata
@@ -35,6 +36,14 @@ def unfoldpars(pars,numpars=5):
 
 def voigtfunc(vwave,vpars):
 	vflux=np.zeros(len(vwave))+1.
+	factor=makevoigt.voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
+	convfactor=makevoigt.convolvecos(vwave,factor,vpars[0],vpars[3])
+	vflux*=convfactor
+	return vflux
+
+def voigtfunc_AbsComp(vwave,abscomp):
+	vflux=np.zeros(len(vwave))+1.
+
 	factor=makevoigt.voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
 	convfactor=makevoigt.convolvecos(vwave,factor,vpars[0],vpars[3])
 	vflux*=convfactor
@@ -506,6 +515,22 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 
 
 def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
+	from astropy.table import Table
+	model = voigtfunc(wave, fitpars)
+	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
+	modeltab.write(outfile, format='fits', overwrite=True)
+	print 'Voigt profile model written to:'
+	print outfile
+
+def writeVPmodelByComp(outfile, wave, fitpars, normflux, normsig):
+	import copy
+	### TODO: Find a way to get a velocity centroid from the AbsComponent
+	linelist = utils.abslines_from_fitpars(fitpars)
+	complist = utils.abscomponents_from_abslines(linelist)
+	for comp in complist:
+		model = voigtfunc(wave)
+		spec = copy.deepcopy(cfg.spectrum)
+
 	from astropy.table import Table
 	model = voigtfunc(wave, fitpars)
 	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])

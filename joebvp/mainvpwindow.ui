@@ -203,7 +203,7 @@
        <property name="geometry">
         <rect>
          <x>265</x>
-         <y>491</y>
+         <y>484</y>
          <width>171</width>
          <height>41</height>
         </rect>
@@ -239,7 +239,7 @@
        <property name="geometry">
         <rect>
          <x>326</x>
-         <y>523</y>
+         <y>517</y>
          <width>111</width>
          <height>32</height>
         </rect>
@@ -257,8 +257,8 @@
       <widget class="QCheckBox" name="fitConvBox">
        <property name="geometry">
         <rect>
-         <x>270</x>
-         <y>473</y>
+         <x>297</x>
+         <y>458</y>
          <width>151</width>
          <height>20</height>
         </rect>
@@ -267,6 +267,25 @@
         <string>Fit to convergence</string>
        </property>
        <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="writeModelCompButton">
+       <property name="geometry">
+        <rect>
+         <x>237</x>
+         <y>541</y>
+         <width>201</width>
+         <height>32</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Write model by component</string>
+       </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
         <bool>false</bool>
        </property>
       </widget>

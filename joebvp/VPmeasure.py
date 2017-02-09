@@ -317,6 +317,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.addLineButton.clicked.connect(self.addLineDialog)
         self.writeParsButton.clicked.connect(self.writeParFileDialog)
         self.writeModelButton.clicked.connect(self.writeModelFileDialog)
+        self.writeModelCompButton.clicked.connect(self.writeModelCompFileDialog)
 
         ### Initialize spectral plots
         fig=Figure()
@@ -448,9 +449,13 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
         fname = str(fname)
         if fname != '':
-            #TODO: ensure the move to joebvpfit works correctly and remove datamodel method
-            #self.datamodel.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
             joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+
+    def writeModelCompFileDialog(self):
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to files split by components', cfg.VPmodeloutfile)
+        fname = str(fname)
+        if fname != '':
+            joebvpfit.writeVPmodelByComp(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()
