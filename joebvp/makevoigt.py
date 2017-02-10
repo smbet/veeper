@@ -92,7 +92,9 @@ def get_lsfs():
 
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):
-		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i])))
+		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],
+								life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i],
+						   		slit=cfg.slits[i])))
 	cfg.lsfs=[]
 	for fg in cfg.fgs:
 
