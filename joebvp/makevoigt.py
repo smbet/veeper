@@ -75,16 +75,12 @@ def voigt(waves,line,coldens,bval,z,vels):
 		lam0=cfg.lams[i]
 		gam=cfg.gam[i]
 		fosc=cfg.fosc[i]
-
-		#thatfactor=1
-		#lam.append(arange(lam0-5.,lam0+5.,step=.001))
 		lam = waves/thatfactor
 		dlam=bval[i]*lam0/c  #Doppler param in wavelength
 		x=(lam-lam0-lam0*vels[i]/c)/dlam
 		a=gam/(4.*np.pi*(c*1e13/lam0**2*dlam))
 		vp=Hfunc(x,a)
 		tauval=np.sqrt(np.pi)*cfg.echarge**2/cfg.m_e/cfg.c**2*(lam0*1e-8)**2/dlam*1e8*(10**coldens[i])*fosc*vp
-		#tau.append(tauval)
 		tautot+=tauval
 	return np.exp(-tautot)
 
@@ -92,7 +88,9 @@ def get_lsfs():
 
 	lsfobjs=[]
 	for i,inst in enumerate(cfg.instr):
-		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i])))
+		lsfobjs.append(LSF(dict(name=inst,grating=cfg.gratings[i],
+								life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i],
+						   		slit=cfg.slits[i])))
 	cfg.lsfs=[]
 	for fg in cfg.fgs:
 
