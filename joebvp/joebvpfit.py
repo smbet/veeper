@@ -35,6 +35,12 @@ def unfoldpars(pars,numpars=5):
 	return ufpars
 
 def voigtfunc(vwave,vpars):
+	### Check to see if cfg variables are set
+	if isinstance(cfg.fitidx,int)|isinstance(cfg.wave,int):
+		cfg.fitidx = fitpix(vwave,vpars)
+		cfg.wave = vwave
+	if len(cfg.lsfs) == 0:
+		makevoigt.get_lsfs()
 	vflux=np.zeros(len(vwave))+1.
 	factor=makevoigt.voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
 	convfactor=makevoigt.convolvecos(vwave,factor,vpars[0],vpars[3])
@@ -519,11 +525,15 @@ def writeVPmodelByComp(outdir, spectrum, fitpars):
 	os.mkdir(outdir)
 	linelist = utils.abslines_from_fitpars(fitpars)
 	complist = utils.abscomponents_from_abslines(linelist)
+
 	for comp in complist:
+		print '\n',comp.name
 		wave,model = modelFromAbsComp(cfg.spectrum,comp)
 		spec = copy.deepcopy(cfg.spectrum)
 		spec.flux = model
 		fname = comp.name+'_VPmodel.fits'
+		#print '\n ',fname
+		#print comp._abslines
 		spec.write_to_fits(outdir+'/'+fname)
 	print 'Voigt profile models written to directory:', outdir
 
@@ -563,6 +573,8 @@ def modelFromAbsComp(spectrum,abscomp):
 		vlim1s.append(absline.limits.vlim[0].value)
 		vlim2s.append(absline.limits.vlim[1].value)
 	pars = [restwaves,cols,bs,zs,vels,vlim1s,vlim2s]
+	#print pars
+
 	profile = voigtfunc(spectrum.wavelength.value, pars)
 	return spectrum.wavelength.value,profile
 
