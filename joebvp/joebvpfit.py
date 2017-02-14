@@ -130,6 +130,9 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	parinfo=prepparinfo(partofit,flags)
 	# Save the velocity windows to add back to the parameter array
 	vlim1=linepars[5] ; vlim2=linepars[6]
+	# Get atomic data
+	lam,fosc,gam=atomicdata.setatomicdata(linepars[0])
+	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	# Set fit regions
 	cfg.fitidx=fitpix(wave,linepars)
 	# Prep parameters for fitter
@@ -521,7 +524,9 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 
 def writeVPmodelByComp(outdir, spectrum, fitpars):
 	import copy
-	import os
+	import os,glob
+	if cfg.spectrum == []:
+		cfg.spectrum = spectrum
 	os.mkdir(outdir)
 	linelist = utils.abslines_from_fitpars(fitpars)
 	complist = utils.abscomponents_from_abslines(linelist)
@@ -531,10 +536,13 @@ def writeVPmodelByComp(outdir, spectrum, fitpars):
 		wave,model = modelFromAbsComp(cfg.spectrum,comp)
 		spec = copy.deepcopy(cfg.spectrum)
 		spec.flux = model
-		fname = comp.name+'_VPmodel.fits'
-		#print '\n ',fname
-		#print comp._abslines
+		flist = glob.glob(outdir+'/'+comp.name+'*')
+		if len(flist)!=0:
+			fname = comp.name+'_'+str(len(flist))+ '_VPmodel.fits'
+		else:
+			fname = comp.name+'_VPmodel.fits'
 		spec.write_to_fits(outdir+'/'+fname)
+
 	print 'Voigt profile models written to directory:', outdir
 
 def modelFromAbsComp(spectrum,abscomp):
@@ -562,7 +570,6 @@ def modelFromAbsComp(spectrum,abscomp):
 	vels = []
 	vlim1s = []
 	vlim2s = []
-
 	for absline in abscomp._abslines:
 		### Grab parameters from AbsLine object
 		restwaves.append(absline.wrest.value)
@@ -573,9 +580,14 @@ def modelFromAbsComp(spectrum,abscomp):
 		vlim1s.append(absline.limits.vlim[0].value)
 		vlim2s.append(absline.limits.vlim[1].value)
 	pars = [restwaves,cols,bs,zs,vels,vlim1s,vlim2s]
-	#print pars
+
+	### Set atomic data so that the right profiles are evaluated!
+	lam,fosc,gam=atomicdata.setatomicdata(restwaves)
+	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 
 	profile = voigtfunc(spectrum.wavelength.value, pars)
+	#nonone = np.where(np.abs(profile - 1.) > 0.01)[0]
+	#print spectrum.wavelength[nonone]
 	return spectrum.wavelength.value,profile
 
 
