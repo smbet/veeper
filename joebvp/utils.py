@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 import joebvpfit
 import makevoigt
 import atomicdata
@@ -157,6 +158,7 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         line.attrib['sig_N'] = colerr
         line.attrib['b'] = row['bval']
         line.attrib['sig_b'] = berr
+        line.attrib['vel'] = row['vel']
         ### Attach the spectrum to this AbsLine but check first to see if this one is same as previous
         if specfile==None:
             if i==0:
@@ -259,21 +261,38 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
     all=abslines_from_VPfile(parfile,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
     fitpars,fiterrors,parinfo = joebvpfit.readpars(parfile)
+    fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
+
 
     ### Make a stackplot for each component
     for comp in acl:
-        fig=comp.stack_plot(show=False,return_fig=True, tight_layout=True)
+        fig=comp.stack_plot(ymnx=(-0.1,1.3),show=False,return_fig=True, tight_layout=True)
+        if (len(comp._abslines)<6):
+            numrow = len(comp._abslines)%6
+        else:
+            numrow = 6
+        height = numrow*1.0+0.25
+        fig.set_figheight(height)
+        if len(comp._abslines)<6:
+            fig.set_figwidth(5.)
+        else:
+            fig.set_figwidth(10.)
         stackaxes = fig.axes
 
         for i,ax in enumerate(stackaxes):
             line = comp._abslines[i]
-            model=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,fitpars)
+            thesepars=[[line.wrest.value],[line.attrib['logN']],[line.attrib['b']],
+                       [line.z],[line.attrib['vel']],[line.limits.vlim[0].value],[line.limits.vlim[1].value]]
+            thismodel=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,thesepars)
             axlin=ax.get_lines()
             veldat=axlin[0].get_data()[0]
-            ax.plot(veldat,model,color='red')
+            ax.plot(veldat,fullmodel,color='red',alpha=0.8)
+            ax.plot(veldat,thismodel,color='purple',linestyle='dashed')
+        fig.subplots_adjust(bottom=0.1,left=0.1)
         title=comp.name
         fig.suptitle(title)
         fig.savefig(pp,format='pdf')
+        plt.close(fig)
     pp.close()
 
 def abscomponents_from_abslines(abslinelist, **kwargs):
@@ -328,7 +347,13 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
     ### Instantiate the AbsComponents
     comps=[]
     for lst in complines:
-        thiscomp=AbsComponent.from_abslines(lst.tolist(), **kwargs)
+        if '*' in lst[0].name:
+            linename=lst[0].name
+            starct=linename.count('*')
+            stars='*'*starct
+        else:
+            stars = None
+        thiscomp=AbsComponent.from_abslines(lst.tolist(), stars=stars, chk_vel=False, **kwargs)
         comps.append(thiscomp)
     return comps
 
