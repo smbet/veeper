@@ -319,7 +319,7 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
     sparr=np.chararray(len(abslinelist),itemsize=6)
     for i,absline in enumerate(abslinelist):
         zarr[i]=absline.z
-        varr[i]=np.mean(absline.limits.vlim.value)
+        varr[i]=absline.attrib['vel']
         sparr[i]=atomicdata.lam2ion(absline.wrest.value)
 
     abslinelist=np.array(abslinelist) # Convert to array for the indexing used below
