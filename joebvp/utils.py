@@ -271,7 +271,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
             numrow = len(comp._abslines)%6
         else:
             numrow = 6
-        height = numrow*1.0+0.25
+        height = numrow*1.0+0.5
         fig.set_figheight(height)
         if len(comp._abslines)<6:
             fig.set_figwidth(5.)
@@ -288,7 +288,9 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
             veldat=axlin[0].get_data()[0]
             ax.plot(veldat,fullmodel,color='red',alpha=0.8)
             ax.plot(veldat,thismodel,color='purple',linestyle='dashed')
-        fig.subplots_adjust(bottom=0.1,left=0.1)
+        botbuf = 0.5/height
+        fig.subplots_adjust(bottom=botbuf,left=0.1,right=0.95,hspace=0.,wspace=0.35)
+
         title=comp.name
         fig.suptitle(title)
         fig.savefig(pp,format='pdf')
