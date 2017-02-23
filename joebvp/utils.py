@@ -150,7 +150,7 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         vcentmax = row['vel']+velerr
         v1 = vcentmin + row['vlim1']
         v2 = vcentmax + row['vlim2']
-        line=AbsLine(row['restwave']*u.AA, z=row['zsys'])
+        line=AbsLine(row['restwave']*u.AA, z=row['zsys'],closest=True)
         vlims=[v1,v2]*u.km/u.s
         line.limits.set(vlims)
         ### Set other parameters
