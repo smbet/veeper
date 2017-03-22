@@ -463,7 +463,7 @@ def readpars(filename,wave1=None,wave2=None):
 	return fitpars,fiterrors,parinfo
 
 
-def writelinepars(fitpars,fiterrors,parinfo, outfilename):
+def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 	'''
 	Write fit parameters out to file.
 
@@ -475,6 +475,8 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 		Error array for the fitting initialized to '0' for each param
 	parinfo : array of arrays
 		Flags to be used in fit
+	specfile : str
+		Name of the input file containing the spectrum
 	outfilename : str
 		Parameter output filename
 
@@ -503,7 +505,7 @@ def writelinepars(fitpars,fiterrors,parinfo, outfilename):
 		pix2 = jbg.closest(cfg.wave, wobs2)
 		trans = atomicdata.lam2ion(fitpars[0][i])
 		towrite = jbg.pipedelimrow(
-			[cfg.filename, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+			[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
 			 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
 			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, trans])
 		VPparfile.write(towrite)
