@@ -93,17 +93,18 @@ def get_lsfs():
 						   		slit=cfg.slits[i])))
 	cfg.lsfs=[]
 	for fg in cfg.fgs:
-
 		if isinstance(fg,int):
 			lamobs=cfg.wave[fg]
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA)
+			#lsf = lsfobjs[lsfmatch].interpolate_to_wv0(np.median(cfg.wave[cfg.fgs]) * u.AA)
+			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA,kind='cubic')
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA)
+			#lsf = lsfobjs[lsfmatch].interpolate_to_wv0(np.median(cfg.wave[fg]) * u.AA)
+			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA,kind='cubic')
 			cfg.lsfs.append(lsf['kernel'])
 
 def convolvecos(wave,profile,lines,zs):
@@ -156,7 +157,11 @@ def convolvecos(wave,profile,lines,zs):
 
 			for fg in newfgs:
 				cfg.fgs.append(fg)
+		#print cfg.fgs
+		#for fg in cfg.fgs:
+	#		print wave[fg]
 		get_lsfs()
+	#	print cfg.lsfs
 	convprof=profile
 	'''
 	for i,ll in enumerate(cfg.uqwgidxs):
