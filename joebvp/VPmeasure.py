@@ -443,7 +443,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, fname)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)

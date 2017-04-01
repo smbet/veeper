@@ -18,7 +18,7 @@ field=''
 homedir=os.path.expanduser('~')
 spectrum = []
 
-Todd = True
+Todd = False
 if Todd:
     lsf='COS_LP1'
     instr=['COS','COS','COS','COS','STIS']
@@ -29,12 +29,12 @@ if Todd:
     cen_wave=['1327','1600','1953','2250','2707']
 
 else:  # this is for the casual user
-    lsf='COS_LP3'
+    lsf='COS_LP2'
     instr=['COS','COS']
     gratings=['G130M','G160M']
     slits=['NA','NA']
-    lsfranges=np.array([[1100,1400],[1300,1800]])
-    lps=['3','3']
+    lsfranges=np.array([[1100,1450],[1450,1800]])
+    lps=['2','2']
     cen_wave=['1327','1600']
 
 
