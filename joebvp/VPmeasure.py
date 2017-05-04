@@ -593,8 +593,10 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     '''
     if isinstance(spec,str):
         spectofit = readspec(spec)
+        specfile = spectofit.filename
     else:
         spectofit = spec
+        specfile = cfg.filename
 
     if isinstance(filelist, str):
         lstarr=np.genfromtxt(filelist,dtype=None)
@@ -618,7 +620,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
             print 'Fit converged:', ff
             paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
-            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, paroutfilename)
+            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
         except:
             print 'Fitting failed:',ff
