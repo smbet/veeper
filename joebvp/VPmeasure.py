@@ -13,6 +13,7 @@ import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
 from joebvp import cfg
 from joebvp import joebvpfit
+from joebvp import utils as jbu
 import os
 from linetools.spectra.io import readspec
 from astropy.io import ascii
@@ -393,8 +394,8 @@ class Main(QMainWindow, Ui_MainWindow):
         except TypeError:
             pass
     def fitlines(self):
-        print 'Fitting line profile(s)...'
-        print len(self.fitpars[0]),'lines loaded for fitting.'
+        print('VPmeasure: Fitting line profile(s)...')
+        print(len(self.fitpars[0]),'lines loaded for fitting.')
         if self.fitconvtog:
             self.fitpars, self.fiterrors = joebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
                                                                self.datamodel.fitpars, self.datamodel.parinfo)
@@ -443,7 +444,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, fname)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
@@ -611,19 +612,32 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     normsig=spectofit.sig.value/spectofit.co.value
     cfg.wave=wave
 
+    q_pass = 0
+    q_fail = 0
     for i,ff in enumerate(listofiles):
         i+=1
         fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
         cfg.wavegroups = []
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
-            print 'Fit converged:', ff
+            print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
             joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
+            q_pass += 1
         except:
-            print 'Fitting failed:',ff
+            print('VPmeasure: Fitting failed:',ff)
+            q_fail += 1
+    print("")
+    print("VPmeasure: {}/{} fits converged, {}/{} failed (see log for details).\n".format(q_pass, i, q_fail, i))
+
+    # concatenate and inspect fit
+    print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
+    os.system("ls *.VP > all_VP.txt")
+    jbu.concatenate_line_tables("all_VP.txt")
+    jbu.inspect_fits("compiledVPoutputs.dat")
+    print("VPmeasure: Done.")
 
 if __name__ == '__main__':
         import sys

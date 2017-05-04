@@ -10,9 +10,11 @@ import makevoigt
 import cfg
 import joebvp.atomicdata as atomicdata
 from astropy.io import ascii
+from astropy import units as u
 from scipy import random
 import warnings
 import sys
+from linetools import utils as ltu
 
 c=299792.458
 
@@ -491,7 +493,7 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 	else:
 		VPparfile = open(filetowrite, 'wb')
 		bigparfile = open(bigfiletowrite, 'wb')
-	header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
+	header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
 	for i in range(len(fitpars[0])):
@@ -504,10 +506,12 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 		pix1 = jbg.closest(cfg.wave, wobs1)
 		pix2 = jbg.closest(cfg.wave, wobs2)
 		trans = atomicdata.lam2ion(fitpars[0][i])
+		z_comp = ltu.z_from_dv(fitpars[4][i]*u.km/u.s, zline)
+		# import pdb; pdb.set_trace()
 		towrite = jbg.pipedelimrow(
 			[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
 			 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
-			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, trans])
+			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2,round(z_comp, 5), trans])
 		VPparfile.write(towrite)
 		bigparfile.write(towrite)
 	VPparfile.close()
