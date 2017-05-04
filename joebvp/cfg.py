@@ -18,14 +18,6 @@ field=''
 homedir=os.path.expanduser('~')
 spectrum = []
 
-'''
-instr=['COS','COS','COS','COS']
-gratings=['G130M','G160M','G185M','G225M']
-slits=['NA','NA','NA','NA','0.2x0.2']
-lsfranges=np.array([[1100,1400],[1400,1700],[1700,2100],[2100,2278]])
-lps=['1','1','1','1']
-cen_wave=['1327','1600','1953','2250']
-'''
 echarge=4.803204505713468e-10
 m_e=9.10938291e-28
 c=29979245800.0
