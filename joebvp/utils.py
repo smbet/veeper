@@ -43,7 +43,7 @@ def compose_model(spec,filelist,outfile):
     concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat')
 
     ### Make the model!
-    fitpars, fiterrors, parinfo = joebvpfit.readpars('compiledVPinputs.dat')  # read this back in to load params
+    fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars('compiledVPinputs.dat')  # read this back in to load params
     cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # set the pixels in the line regions
     model = joebvpfit.voigtfunc(wave,fitpars)  # generate the Voigt profiles of all lines
 
@@ -260,7 +260,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
 
     all=abslines_from_VPfile(parfile,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
-    fitpars,fiterrors,parinfo = joebvpfit.readpars(parfile)
+    fitpars,fiterrors,parinfo,linecmts = joebvpfit.readpars(parfile)
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
 
 

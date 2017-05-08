@@ -413,6 +413,8 @@ def readpars(filename,wave1=None,wave2=None):
 		Error array for the fitting initialized to '0' for each param
 	parinfo : array of arrays
 		Flags to be used in fit
+	linecmts: list of lists
+		Reliability and comment flags, e.g., from igmguesses
 	'''
 
 	linelist = ascii.read(filename)
@@ -426,6 +428,8 @@ def readpars(filename,wave1=None,wave2=None):
 	else:
 		lineobswave = linerestwave * (1. + linez)
 		lineshere = np.where((lineobswave > wave1) & (lineobswave < wave2))[0]
+	linelist=linelist[lineshere]
+	'''
 	zs = linelist['zsys'][lineshere]
 	restwaves = linerestwave[lineshere]
 	linecol = linelist['col'][lineshere]
@@ -436,33 +440,43 @@ def readpars(filename,wave1=None,wave2=None):
 	colflag = linelist['nflag'][lineshere]
 	bflag = linelist['bflag'][lineshere]
 	velflag = linelist['vflag'][lineshere]
-	#colsig = linelist['sigcol'][lineshere]
-	#bsig = linelist['sigbval'][lineshere]
-	#velsig = linelist['sigvel'][lineshere]
-	allpars = np.core.records.fromarrays(
-		[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
-		 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
-		formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
-	allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
-	linerestwave = allpars['lamrest']
-	zs = allpars['z']
-	linecol = allpars['col']
-	lineb = allpars['b']
-	linevel = allpars['vel']
-	linevlim1 = allpars['vlim1']
-	linevlim2 = allpars['vlim2']
-	colflag = allpars['colflag']
-	bflag = allpars['bflag']
-	velflag = allpars['velflag']
+	'''
+	linelist['ions']=atomicdata.lam2ion(linelist['restwave'].value)
+
+	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
+		pass
+	elif ('rely' in linelist.colnames):
+		linelist['comment']=['']
+
+	### TODO: replace the next line with astropy table sort() method
+	linelist.sort(['ions','zsys','vel','restwaves'])
+ 	#allpars = np.core.records.fromarrays(
+	#	[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
+	#	 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
+	#	formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
+	#allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
+	linerestwave = linelist['lamrest']
+	zs = linelist['z']
+	linecol = linelist['col']
+	lineb = linelist['b']
+	linevel = linelist['vel']
+	linevlim1 = linelist['vlim1']
+	linevlim2 = linelist['vlim2']
+	colflag = linelist['colflag']
+	bflag = linelist['bflag']
+	velflag = linelist['velflag']
 	restwaves = linerestwave
+	reliability = linelist['rely']
+	comment = linelist['comment']
 	initinfo = [colflag, bflag, velflag]
 	initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
 	fitpars, parinfo = initlinepars(zs, restwaves, initpars, initinfo=initinfo)
 	fiterrors = np.zeros([5, len(fitpars[0])])  # Initialize errors to zero
+	linecmts = [reliability,comment]
 	#fiterrors[1] = colsig
 	#fiterrors[2] = bsig
 	#fiterrors[4] = velsig
-	return fitpars,fiterrors,parinfo
+	return fitpars,fiterrors,parinfo,linecmts
 
 
 def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
