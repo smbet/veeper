@@ -429,18 +429,6 @@ def readpars(filename,wave1=None,wave2=None):
 		lineobswave = linerestwave * (1. + linez)
 		lineshere = np.where((lineobswave > wave1) & (lineobswave < wave2))[0]
 	linelist=linelist[lineshere]
-	'''
-	zs = linelist['zsys'][lineshere]
-	restwaves = linerestwave[lineshere]
-	linecol = linelist['col'][lineshere]
-	lineb = linelist['bval'][lineshere]
-	linevel = linelist['vel'][lineshere]
-	linevlim1 = linelist['vlim1'][lineshere]
-	linevlim2 = linelist['vlim2'][lineshere]
-	colflag = linelist['nflag'][lineshere]
-	bflag = linelist['bflag'][lineshere]
-	velflag = linelist['vflag'][lineshere]
-	'''
 	linelist['ions']=atomicdata.lam2ion(linelist['restwave'])
 
 	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
@@ -450,11 +438,6 @@ def readpars(filename,wave1=None,wave2=None):
 
 	### TODO: replace the next line with astropy table sort() method
 	linelist.sort(['ions','zsys','vel','restwave'])
- 	#allpars = np.core.records.fromarrays(
-	#	[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
-	#	 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
-	#	formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
-	#allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
 	linerestwave = linelist['restwave']
 	zs = linelist['zsys']
 	linecol = linelist['col']

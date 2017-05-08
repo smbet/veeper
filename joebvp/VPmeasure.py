@@ -16,7 +16,6 @@ from joebvp import joebvpfit
 from joebvp import utils as jbu
 import os
 from linetools.spectra.io import readspec
-from astropy.io import ascii
 import numpy as np
 
 from matplotlib.figure import Figure
@@ -44,19 +43,8 @@ class LineParTableModel(QAbstractTableModel):
 
     def columnCount(self, parent):
         return 11
-        #return len(self.fitpars)
-
-    def writeVPmodel(self, outfile, wave,fitpars,normflux,normsig):
-        from astropy.table import Table
-        model = joebvpfit.voigtfunc(wave, fitpars)
-        modeltab=Table([wave,model,normflux,normsig],names=['wavelength','model','normflux','normsig'])
-        modeltab.write(outfile,format='fits')
-        print 'Voigt profile model written to:'
-        print outfile
-
 
     def data(self,index,role):
-
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
@@ -88,6 +76,7 @@ class LineParTableModel(QAbstractTableModel):
             elif column == 10: toret=self.linecmts[1][row]
             else: toret=QVariant(round(self.fitpars[column][row],3))
             return toret
+
         else: return None
 
     def flags(self,index):
@@ -98,8 +87,10 @@ class LineParTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
+            print column
             if value.toFloat()[1]==True:
                 val = round(float(value.toFloat()[0]),2)
+                print 'hi',val
                 if column == 1: pass
                 if column == 2: self.fitpars[3][row] = val
                 elif column == 3: self.fitpars[1][row] = val
@@ -108,8 +99,8 @@ class LineParTableModel(QAbstractTableModel):
                 elif column == 6: self.fiterrors[2][row] = val
                 elif column == 7: self.fitpars[4][row] = val
                 elif column == 8: self.fiterrors[4][row] = val
-                elif column == 9: self.linecmts[0][row] = val
-                elif column == 10: self.linecmts[1][row] = val
+                elif column == 9: pass
+                elif column == 10: pass
                 else: self.fitpars[column][row] = val
                 self.dataChanged.emit(index,index)
                 return True
@@ -220,8 +211,6 @@ class newLineDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
-        #import pdb
-        #pdb.set_trace()
 
     def validateWavelength(self):
         ### Handle approximate wavelength entries by looking up precise values on focus exit
@@ -338,6 +327,7 @@ class Main(QMainWindow, Ui_MainWindow):
         cfg.wavegroups=[]
         self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo,linecmts=self.linecmts)
         self.tableView.setModel(self.datamodel)
+        self.datamodel.updatedata(self.fitpars,self.fitpars,self.parinfo,self.linecmts)
 
     def sideplot(self,cenwave,wavebuf=3):
         if len(self.sidefig.axes)==0:
