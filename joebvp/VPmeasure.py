@@ -43,48 +43,8 @@ class LineParTableModel(QAbstractTableModel):
         return len(self.fitpars[0])
 
     def columnCount(self, parent):
-        return 9
+        return 11
         #return len(self.fitpars)
-
-    def writelinepars(self, outfilename,specfilename):
-        fitpars = self.fitpars
-        fiterrors = self.fiterrors
-        parinfo = self.parinfo
-        linecmt = self.linecmts
-        bigfiletowrite = cfg.largeVPparfile
-        filetowrite = outfilename
-
-        if os.path.isfile(filetowrite):
-            VPparfile = open(filetowrite, 'wb')
-            bigparfile = open(bigfiletowrite, 'ab')
-        else:
-            VPparfile = open(filetowrite, 'wb')
-            bigparfile = open(bigfiletowrite, 'wb')
-        if linecmt!=None:
-            header='specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans|rely|comment \n'
-        else:
-            header='specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
-        VPparfile.write(header)
-        bigparfile.write(header)
-        for i in range(len(fitpars[0])):
-            zline=fitpars[3][i]
-            vlim1=fitpars[5][i] ; vlim2=fitpars[6][i]
-            restwave=fitpars[0][i]
-            wobs1=restwave*(1+zline+vlim1/299792.458)
-            wobs2=restwave*(1+zline+vlim2/299792.458)
-            pix1=jbg.closest(cfg.wave,wobs1)
-            pix2=jbg.closest(cfg.wave,wobs2)
-            trans=atomicdata.lam2ion(fitpars[0][i])
-            if linecmt!=None:
-                towrite=jbg.pipedelimrow([cfg.filename,restwave,round(zline,5),round(fitpars[1][i],3),round(fiterrors[1][i],3),round(fitpars[2][i],3),round(fiterrors[2][i],3),round(fitpars[4][i],3), round(fiterrors[4][i],3),parinfo[1][i],parinfo[2][i],parinfo[4][i],vlim1,vlim2,wobs1,wobs2,pix1,pix2,trans])
-            else:
-                towrite=jbg.pipedelimrow([cfg.filename,restwave,round(zline,5),round(fitpars[1][i],3),round(fiterrors[1][i],3),round(fitpars[2][i],3),round(fiterrors[2][i],3),round(fitpars[4][i],3), round(fiterrors[4][i],3),parinfo[1][i],parinfo[2][i],parinfo[4][i],vlim1,vlim2,wobs1,wobs2,pix1,pix2,trans,linecmts[0][i],linecmts[1][i]])
-            VPparfile.write(towrite)
-            bigparfile.write(towrite)
-        VPparfile.close()
-        bigparfile.close()
-        print 'Line parameters written to:'
-        print filetowrite
 
     def writeVPmodel(self, outfile, wave,fitpars,normflux,normsig):
         from astropy.table import Table
@@ -148,6 +108,8 @@ class LineParTableModel(QAbstractTableModel):
                 elif column == 6: self.fiterrors[2][row] = val
                 elif column == 7: self.fitpars[4][row] = val
                 elif column == 8: self.fiterrors[4][row] = val
+                elif column == 9: self.linecmts[0][row] = val
+                elif column == 10: self.linecmts[1][row] = val
                 else: self.fitpars[column][row] = val
                 self.dataChanged.emit(index,index)
                 return True
@@ -374,7 +336,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.fitpars,self.fiterrors,self.parinfo,self.linecmts = joebvpfit.readpars(parfilename)
         cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
         cfg.wavegroups=[]
-        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
+        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo,linecmts=self.linecmts)
         self.tableView.setModel(self.datamodel)
 
     def sideplot(self,cenwave,wavebuf=3):
@@ -417,7 +379,7 @@ class Main(QMainWindow, Ui_MainWindow):
                                                                self.datamodel.fitpars, self.datamodel.parinfo)
         else:
             self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
-        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
+        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,self.linecmts)
         self.tableView.resizeColumnsToContents()
         self.updateplot()
         self.sideplot(self.lastclick)
@@ -460,7 +422,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname, self.datamodel.linecmts)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)

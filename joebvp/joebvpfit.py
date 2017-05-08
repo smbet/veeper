@@ -441,7 +441,7 @@ def readpars(filename,wave1=None,wave2=None):
 	bflag = linelist['bflag'][lineshere]
 	velflag = linelist['vflag'][lineshere]
 	'''
-	linelist['ions']=atomicdata.lam2ion(linelist['restwave'].value)
+	linelist['ions']=atomicdata.lam2ion(linelist['restwave'])
 
 	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
 		pass
@@ -449,22 +449,22 @@ def readpars(filename,wave1=None,wave2=None):
 		linelist['comment']=['']
 
 	### TODO: replace the next line with astropy table sort() method
-	linelist.sort(['ions','zsys','vel','restwaves'])
+	linelist.sort(['ions','zsys','vel','restwave'])
  	#allpars = np.core.records.fromarrays(
 	#	[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
 	#	 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
 	#	formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
 	#allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
-	linerestwave = linelist['lamrest']
-	zs = linelist['z']
+	linerestwave = linelist['restwave']
+	zs = linelist['zsys']
 	linecol = linelist['col']
-	lineb = linelist['b']
+	lineb = linelist['bval']
 	linevel = linelist['vel']
 	linevlim1 = linelist['vlim1']
 	linevlim2 = linelist['vlim2']
-	colflag = linelist['colflag']
+	colflag = linelist['nflag']
 	bflag = linelist['bflag']
-	velflag = linelist['velflag']
+	velflag = linelist['vflag']
 	restwaves = linerestwave
 	reliability = linelist['rely']
 	comment = linelist['comment']
@@ -479,7 +479,7 @@ def readpars(filename,wave1=None,wave2=None):
 	return fitpars,fiterrors,parinfo,linecmts
 
 
-def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
+def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=None):
 	'''
 	Write fit parameters out to file.
 
@@ -495,21 +495,30 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 		Name of the input file containing the spectrum
 	outfilename : str
 		Parameter output filename
+	linecmts : list of lists, optional
+		Reliability flags and comments, e.g., from igmguesses
 
 	'''
 	import os
+	### Set outputs and open files
 	bigfiletowrite = cfg.largeVPparfile
 	filetowrite = outfilename
-
 	if os.path.isfile(filetowrite):
 		VPparfile = open(filetowrite, 'wb')
-		bigparfile = open(bigfiletowrite, 'ab')
+		bigparfile = open(bigfiletowrite, 'ab') # Append to the running list
 	else:
 		VPparfile = open(filetowrite, 'wb')
 		bigparfile = open(bigfiletowrite, 'wb')
-	header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
+
+	### Prep header of line parameter file
+	if linecmts != None:
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans|rely|comment \n'
+	else:
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
+
+	### Grab parameters/info for each line
 	for i in range(len(fitpars[0])):
 		zline = fitpars[3][i]
 		vlim1 = fitpars[5][i]
@@ -521,11 +530,17 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 		pix2 = jbg.closest(cfg.wave, wobs2)
 		trans = atomicdata.lam2ion(fitpars[0][i])
 		z_comp = ltu.z_from_dv(fitpars[4][i]*u.km/u.s, zline)
-		# import pdb; pdb.set_trace()
-		towrite = jbg.pipedelimrow(
-			[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
-			 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
-			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2,round(z_comp, 5), trans])
+		if linecmts != None:
+			towrite = jbg.pipedelimrow(
+				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
+				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2,round(z_comp, 5), trans,
+				 linecmts[0][i],linecmts[1][i]])
+		else:
+			towrite = jbg.pipedelimrow(
+				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
+				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, round(z_comp, 5),trans])
 		VPparfile.write(towrite)
 		bigparfile.write(towrite)
 	VPparfile.close()
