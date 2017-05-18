@@ -448,10 +448,10 @@ def readpars(filename,wave1=None,wave2=None):
 	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
 		pass
 	elif ('rely' in linelist.colnames):
-		linelist['comment']=['']*len(linelist)
+		linelist['comment']=['none']*len(linelist)
 	else:
-		linelist['rely'] = [''] * len(linelist)
-		linelist['comment'] = [''] * len(linelist)
+		linelist['rely'] = ['-'] * len(linelist)
+		linelist['comment'] = ['none'] * len(linelist)
 
 	reliability = linelist['rely']
 	comment = linelist['comment']
