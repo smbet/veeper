@@ -413,6 +413,8 @@ def readpars(filename,wave1=None,wave2=None):
 		Error array for the fitting initialized to '0' for each param
 	parinfo : array of arrays
 		Flags to be used in fit
+	linecmts: list of lists
+		Reliability and comment flags, e.g., from igmguesses
 	'''
 
 	linelist = ascii.read(filename)
@@ -426,46 +428,45 @@ def readpars(filename,wave1=None,wave2=None):
 	else:
 		lineobswave = linerestwave * (1. + linez)
 		lineshere = np.where((lineobswave > wave1) & (lineobswave < wave2))[0]
-	zs = linelist['zsys'][lineshere]
-	restwaves = linerestwave[lineshere]
-	linecol = linelist['col'][lineshere]
-	lineb = linelist['bval'][lineshere]
-	linevel = linelist['vel'][lineshere]
-	linevlim1 = linelist['vlim1'][lineshere]
-	linevlim2 = linelist['vlim2'][lineshere]
-	colflag = linelist['nflag'][lineshere]
-	bflag = linelist['bflag'][lineshere]
-	velflag = linelist['vflag'][lineshere]
-	#colsig = linelist['sigcol'][lineshere]
-	#bsig = linelist['sigbval'][lineshere]
-	#velsig = linelist['sigvel'][lineshere]
-	allpars = np.core.records.fromarrays(
-		[restwaves, linecol, lineb, zs, linevel, atomicdata.lam2ion(restwaves), linevlim1, linevlim2, colflag, bflag,
-		 velflag], names='lamrest,col,b,z,vel,ion,vlim1,vlim2,colflag,bflag,velflag',
-		formats='f8,f8,f8,f8,f8,a4,f8,f8,i4,i4,i4')
-	allpars.sort(order=['ion', 'z', 'vel', 'lamrest'])
-	linerestwave = allpars['lamrest']
-	zs = allpars['z']
-	linecol = allpars['col']
-	lineb = allpars['b']
-	linevel = allpars['vel']
-	linevlim1 = allpars['vlim1']
-	linevlim2 = allpars['vlim2']
-	colflag = allpars['colflag']
-	bflag = allpars['bflag']
-	velflag = allpars['velflag']
+	linelist=linelist[lineshere]
+	linelist['ions']=atomicdata.lam2ion(linelist['restwave'])
+
+	linelist.sort(['ions','zsys','vel','restwave'])
+
+
+	linerestwave = linelist['restwave']
+	zs = linelist['zsys']
+	linecol = linelist['col']
+	lineb = linelist['bval']
+	linevel = linelist['vel']
+	linevlim1 = linelist['vlim1']
+	linevlim2 = linelist['vlim2']
+	colflag = linelist['nflag']
+	bflag = linelist['bflag']
+	velflag = linelist['vflag']
 	restwaves = linerestwave
+	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
+		pass
+	elif ('rely' in linelist.colnames):
+		linelist['comment']=['none']*len(linelist)
+	else:
+		linelist['rely'] = ['-'] * len(linelist)
+		linelist['comment'] = ['none'] * len(linelist)
+
+	reliability = linelist['rely']
+	comment = linelist['comment']
 	initinfo = [colflag, bflag, velflag]
 	initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
 	fitpars, parinfo = initlinepars(zs, restwaves, initpars, initinfo=initinfo)
 	fiterrors = np.zeros([5, len(fitpars[0])])  # Initialize errors to zero
+	linecmts = [reliability,comment]
 	#fiterrors[1] = colsig
 	#fiterrors[2] = bsig
 	#fiterrors[4] = velsig
-	return fitpars,fiterrors,parinfo
+	return fitpars,fiterrors,parinfo,linecmts
 
 
-def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
+def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=None):
 	'''
 	Write fit parameters out to file.
 
@@ -481,21 +482,30 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 		Name of the input file containing the spectrum
 	outfilename : str
 		Parameter output filename
+	linecmts : list of lists, optional
+		Reliability flags and comments, e.g., from igmguesses
 
 	'''
 	import os
+	### Set outputs and open files
 	bigfiletowrite = cfg.largeVPparfile
 	filetowrite = outfilename
-
 	if os.path.isfile(filetowrite):
 		VPparfile = open(filetowrite, 'wb')
-		bigparfile = open(bigfiletowrite, 'ab')
+		bigparfile = open(bigfiletowrite, 'ab') # Append to the running list
 	else:
 		VPparfile = open(filetowrite, 'wb')
 		bigparfile = open(bigfiletowrite, 'wb')
-	header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
+
+	### Prep header of line parameter file
+	if linecmts != None:
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
+	else:
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
+
+	### Grab parameters/info for each line
 	for i in range(len(fitpars[0])):
 		zline = fitpars[3][i]
 		vlim1 = fitpars[5][i]
@@ -507,11 +517,17 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename):
 		pix2 = jbg.closest(cfg.wave, wobs2)
 		trans = atomicdata.lam2ion(fitpars[0][i])
 		z_comp = ltu.z_from_dv(fitpars[4][i]*u.km/u.s, zline)
-		# import pdb; pdb.set_trace()
-		towrite = jbg.pipedelimrow(
-			[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
-			 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
-			 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2,round(z_comp, 5), trans])
+		if linecmts != None:
+			towrite = jbg.pipedelimrow(
+				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
+				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2,round(z_comp, 5), trans,
+				 linecmts[0][i],linecmts[1][i]])
+		else:
+			towrite = jbg.pipedelimrow(
+				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
+				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
+				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, round(z_comp, 5),trans])
 		VPparfile.write(towrite)
 		bigparfile.write(towrite)
 	VPparfile.close()

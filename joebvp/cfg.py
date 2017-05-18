@@ -18,7 +18,7 @@ field=''
 homedir=os.path.expanduser('~')
 spectrum = []
 
-Todd = False
+Todd = True
 if Todd:
     lsf='COS_LP1'
     instr=['COS','COS','COS','COS','STIS']

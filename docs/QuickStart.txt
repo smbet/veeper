@@ -7,3 +7,6 @@ VPmeasure.go([specfile],[paramfile])
 [paramfile] contains input parameters for lines to be fit.
 The columns of the [paramfile]:
 specfile|restwave|zsys|col|bval|vel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans
+
+Alternatively, the [paramfile] may also have columns named 'rely' and 'comment' for reliabiliy
+flags and any user-supplied comments.

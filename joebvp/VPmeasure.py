@@ -16,7 +16,6 @@ from joebvp import joebvpfit
 from joebvp import utils as jbu
 import os
 from linetools.spectra.io import readspec
-from astropy.io import ascii
 import numpy as np
 
 from matplotlib.figure import Figure
@@ -31,64 +30,21 @@ Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 c=cfg.c/1e5
 
 class LineParTableModel(QAbstractTableModel):
-    def __init__(self,fitpars,fiterrors,parinfo,parent=None):
+    def __init__(self,fitpars,fiterrors,parinfo,linecmts=None,parent=None):
             QAbstractTableModel.__init__(self,parent)
             self.fitpars=fitpars
             self.fiterrors=fiterrors
             self.parinfo=parinfo
-            self.headers=['Wavelength','Species','z','N','sig(N)','b','sig(b)','v','sig(v)']
+            self.linecmts=linecmts
+            self.headers=['Wavelength','Species','z','N','sig(N)','b','sig(b)','v','sig(v)','rely','comment']
 
     def rowCount(self,parent):
         return len(self.fitpars[0])
 
     def columnCount(self, parent):
-        return 9
-        #return len(self.fitpars)
-
-    def writelinepars(self, outfilename,specfilename):
-        fitpars = self.fitpars
-        fiterrors = self.fiterrors
-        parinfo = self.parinfo
-        bigfiletowrite = cfg.largeVPparfile
-        filetowrite = outfilename
-
-        if os.path.isfile(filetowrite):
-            VPparfile = open(filetowrite, 'wb')
-            bigparfile = open(bigfiletowrite, 'ab')
-        else:
-            VPparfile = open(filetowrite, 'wb')
-            bigparfile = open(bigfiletowrite, 'wb')
-        header='specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
-        VPparfile.write(header)
-        bigparfile.write(header)
-        for i in range(len(fitpars[0])):
-            zline=fitpars[3][i]
-            vlim1=fitpars[5][i] ; vlim2=fitpars[6][i]
-            restwave=fitpars[0][i]
-            wobs1=restwave*(1+zline+vlim1/299792.458)
-            wobs2=restwave*(1+zline+vlim2/299792.458)
-            pix1=jbg.closest(cfg.wave,wobs1)
-            pix2=jbg.closest(cfg.wave,wobs2)
-            trans=atomicdata.lam2ion(fitpars[0][i])
-            towrite=jbg.pipedelimrow([cfg.filename,restwave,round(zline,5),round(fitpars[1][i],3),round(fiterrors[1][i],3),round(fitpars[2][i],3),round(fiterrors[2][i],3),round(fitpars[4][i],3), round(fiterrors[4][i],3),parinfo[1][i],parinfo[2][i],parinfo[4][i],vlim1,vlim2,wobs1,wobs2,pix1,pix2,trans])
-            VPparfile.write(towrite)
-            bigparfile.write(towrite)
-        VPparfile.close()
-        bigparfile.close()
-        print 'Line parameters written to:'
-        print filetowrite
-
-    def writeVPmodel(self, outfile, wave,fitpars,normflux,normsig):
-        from astropy.table import Table
-        model = joebvpfit.voigtfunc(wave, fitpars)
-        modeltab=Table([wave,model,normflux,normsig],names=['wavelength','model','normflux','normsig'])
-        modeltab.write(outfile,format='fits')
-        print 'Voigt profile model written to:'
-        print outfile
-
+        return 11
 
     def data(self,index,role):
-
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
@@ -100,6 +56,8 @@ class LineParTableModel(QAbstractTableModel):
             elif column == 6: toret=round(self.fiterrors[2][row],3)
             elif column == 7: toret=round(self.fitpars[4][row],3)
             elif column == 8: toret=round(self.fiterrors[4][row],3)
+            elif column == 9: toret=self.linecmts[0][row]
+            elif column == 10: toret=self.linecmts[1][row]
             else: toret=QVariant(round(self.fitpars[column][row],3))
             return toret
 
@@ -114,8 +72,11 @@ class LineParTableModel(QAbstractTableModel):
             elif column == 6: toret=round(self.fiterrors[2][row],3)
             elif column == 7: toret=round(self.fitpars[4][row],3)
             elif column == 8: toret=round(self.fiterrors[4][row],3)
+            elif column == 9: toret=self.linecmts[0][row]
+            elif column == 10: toret=self.linecmts[1][row]
             else: toret=QVariant(round(self.fitpars[column][row],3))
             return toret
+
         else: return None
 
     def flags(self,index):
@@ -136,6 +97,8 @@ class LineParTableModel(QAbstractTableModel):
                 elif column == 6: self.fiterrors[2][row] = val
                 elif column == 7: self.fitpars[4][row] = val
                 elif column == 8: self.fiterrors[4][row] = val
+                elif column == 9: self.linecmts[0][row] = value
+                elif column == 10: self.linecmts[1][row] = value
                 else: self.fitpars[column][row] = val
                 self.dataChanged.emit(index,index)
                 return True
@@ -143,7 +106,7 @@ class LineParTableModel(QAbstractTableModel):
         return False
 
 
-    def addLine(self,wave,newrestwave,newz,newcol,newb,newvel,newvel1,newvel2):
+    def addLine(self,wave,newrestwave,newz,newcol,newb,newvel,newvel1,newvel2,newrely=None,newcmt=None):
         ### Setup new parameters and append them to main arrays of the data model
         newpars=[[newrestwave],[newcol],[newb],[newz],[newvel],[newvel1],[newvel2]]
         fitpars=np.hstack((self.fitpars,newpars))
@@ -152,12 +115,14 @@ class LineParTableModel(QAbstractTableModel):
         newindex=np.max(self.parinfo[1])+1
         newinfo=[[1],[newindex],[newindex],[1],[newindex]]
         parinfo=np.hstack((self.parinfo,newinfo))
+        newcmts=[newrely,newcmt]
+        linecmts=np.hstack((self.linecmts,newcmts))
         ### Call initlinepars to set atomic data in cfg.fosc, etc.
         junk,junk=joebvpfit.initlinepars(fitpars[3],fitpars[0],initvals=fitpars,initinfo=parinfo)
         ### Do the update
         midx=QModelIndex()  # Needed for 'beginInsertRows'
         self.beginInsertRows(midx,len(self.fitpars[0]),len(self.fitpars[0]))
-        self.updatedata(fitpars,fiterrors,parinfo)
+        self.updatedata(fitpars,fiterrors,parinfo,linecmts)
         self.endInsertRows()
         ### Reset pixels for fit and wavegroups for convolution
         cfg.fitidx=joebvpfit.fitpix(wave,fitpars) #Reset pixels for fit
@@ -183,10 +148,11 @@ class LineParTableModel(QAbstractTableModel):
         self.endInsertRows()
     '''
 
-    def updatedata(self,fitpars,fiterrors,parinfo):
+    def updatedata(self,fitpars,fiterrors,parinfo,linecmts):
         self.fitpars=fitpars
         self.fiterrors=fiterrors
         self.parinfo=parinfo
+        self.linecmts=linecmts
         self.dataChanged.emit(self.index(0,0),self.index(self.rowCount(self)-1,self.columnCount(self)-1))
 
 
@@ -243,8 +209,6 @@ class newLineDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
-        #import pdb
-        #pdb.set_trace()
 
     def validateWavelength(self):
         ### Handle approximate wavelength entries by looking up precise values on focus exit
@@ -283,6 +247,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.line_dict = {}
         self.fitpars = None
         self.parinfo = None
+        self.linecmts = None
         self.wave1 = wave1
         self.wave2 = wave2
         self.numchunks = numchunks
@@ -355,11 +320,12 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def initialpars(self,parfilename):
         ### Deal with initial parameters from line input file
-        self.fitpars,self.fiterrors,self.parinfo = joebvpfit.readpars(parfilename)
+        self.fitpars,self.fiterrors,self.parinfo,self.linecmts = joebvpfit.readpars(parfilename)
         cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
         cfg.wavegroups=[]
-        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo)
+        self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo,linecmts=self.linecmts)
         self.tableView.setModel(self.datamodel)
+        self.datamodel.updatedata(self.fitpars,self.fitpars,self.parinfo,self.linecmts)
 
     def sideplot(self,cenwave,wavebuf=3):
         if len(self.sidefig.axes)==0:
@@ -401,7 +367,7 @@ class Main(QMainWindow, Ui_MainWindow):
                                                                self.datamodel.fitpars, self.datamodel.parinfo)
         else:
             self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
-        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo)
+        self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,self.linecmts)
         self.tableView.resizeColumnsToContents()
         self.updateplot()
         self.sideplot(self.lastclick)
@@ -444,7 +410,7 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname)
         if fname != '':
-            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname, self.datamodel.linecmts)
 
     def writeModelFileDialog(self):
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
@@ -616,7 +582,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     q_fail = 0
     for i,ff in enumerate(listofiles):
         i+=1
-        fitpars,fiterrors,parinfo=joebvpfit.readpars(ff)
+        fitpars,fiterrors,parinfo,linecmts=joebvpfit.readpars(ff)
         cfg.wavegroups = []
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
