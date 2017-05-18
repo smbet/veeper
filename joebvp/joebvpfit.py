@@ -431,13 +431,9 @@ def readpars(filename,wave1=None,wave2=None):
 	linelist=linelist[lineshere]
 	linelist['ions']=atomicdata.lam2ion(linelist['restwave'])
 
-	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
-		pass
-	elif ('rely' in linelist.colnames):
-		linelist['comment']=['']
-
-	### TODO: replace the next line with astropy table sort() method
 	linelist.sort(['ions','zsys','vel','restwave'])
+
+
 	linerestwave = linelist['restwave']
 	zs = linelist['zsys']
 	linecol = linelist['col']
@@ -449,6 +445,14 @@ def readpars(filename,wave1=None,wave2=None):
 	bflag = linelist['bflag']
 	velflag = linelist['vflag']
 	restwaves = linerestwave
+	if (('rely' in linelist.colnames)&('comment' in linelist.colnames)):
+		pass
+	elif ('rely' in linelist.colnames):
+		linelist['comment']=['']*len(linelist)
+	else:
+		linelist['rely'] = [''] * len(linelist)
+		linelist['comment'] = [''] * len(linelist)
+
 	reliability = linelist['rely']
 	comment = linelist['comment']
 	initinfo = [colflag, bflag, velflag]
