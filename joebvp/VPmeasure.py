@@ -87,10 +87,8 @@ class LineParTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
-            print column
             if value.toFloat()[1]==True:
                 val = round(float(value.toFloat()[0]),2)
-                print 'hi',val
                 if column == 1: pass
                 if column == 2: self.fitpars[3][row] = val
                 elif column == 3: self.fitpars[1][row] = val
@@ -99,8 +97,8 @@ class LineParTableModel(QAbstractTableModel):
                 elif column == 6: self.fiterrors[2][row] = val
                 elif column == 7: self.fitpars[4][row] = val
                 elif column == 8: self.fiterrors[4][row] = val
-                elif column == 9: pass
-                elif column == 10: pass
+                elif column == 9: self.linecmts[0][row] = value
+                elif column == 10: self.linecmts[1][row] = value
                 else: self.fitpars[column][row] = val
                 self.dataChanged.emit(index,index)
                 return True

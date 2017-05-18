@@ -499,9 +499,9 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 
 	### Prep header of line parameter file
 	if linecmts != None:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans|rely|comment \n'
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
 	else:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|trans \n'
+		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
 
