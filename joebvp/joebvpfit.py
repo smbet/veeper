@@ -540,7 +540,10 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	from astropy.table import Table
 	model = voigtfunc(wave, fitpars)
 	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
-	modeltab.write(outfile, format='fits', overwrite=True)
+	# modeltab.write(outfile, format='fits', overwrite=True)
+	spec = XSpectrum1D.from_tuple((modeltab['wavelength'], modeltab['model'], modeltab['normsig']))
+	spec.write_to_fits(outfile)
+
 	print 'Voigt profile model written to:'
 	print outfile
 
