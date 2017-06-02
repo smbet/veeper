@@ -542,7 +542,8 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	model = voigtfunc(wave, fitpars)
 	modeltab = Table([wave, model, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
 	# modeltab.write(outfile, format='fits', overwrite=True)
-	spec = XSpectrum1D.from_tuple((modeltab['wavelength'], modeltab['model'], modeltab['normsig']))
+	dummycont = np.ones(len(wave))
+	spec = XSpectrum1D.from_tuple((modeltab['wavelength'], modeltab['model'], modeltab['normsig'], dummycont))
 	spec.write_to_fits(outfile)
 
 	print 'Voigt profile model written to:'
