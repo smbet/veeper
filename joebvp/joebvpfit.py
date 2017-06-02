@@ -15,6 +15,7 @@ from scipy import random
 import warnings
 import sys
 from linetools import utils as ltu
+from linetools.spectra.xspectrum1d import XSpectrum1D
 
 c=299792.458
 
