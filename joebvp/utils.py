@@ -295,6 +295,16 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
         fig.suptitle(title)
         fig.savefig(pp,format='pdf')
         plt.close(fig)
+
+    ### Write out full model fits file
+    normflux = line.analy['spec'].flux/line.analy['spec'].co
+    normsig = line.analy['spec'].sig / line.analy['spec'].co
+    modeltab = Table([line.analy['spec'].wavelength.value, fullmodel, normflux, normsig], names=['wavelength', 'model', 'normflux', 'normsig'])
+    # modeltab.write(outfile, format='fits', overwrite=True)
+    dummycont = np.ones(len(normflux))
+    spec = XSpectrum1D.from_tuple((modeltab['wavelength'], modeltab['model'], modeltab['normsig'], dummycont))
+    spec.write_to_fits(output[:-4]+'.fits')
+
     pp.close()
 
 def abscomponents_from_abslines(abslinelist, **kwargs):
