@@ -28,16 +28,6 @@ c=const.c.value/1e3
 
 modpath=os.path.dirname(__file__)
 
-
-# if cfg.lsf=='COS_LP1':
-# 	G130file=modpath+'/LSF/COS_LP1/G130M.REBIN.LSF.dat'
-# 	relpix,w1150,w1200,w1250,w1300,w1350,w1400,w1450=np.loadtxt(G130file,unpack=True,skiprows=1)
-# 	G160file=modpath+'/LSF/COS_LP1/G160M.REBIN.LSF.dat'
-# 	relpix,w1450,w1500,w1550,w1600,w1650,w1700,w1750=np.loadtxt(G160file,unpack=True,skiprows=1)
-# else:
-# 	raise('Error: Only COS LP1 is supported at this time')
-
-
 def Hfunc(x,a):
 	z=x+1j*a
 	I=wofz(z).real
@@ -96,13 +86,13 @@ def get_lsfs():
 		if isinstance(fg,int):
 			lamobs=cfg.wave[fg]
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA,kind='cubic')
+			lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[cfg.fgs] * u.AA,kind='cubic')
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-			lsf = lsfobjs[lsfmatch].interpolate_to_wv_array(cfg.wave[fg] * u.AA,kind='cubic')
+			lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA,kind='cubic')
 			cfg.lsfs.append(lsf['kernel'])
 
 def convolvecos(wave,profile,lines,zs):
@@ -157,15 +147,6 @@ def convolvecos(wave,profile,lines,zs):
 				cfg.fgs.append(fg)
 		get_lsfs()
 	convprof=profile
-	'''
-	for i,ll in enumerate(cfg.uqwgidxs):
-		matches=cfg.fitidx[np.where(cfg.wgidxs==ll)[0]]
-		paddedprof=np.insert(profile[matches],0,[1.]*16)
-		paddedprof=np.append(paddedprof,[1.]*16)
-		#convprof[matches]=convolve(profile[matches],lsf,mode='same')[16:-16]
-		convprof[matches] = convolve(paddedprof, cfg.lsfs[i], mode='same')[16:-16]
-		#convprof[matches[:16]]=[1.]*16 ; convprof[matches[-16:]]=[1.]*16
-	'''
 	for i,ll in enumerate(cfg.fgs):
 		if isinstance(ll,int):
 			lsfwidth=len(cfg.fgs)/2+1
@@ -178,36 +159,7 @@ def convolvecos(wave,profile,lines,zs):
 			lsfwidth=len(ll)/2+1
 			paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
 			paddedprof=np.append(paddedprof,[1.]*lsfwidth)
-			'''
-			tab2write=Table([cfg.wave[ll]],names=['wave'])
-			ascii.write(tab2write, output='wave_'+str(i)+'.dat')
-			tab2write=Table([cfg.lsfs[i]],names=['lsf'])
-			ascii.write(tab2write, output='lsf'+str(i)+'.dat')
-			tab2write=Table([paddedprof],names=['paddedprof'])
-			ascii.write(tab2write, output='padprof_'+str(i)+'.dat')
-			tab2write=Table([cfg.normflux[ll]],names=['flux'])
-			ascii.write(tab2write, output='flux_'+str(i)+'.dat')
-			'''
 			convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
 
 
 	return convprof
-
-'''
-def convolvecos(profile,line,z):
-    lamobs=restwave(line)*(1.+z)
-    if (lamobs<=1175): lsf=w1150
-    elif (lamobs>1175) 	& (lamobs<=1225): lsf=w1200
-    elif (lamobs>1225) & (lamobs<=1275): lsf=w1250
-    elif (lamobs>1275) & (lamobs<=1325): lsf=w1300
-    elif (lamobs>1325) & (lamobs<=1375): lsf=w1350
-    elif (lamobs>1375) & (lamobs<=1425): lsf=w1400
-    elif (lamobs>1425) & (lamobs<=1475): lsf=w1450
-    elif (lamobs>1475) & (lamobs<=1525): lsf=w1500
-    elif (lamobs>1525) & (lamobs<=1575): lsf=w1550
-    elif (lamobs>1575) & (lamobs<=1625): lsf=w1600
-    elif (lamobs>1625) & (lamobs<=1675): lsf=w1650
-    elif (lamobs>1675) & (lamobs<=1725): lsf=w1700
-    elif (lamobs>1725): lsf=w1750
-    return convolve(profile,lsf,mode='same')
-    '''

@@ -5,10 +5,13 @@ Created on Mon Mar 21 22:50:45 2016
 @author: burchett
 """
 
-from PyQt4.uic import loadUiType
-from PyQt4 import QtGui
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt5.uic import loadUiType
+from PyQt5 import QtGui
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5 import QtWidgets
+
 import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
 from joebvp import cfg
@@ -19,7 +22,7 @@ from linetools.spectra.io import readspec
 import numpy as np
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg import (
+from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 
@@ -239,7 +242,7 @@ class newLineDialog(QDialog):
 
 class Main(QMainWindow, Ui_MainWindow):
     def __init__(self,specfilename,parfilename=None,wave1=None,wave2=None,numchunks=8,parent=None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
         #super(Main,self).__init__()
         self.setupUi(self)
 
@@ -399,7 +402,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.updateplot()
 
     def openParFileDialog(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
         fname = str(fname)
         if fname != '':
             self.initialpars(fname)
@@ -407,25 +410,24 @@ class Main(QMainWindow, Ui_MainWindow):
         self.updateplot()
 
     def writeParFileDialog(self):
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
-        fname = str(fname)
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
+        fname = str(fname[0])
         if fname != '':
             joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname, self.datamodel.linecmts)
 
     def writeModelFileDialog(self):
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
-        fname = str(fname)
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
+        fname = str(fname[0])
         if fname != '':
             joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def writeModelCompFileDialog(self):
-        dirDialog = QtGui.QFileDialog(self)
-
+        dirDialog = QtWidgets.QFileDialog(self)
         dirDialog.setFileMode(dirDialog.Directory)
         dirDialog.setOption(dirDialog.ShowDirsOnly, True)
         defDirName = cfg.VPmodeloutfile[:-5]
         dname = dirDialog.getSaveFileName(self, 'Save model to files split by components',defDirName)
-        dname = str(dname)
+        dname = str(dname[0])
         if dname != '':
             joebvpfit.writeVPmodelByComp(dname, self.spectrum,self.fitpars)
 
@@ -532,10 +534,16 @@ def go(specfilename, parfilename):
     from astropy.io import ascii
     from linetools.spectra.io import readspec
 
-    app = QtGui.QApplication(sys.argv)
-    main = Main(specfilename, parfilename)
-    main.show()
-    app.exec_()
+
+    try:
+        app = QtWidgets.QApplication(sys.argv)
+        main = Main(specfilename, parfilename)
+        main.show()
+        sys.exit(app.exec_())
+    except:
+        print('Uh-oh')
+        app.quit()
+
     #sys.exit(app.exec_())
     #app.quit()
 
