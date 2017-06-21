@@ -602,6 +602,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
     jbu.concatenate_line_tables("all_VP.txt")
+    reload(cfg) # Clear out the LSFs from the last fit
     jbu.inspect_fits("compiledVPoutputs.dat")
     print("VPmeasure: Done.")
 

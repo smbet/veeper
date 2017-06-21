@@ -8,6 +8,7 @@ from linetools.spectra.xspectrum1d import XSpectrum1D
 from astropy.table import Table,vstack
 from astropy.io import ascii
 import joebvp.cfg as cfg
+import astropy.units as u
 
 def compose_model(spec,filelist,outfile):
     '''
@@ -238,7 +239,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
     
-def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
+def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **kwargs):
     '''
     Produce pdf of fitting results for quality check.
 
@@ -246,9 +247,11 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
     ----------
     parfile : str
         Name of the parameter file in the joebvp format
-
-    output : str
+    output : str,optional
         Name of file to write stackplots output
+    vlim : Quantity array, optional
+        Velocity range of stackplots
+        e.g.: [-400,
 
     Returns
     -------
@@ -263,10 +266,9 @@ def inspect_fits(parfile,output='FitInspection.pdf',**kwargs):
     fitpars,fiterrors,parinfo,linecmts = joebvpfit.readpars(parfile)
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
 
-
     ### Make a stackplot for each component
     for comp in acl:
-        fig=comp.stack_plot(ymnx=(-0.1,1.3),show=False,return_fig=True, tight_layout=True)
+        fig=comp.stack_plot(ymnx=(-0.1,1.3),show=False,return_fig=True,vlim=vlim, tight_layout=True)
         if (len(comp._abslines)<6):
             numrow = len(comp._abslines)%6
         else:
