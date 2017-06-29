@@ -403,7 +403,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def openParFileDialog(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
-        fname = str(fname)
+        fname = str(fname[0])
         if fname != '':
             self.initialpars(fname)
 
@@ -535,17 +535,13 @@ def go(specfilename, parfilename):
     from linetools.spectra.io import readspec
 
 
-    try:
+    app = QtWidgets.QApplication.instance()
+    if not app:
         app = QtWidgets.QApplication(sys.argv)
-        main = Main(specfilename, parfilename)
-        main.show()
-        sys.exit(app.exec_())
-    except:
-        print('Uh-oh')
-        app.quit()
-
-    #sys.exit(app.exec_())
-    #app.quit()
+        app.aboutToQuit.connect(app.deleteLater)
+    main = Main(specfilename, parfilename)
+    main.show()
+    app.exec_()
 
 def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
     '''
