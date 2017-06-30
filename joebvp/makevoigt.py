@@ -5,6 +5,7 @@
 ###  params format (each entry a list): [restwave,coldens,bval,z,vel]
 ###
 #######################################################################
+from PyQt5 import QtGui, QtCore
 
 
 import joebgoodies as jbg
@@ -90,6 +91,9 @@ def get_lsfs():
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
+			# QtCore.pyqtRemoveInputHook()
+			# import pdb; pdb.set_trace()
+			# QtCore.pyqtRestoreInputHook()
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
 			lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA,kind='cubic')

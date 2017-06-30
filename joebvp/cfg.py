@@ -17,6 +17,8 @@ filename=''
 field=''
 homedir=os.path.expanduser('~')
 spectrum = []
+bad_pixels = []  # this will store bad pixel indices
+min_sn = 1  # float, minimum signal to noise to include pixels in fit
 
 Todd = False
 if Todd:
@@ -34,7 +36,7 @@ else:  # this is for the casual user
     gratings=['G130M','G160M']
     slits=['NA','NA']
     lsfranges=np.array([[1100,1450],[1450,1800]])
-    lps=['1','1']
+    lps=['2','2']
     cen_wave=['1327','1600']
 
 

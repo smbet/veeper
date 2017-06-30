@@ -77,8 +77,9 @@ def fitpix(wave,pararr):
 			relpix.extend(range(0, p2 + 10))
 		else:
 			relpix.extend(range(p1 - 10, len(wave)-1))
-		rp=np.unique(np.array(relpix))
-	return rp
+	rp = np.unique(np.array(relpix))
+	clean_rp = np.array([i for i in rp if i not in cfg.bad_pixels])
+	return clean_rp
 
 def prepparinfo(linepars,parflags):
 	parinfo=[]
