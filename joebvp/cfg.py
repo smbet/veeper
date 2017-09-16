@@ -18,7 +18,7 @@ field=''
 homedir=os.path.expanduser('~')
 spectrum = []
 bad_pixels = []  # this will store bad pixel indices
-min_sn = 0.5  # float, minimum signal to noise to include pixels in fit
+min_sn = 0.0  # float, minimum signal to noise to include pixels in fit; leave as 0 and nothing will happen
 
 Todd = False
 if Todd:
