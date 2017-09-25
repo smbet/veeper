@@ -138,10 +138,13 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         List of AbsLine objects
     '''
     from linetools.spectralline import AbsLine
+    from linetools.lists.linelist import LineList
     import astropy.units as u
+    llist = LineList('ISM')
     if specfile!=None:
         spec=readspec(specfile) # Allow spectrum file to be declared in call
     linetab = ascii.read(parfile) # Read parameters from file
+    linetab['restwave']=linetab['restwave']*u.AA
     abslinelist = [] # Initiate list to populate
     for i,row in enumerate(linetab):
         ### Check to see if errors for this line are defined
@@ -151,7 +154,7 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         vcentmax = row['vel']+velerr
         v1 = vcentmin + row['vlim1']
         v2 = vcentmax + row['vlim2']
-        line=AbsLine(row['restwave']*u.AA, z=row['zsys'],closest=True)
+        line=AbsLine(row['restwave']*u.AA, z=row['zsys'],closest=True, linelist=llist)
         vlims=[v1,v2]*u.km/u.s
         line.limits.set(vlims)
         ### Set other parameters
