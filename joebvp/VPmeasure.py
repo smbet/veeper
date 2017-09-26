@@ -272,6 +272,14 @@ class Main(QMainWindow, Ui_MainWindow):
         cfg.normflux=self.normflux
         cfg.filename=self.specfilename
 
+        # define bad pixels
+        cond_badpix = (self.spectrum.wavelength <= self.spectrum.wvmin) | \
+                      (self.spectrum.wavelength >= self.spectrum.wvmax) | \
+                      (self.spectrum.sig <= 0) | \
+                      (self.spectrum.flux / self.spectrum.sig < cfg.min_sn)  # bad S/N
+        cfg.bad_pixels = np.where(cond_badpix)[0]  # this variable stores the indices of bad pixels
+
+
         if not parfilename==None:
             self.initialpars(parfilename)
 
@@ -593,7 +601,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
-            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename)
+            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
             q_pass += 1
         except:

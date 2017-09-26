@@ -77,8 +77,9 @@ def fitpix(wave,pararr):
 			relpix.extend(range(0, p2 + 10))
 		else:
 			relpix.extend(range(p1 - 10, len(wave)-1))
-		rp=np.unique(np.array(relpix))
-	return rp
+	rp = np.unique(np.array(relpix))
+	clean_rp = np.array([i for i in rp if i not in cfg.bad_pixels])
+	return clean_rp
 
 def prepparinfo(linepars,parflags):
 	parinfo=[]
@@ -499,7 +500,7 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 		bigparfile = open(bigfiletowrite, 'wb')
 
 	### Prep header of line parameter file
-	if linecmts != None:
+	if linecmts is not None:
 		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
 	else:
 		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
@@ -518,7 +519,7 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 		pix2 = jbg.closest(cfg.wave, wobs2)
 		trans = atomicdata.lam2ion(fitpars[0][i])
 		z_comp = ltu.z_from_dv(fitpars[4][i]*u.km/u.s, zline)
-		if linecmts != None:
+		if linecmts is not None:
 			towrite = jbg.pipedelimrow(
 				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
 				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
