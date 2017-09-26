@@ -601,7 +601,7 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
-            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename)
+            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
             q_pass += 1
         except:
