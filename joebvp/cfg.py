@@ -31,12 +31,12 @@ if Todd:
     cen_wave=['1327','1600','1953','2250','2707']
 
 else:  # this is for the casual user
-    lsf='COS_LP1'
+    lsf='COS_LP3'
     instr=['COS','COS']
     gratings=['G130M','G160M']
     slits=['NA','NA']
     lsfranges=np.array([[1100,1450],[1450,1800]])
-    lps=['2','2']
+    lps=['3','3']
     cen_wave=['1327','1600']
 
 

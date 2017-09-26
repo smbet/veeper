@@ -956,7 +956,7 @@ e.g. mpfit.status, mpfit.errmsg, mpfit.params, npfit.niter, mpfit.covar.
         limited = self.parinfo(parinfo, 'limited', default=[0,0], n=npar)
         limits = self.parinfo(parinfo, 'limits', default=[0.,0.], n=npar)
 
-        if (limited != None) and (limits != None):
+        if (limited is not None) and (limits is not None):
             ## Error checking on limits in parinfo
             wh = numpy.nonzero((limited[:,0] & (xall < limits[:,0])) |
                                                                     (limited[:,1] & (xall > limits[:,1])))
