@@ -30,7 +30,7 @@ modpath=os.path.abspath(os.path.dirname(__file__))
 print os.path.abspath(os.path.dirname(__file__))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
-c=cfg.c/1e5
+c= cfg.c / 1e5
 
 class LineParTableModel(QAbstractTableModel):
     def __init__(self,fitpars,fiterrors,parinfo,linecmts=None,parent=None):
@@ -128,7 +128,7 @@ class LineParTableModel(QAbstractTableModel):
         self.updatedata(fitpars,fiterrors,parinfo,linecmts)
         self.endInsertRows()
         ### Reset pixels for fit and wavegroups for convolution
-        cfg.fitidx=joebvpfit.fitpix(wave,fitpars) #Reset pixels for fit
+        cfg.fitidx=joebvpfit.fitpix(wave, fitpars) #Reset pixels for fit
         cfg.wavegroups=[]
     '''
     def insertRows(self,position,rows,parent=QModelIndex()):
@@ -227,7 +227,7 @@ class newLineDialog(QDialog):
 
     def lineParams(self):
         vel=float(self.velBox.text())
-        vel1=vel-cfg.defaultvlim ; vel2=vel+cfg.defaultvlim
+        vel1= vel - cfg.defaultvlim ; vel2= vel + cfg.defaultvlim
         return self.lamBox.text(),self.zBox.text(),self.colBox.text(),self.bBox.text(),self.velBox.text(),vel1,vel2
 
     @staticmethod
@@ -332,7 +332,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def initialpars(self,parfilename):
         ### Deal with initial parameters from line input file
         self.fitpars,self.fiterrors,self.parinfo,self.linecmts = joebvpfit.readpars(parfilename)
-        cfg.fitidx=joebvpfit.fitpix(self.wave,self.fitpars) #Set pixels for fit
+        cfg.fitidx=joebvpfit.fitpix(self.wave, self.fitpars) #Set pixels for fit
         cfg.wavegroups=[]
         self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo,linecmts=self.linecmts)
         self.tableView.setModel(self.datamodel)
@@ -360,7 +360,7 @@ class Main(QMainWindow, Ui_MainWindow):
                                                                             1. + self.fitpars[3][j])
                 label = ' {:.1f}_\nz{:.4f}'.format(self.fitpars[0][j], self.fitpars[3][j])
                 self.sideax.text(labelloc, cfg.label_ypos, label, rotation=90, withdash=True, ha='center', va='bottom',
-                        clip_on=True, fontsize=cfg.label_fontsize)
+                                 clip_on=True, fontsize=cfg.label_fontsize)
 
         self.sideax.plot(self.wave, self.normsig, linestyle='steps-mid', color='red', lw=0.5)
         self.sideax.plot(self.wave, -self.normsig, linestyle='steps-mid', color='red', lw=0.5)
@@ -463,7 +463,7 @@ class Main(QMainWindow, Ui_MainWindow):
     
                     sp.plot(self.wave,self.normflux,linestyle='steps-mid')
                     if self.pixtog==1:
-                        sp.plot(self.wave[cfg.fitidx],self.normflux[cfg.fitidx],'gs',markersize=4,mec='green')
+                        sp.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
                     model=joebvpfit.voigtfunc(self.wave,self.fitpars)
                     res=self.normflux-model
                     sp.plot(self.wave,model,'r')
@@ -551,10 +551,11 @@ def go(specfilename, parfilename):
     main.show()
     app.exec_()
 
-def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
+def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     '''
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
-    be run until convergence for each input file.
+    be run until convergence for each input file. The program will then ask whether to run the failed
+    runs in GUI mode.
 
     Parameters
     ----------
@@ -592,8 +593,9 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
 
     q_pass = 0
     q_fail = 0
+    fails = [] # store failures filenames
     for i,ff in enumerate(listofiles):
-        i+=1
+        i += 1
         fitpars,fiterrors,parinfo,linecmts=joebvpfit.readpars(ff)
         cfg.wavegroups = []
         try:
@@ -606,15 +608,38 @@ def batch_fit(spec,filelist,outparfile=None,outmodelfile=None,**kwargs):
             q_pass += 1
         except:
             print('VPmeasure: Fitting failed:',ff)
+            fails += [ff]
             q_fail += 1
     print("")
     print("VPmeasure: {}/{} fits converged, {}/{} failed (see log for details).\n".format(q_pass, i, q_fail, i))
 
+    # ask whether run GUI mode on failures
+    if q_fail >= 0:
+        print("VPmeasure: Failed runs are: {}\n".format(fails))
+        while True:
+            answer = raw_input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")
+            if answer in ['y','n', 'yes','no']:
+                break
+        if answer in ['y', 'yes']:
+            for ff in fails:
+                go(spec, ff)
+
+    # ask whether to concatenate and create fits inspection files
+    while True:
+        answer = raw_input("VPmeasure: Would you like to concatenate all .VP outputs in the working directory and create a FitsInspection.pdf file? (y/n): ")
+        if answer in ['y','n', 'yes','no']:
+            break
+    if answer in ['y', 'yes']:
+        concatenate_all()
+    else:
+        print("VPmeasure: Done.")
+
+def concatenate_all():
     # concatenate and inspect fit
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
     jbu.concatenate_line_tables("all_VP.txt")
-    reload(cfg) # Clear out the LSFs from the last fit
+    reload(cfg)  # Clear out the LSFs from the last fit
     jbu.inspect_fits("compiledVPoutputs.dat")
     print("VPmeasure: Done.")
 
