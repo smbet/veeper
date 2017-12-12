@@ -582,6 +582,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     normflux=spectofit.flux.value/spectofit.co.value
     normsig=spectofit.sig.value/spectofit.co.value
     cfg.wave=wave
+    cfg.spectrum = spectofit # need this for defining bad pixels later
 
     q_pass = 0
     q_fail = 0
@@ -606,7 +607,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     print("VPmeasure: {}/{} fits converged, {}/{} failed (see log for details).\n".format(q_pass, i, q_fail, i))
 
     # ask whether run GUI mode on failures
-    if q_fail >= 0:
+    if q_fail > 0:
         print("VPmeasure: Failed runs are: {}\n".format(fails))
         while True:
             answer = raw_input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")

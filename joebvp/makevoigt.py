@@ -91,12 +91,29 @@ def get_lsfs():
 			cfg.lsfs.append(lsf['kernel'])
 			break
 		else:
-			# QtCore.pyqtRemoveInputHook()
-			# import pdb; pdb.set_trace()
-			# QtCore.pyqtRestoreInputHook()
+
 			lamobs=np.median(cfg.wave[fg])
 			lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+			if len(fg) < 10:
+				print("Line at {:.2f} AA is undersampling the LSF. Will increase number of pixels at either side to"
+					"include at least 10.".format(lamobs))
+				n_more_side = (10 - len(fg))/2 + 1
+				inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
+				inds_left = [np.min(fg) - ii - 1 for ii in range(n_more_side)]
+				inds_left.sort()
+				# QtCore.pyqtRemoveInputHook()
+				# import pdb; pdb.set_trace()
+				# QtCore.pyqtRestoreInputHook()
+				fg = inds_left + fg.tolist() + inds_right
+				fg = np.array(fg)
+				print("New fg is: {}".format(fg))
+
 			lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA, kind='cubic')
+			# except:
+			# 	QtCore.pyqtRemoveInputHook()
+			# 	import pdb; pdb.set_trace()
+			# 	QtCore.pyqtRestoreInputHook()
+
 			cfg.lsfs.append(lsf['kernel'])
 
 def convolvecos(wave,profile,lines,zs):

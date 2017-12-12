@@ -19,8 +19,10 @@ field=''
 homedir=os.path.expanduser('~')
 spectrum = []
 bad_pixels = []  # this will store bad pixel indices
-min_sn = 0.5  # float, minimum signal to noise to include pixels in fit; leave as 0 and nothing will happen
-spectral_gaps = [[0,1174], [1300,1307], [1312.5,1330], [1560,1575], [1750,2000]]  # these gaps can be used to define bad pixels
+min_sn = 0.2  # float, minimum signal to noise to include pixels in fit; leave as 0 and nothing will happen
+# spectral_gaps = [[0,1174], [1300,1307], [1312.5,1330], [1560,1575], [1750,2000]]  # these gaps can be used to define bad pixels
+
+
 
 Todd = False
 if Todd:
@@ -40,6 +42,11 @@ else:  # this is for the casual user
     lsfranges=np.array([[1160,1450],[1450,1800]])
     lps=['3','3']
     cen_wave=['1318','1600']
+    # spectral gaps for defyning bad pixels
+    # spectral_gaps = [[0,1385], [1387,1387.6], [1558.4,1575.4], [1577.77,1578.3], [1748,2000]]  # BAL
+    spectral_gaps = [[0,1174], [1300,1307], [1312.5,1330], [1560,1575], [1750,2000]]  # J0321
+
+
 
 # fundamental constants
 echarge = 4.803204505713468e-10
