@@ -544,7 +544,7 @@ def go(specfilename, parfilename):
     app.exec_()
 
 def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
-    '''
+    """
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file. The program will then ask whether to run the failed
     runs in GUI mode.
@@ -553,16 +553,19 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     ----------
     spec : string or XSpectrum1D
         The spectrum to be fitted with the input lines
-
     filelist : list of strings or str
         This should be a list containing the names of VP input files or a string referring to a file simply
         listing the input files.
         See joebvpfit.readpars for details of file format
+    outparfile : str, optional
+        Not sure what this does [complete here].
+    outmodelfile: str, optional
+        Not sure what this does [complete here].
 
     **kwargs : maxiter, itertol
         These are fed on to the joebvp.fit_to_convergence() function
 
-    '''
+    """
     if isinstance(spec,str):
         spectofit = readspec(spec)
         specfile = spectofit.filename
@@ -589,10 +592,10 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     fails = [] # store failures filenames
     for i,ff in enumerate(listofiles):
         i += 1
-        fitpars,fiterrors,parinfo,linecmts=joebvpfit.readpars(ff)
+        fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
         cfg.wavegroups = []
         try:
-            fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo)
+            fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff[:-6] + 'VP'
             modeloutfilename = ff[:-7] + '_VPmodel.fits'
@@ -617,24 +620,20 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
             for ff in fails:
                 go(spec, ff)
 
-    # ask whether to concatenate and create fits inspection files
-    while True:
-        answer = raw_input("VPmeasure: Would you like to concatenate all .VP outputs in the working directory and create a FitsInspection.pdf file? (y/n): ")
-        if answer in ['y','n', 'yes','no']:
-            break
-    if answer in ['y', 'yes']:
-        concatenate_all()
-    else:
-        print("VPmeasure: Done.")
+    # Concatenate and create fits inspection files
+    concatenate_all()
+    print("VPmeasure: Done.")
 
 def concatenate_all():
+    """Takes all *.VP files in the working directory, and concatenates them into a single VP file
+    as well as creates a single PDF file for fit inspection."""
     # concatenate and inspect fit
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
     jbu.concatenate_line_tables("all_VP.txt")
     reload(cfg)  # Clear out the LSFs from the last fit
     jbu.inspect_fits("compiledVPoutputs.dat")
-    print("VPmeasure: Done.")
+
 
 if __name__ == '__main__':
         import sys
