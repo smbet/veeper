@@ -20,6 +20,7 @@ from joebvp import utils as jbu
 import os
 from linetools.spectra.io import readspec
 import numpy as np
+from astropy.constants import c
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
@@ -30,7 +31,7 @@ modpath=os.path.abspath(os.path.dirname(__file__))
 print os.path.abspath(os.path.dirname(__file__))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
-c= cfg.c / 1e5
+c= c.to('km/s').value
 
 class LineParTableModel(QAbstractTableModel):
     def __init__(self,fitpars,fiterrors,parinfo,linecmts=None,parent=None):
@@ -271,14 +272,6 @@ class Main(QMainWindow, Ui_MainWindow):
         cfg.wave=self.wave
         cfg.normflux=self.normflux
         cfg.filename=self.specfilename
-
-        # define bad pixels
-        cond_badpix = (self.spectrum.wavelength <= self.spectrum.wvmin) | \
-                      (self.spectrum.wavelength >= self.spectrum.wvmax) | \
-                      (self.spectrum.sig <= 0) | \
-                      (self.spectrum.flux / self.spectrum.sig < cfg.min_sn)  # bad S/N
-        cfg.bad_pixels = np.where(cond_badpix)[0]  # this variable stores the indices of bad pixels
-
 
         if not parfilename==None:
             self.initialpars(parfilename)
@@ -541,7 +534,6 @@ def go(specfilename, parfilename):
     from astropy.io import fits as pf
     from astropy.io import ascii
     from linetools.spectra.io import readspec
-
 
     app = QtWidgets.QApplication.instance()
     if not app:

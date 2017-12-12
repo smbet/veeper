@@ -56,7 +56,23 @@ def voigterrfunc(p,x,y,err,fjac=None):
 	status=0
 	return([status, (y[cfg.fitidx] - model[cfg.fitidx]) / err[cfg.fitidx]])
 
+def update_bad_pixels():
+	# define bad pixels
+	cond_badpix = (cfg.spectrum.wavelength <= cfg.spectrum.wvmin) | \
+				  (cfg.spectrum.wavelength >= cfg.spectrum.wvmax) | \
+				  (cfg.spectrum.sig <= 0) | \
+				  (cfg.spectrum.flux / cfg.spectrum.sig < cfg.min_sn)  # bad S/N
+	# spectral gaps
+	for gap in cfg.spectral_gaps:
+		cond_gap = (cfg.spectrum.wavelength >= gap[0]*u.AA) & (cfg.spectrum.wavelength <= gap[1]*u.AA)
+		cond_badpix = cond_badpix | cond_gap
+	bad_pixels = np.where(cond_badpix)[0]
+	return bad_pixels
+
 def fitpix(wave,pararr):
+	# define bad pixels
+	cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
+
 	ll=pararr[0]
 	lz=pararr[3]
 	lv1=pararr[5]
@@ -138,7 +154,7 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	lam,fosc,gam=atomicdata.setatomicdata(linepars[0])
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	# Set fit regions
-	cfg.fitidx=fitpix(wave, linepars)
+	cfg.fitidx = fitpix(wave, linepars)
 	# Prep parameters for fitter
 	partofit=unfoldpars(partofit)
 	modelvars={'x':wave,'y':flux,'err':sig}
@@ -630,12 +646,12 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 	linepars
 	parinfo
 
-    maxiter : int
-        Maximum number of times to run the fit while striving for convergence
+	maxiter : int
+		Maximum number of times to run the fit while striving for convergence
 
-    itertol : float
-        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
-        any difference in the measurements exceeds itertol.
+	itertol : float
+		Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
+		any difference in the measurements exceeds itertol.
 
 
 	Returns
