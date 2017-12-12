@@ -57,7 +57,9 @@ c2 = 29979245800.0
 # store LSFs and FGs
 lsfs=[]
 fgs=[]
-
+wavegroups=[]
+wgidxs=[]
+uqwgidxs=[]
 
 outputdir = './'
 
