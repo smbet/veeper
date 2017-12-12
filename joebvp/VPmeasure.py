@@ -558,9 +558,9 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         listing the input files.
         See joebvpfit.readpars for details of file format
     outparfile : str, optional
-        Not sure what this does [complete here].
+        Output file for fitted line parameters.
     outmodelfile: str, optional
-        Not sure what this does [complete here].
+        Output fits file for fitted model as the 'flux'.
 
     **kwargs : maxiter, itertol
         These are fed on to the joebvp.fit_to_convergence() function
@@ -594,7 +594,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
         cfg.wavegroups = []
-        try:
+        if 1:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff[:-6] + 'VP'
@@ -602,7 +602,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
             joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
             q_pass += 1
-        except:
+        else: #except:
             print('VPmeasure: Fitting failed:',ff)
             fails += [ff]
             q_fail += 1
