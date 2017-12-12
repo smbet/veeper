@@ -39,8 +39,8 @@ def unfoldpars(pars,numpars=5):
 
 def voigtfunc(vwave,vpars):
 	### Check to see if cfg variables are set
-	if isinstance(cfg.fitidx,int)|isinstance(cfg.wave,int):
-		cfg.fitidx = fitpix(vwave,vpars)
+	if isinstance(cfg.fitidx, int)|isinstance(cfg.wave, int):
+		cfg.fitidx = fitpix(vwave, vpars)
 		cfg.wave = vwave
 	if len(cfg.lsfs) == 0:
 		makevoigt.get_lsfs()
@@ -54,9 +54,25 @@ def voigterrfunc(p,x,y,err,fjac=None):
 	fp=foldpars(p)
 	model=voigtfunc(x,fp)
 	status=0
-	return([status,(y[cfg.fitidx]-model[cfg.fitidx])/err[cfg.fitidx]])
+	return([status, (y[cfg.fitidx] - model[cfg.fitidx]) / err[cfg.fitidx]])
+
+def update_bad_pixels():
+	# define bad pixels
+	cond_badpix = (cfg.spectrum.wavelength <= cfg.spectrum.wvmin) | \
+				  (cfg.spectrum.wavelength >= cfg.spectrum.wvmax) | \
+				  (cfg.spectrum.sig <= 0) | \
+				  (cfg.spectrum.flux / cfg.spectrum.sig < cfg.min_sn)  # bad S/N
+	# spectral gaps
+	for gap in cfg.spectral_gaps:
+		cond_gap = (cfg.spectrum.wavelength >= gap[0]*u.AA) & (cfg.spectrum.wavelength <= gap[1]*u.AA)
+		cond_badpix = cond_badpix | cond_gap
+	bad_pixels = np.where(cond_badpix)[0]
+	return bad_pixels
 
 def fitpix(wave,pararr):
+	# define bad pixels
+	cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
+
 	ll=pararr[0]
 	lz=pararr[3]
 	lv1=pararr[5]
@@ -102,12 +118,12 @@ def prepparinfo(linepars,parflags):
 		parinfo[numpars*i+1]['limits']=[round(col-5.,2),round(col+5.,2)]
 		parinfo[numpars*i+2]['limited']=[1,1]
 		### adjust b-value limits to allow for broadened HI features
-		lydiff=abs(linepars[0][i]-cfg.lyseries)
+		lydiff=abs(linepars[0][i] - cfg.lyseries)
 		lymatch = np.where(abs(lydiff)<=0.05)[0]
 		if lymatch:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,cfg.upperblim_HI])]
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim, bpar - 10.]), min([bpar + 10, cfg.upperblim_HI])]
 		else:
-			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim,bpar-10.]),min([bpar+10,cfg.upperblim])]
+			parinfo[numpars*i+2]['limits']=[max([cfg.lowblim, bpar - 10.]), min([bpar + 10, cfg.upperblim])]
 		parinfo[numpars*i+2]['step']=0.5
 		parinfo[numpars*i+2]['mpside']=2
 		#parinfo[numpars*i+2]['relstep']=0.0001
@@ -138,7 +154,7 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	lam,fosc,gam=atomicdata.setatomicdata(linepars[0])
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 	# Set fit regions
-	cfg.fitidx=fitpix(wave,linepars)
+	cfg.fitidx = fitpix(wave, linepars)
 	# Prep parameters for fitter
 	partofit=unfoldpars(partofit)
 	modelvars={'x':wave,'y':flux,'err':sig}
@@ -227,8 +243,8 @@ def initlinepars(zs,restwaves,initvals=[],initinfo=[]):
 	maxb=np.max(initpars[2][:])
 	minb=np.min(initpars[2][:])
 	if maxb>cfg.upperblim:
-		cfg.upperblim=maxb + 10.
-	if minb<cfg.lowblim: cfg.lowblim=minb - 2.
+		cfg.upperblim= maxb + 10.
+	if minb<cfg.lowblim: cfg.lowblim= minb - 2.
 
 	parinfo=np.zeros([5,len(restwaves)],dtype=int)
 	parinfo[0]=parinfo[0]+1
@@ -388,7 +404,7 @@ def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
 	chisq=np.zeros(numiter)
 	for i in range(numiter):
 		mcpars=[fitpars[0],mcpararr[i,:,0],mcpararr[i,:,1],fitpars[3],mcpararr[i,:,2],fitpars[5],fitpars[6]]
-		cfg.fitidx=fitpix(wave,mcpars)
+		cfg.fitidx=fitpix(wave, mcpars)
 		vef= voigterrfunc(unfoldpars(mcpars),wave,flux,err,fjac=None)
 		chisq[i]=np.sum(vef[1]**2)
 	return mcpararr,chisq
@@ -561,7 +577,7 @@ def writeVPmodelByComp(outdir, spectrum, fitpars):
 
 	for comp in complist:
 		print '\n',comp.name
-		wave,model = modelFromAbsComp(cfg.spectrum,comp)
+		wave,model = modelFromAbsComp(cfg.spectrum, comp)
 		spec = copy.deepcopy(cfg.spectrum)
 		spec.flux = model
 		flist = glob.glob(outdir+'/'+comp.name+'*')
@@ -630,12 +646,12 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 	linepars
 	parinfo
 
-    maxiter : int
-        Maximum number of times to run the fit while striving for convergence
+	maxiter : int
+		Maximum number of times to run the fit while striving for convergence
 
-    itertol : float
-        Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
-        any difference in the measurements exceeds itertol.
+	itertol : float
+		Maximum difference in any parameter from one fitting iteration to the next.  Routine will fit again if
+		any difference in the measurements exceeds itertol.
 
 
 	Returns
