@@ -289,6 +289,19 @@
         <bool>false</bool>
        </property>
       </widget>
+      <widget class="QPushButton" name="quitButton">
+       <property name="geometry">
+        <rect>
+         <x>385</x>
+         <y>0</y>
+         <width>63</width>
+         <height>39</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Quit</string>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
