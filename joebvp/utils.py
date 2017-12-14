@@ -370,5 +370,3 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
         thiscomp=AbsComponent.from_abslines(lst.tolist(), stars=stars, chk_vel=False, **kwargs)
         comps.append(thiscomp)
     return comps
-
-

@@ -543,7 +543,7 @@ def go(specfilename, parfilename):
     main.show()
     app.exec_()
 
-def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
+def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', inspect=True, **kwargs):
     """
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file. The program will then ask whether to run the failed
@@ -558,9 +558,13 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         listing the input files.
         See joebvpfit.readpars for details of file format
     outparfile : str, optional
-        Output file for fitted line parameters.
+        Suffix for output file for fitted line parameters.
     outmodelfile: str, optional
-        Output fits file for fitted model as the 'flux'.
+        Suffix for output fits file for fitted model as the 'flux'.
+    inspect : bool, optional
+        Whether to produce plots and model for inspection of individual parameter input files.
+        Default is True.
+
 
     **kwargs : maxiter, itertol
         These are fed on to the joebvp.fit_to_convergence() function
@@ -597,13 +601,15 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         if 1:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
-            paroutfilename = ff[:-6] + 'VP'
-            modeloutfilename = ff[:-7] + '_VPmodel.fits'
+            paroutfilename = ff.split('.')[0] + outparfile
+            modeloutfilename = ff.split('.')[0] + outmodelfile
             joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
+            if inspect:
+                jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
             q_pass += 1
         else: #except:
-            print('VPmeasure: Fitting failed:',ff)
+            print('VPmeasure: Fitting failed:', ff)
             fails += [ff]
             q_fail += 1
     print("")
@@ -623,6 +629,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     # Concatenate and create fits inspection files
     concatenate_all(spectofit)
     print("VPmeasure: Done.")
+
 
 def concatenate_all(spectrum):
     """Takes all *.VP files in the working directory, and concatenates them into a single VP file
