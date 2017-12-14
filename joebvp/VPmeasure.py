@@ -288,6 +288,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.writeParsButton.clicked.connect(self.writeParFileDialog)
         self.writeModelButton.clicked.connect(self.writeModelFileDialog)
         self.writeModelCompButton.clicked.connect(self.writeModelCompFileDialog)
+        self.quitButton.clicked.connect(self.quitGui)
 
         ### Initialize spectral plots
         fig=Figure()
@@ -380,8 +381,8 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.fitconvtog==1: self.fitconvtog=0
         else: self.fitconvtog=1
 
-
-
+    def quitGui(self):
+        self.close()
 
     def toglabels(self):
         if self.labeltog==1: self.labeltog=0
