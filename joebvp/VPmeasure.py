@@ -382,6 +382,7 @@ class Main(QMainWindow, Ui_MainWindow):
         else: self.fitconvtog=1
 
     def quitGui(self):
+        self.deleteLater()
         self.close()
 
     def toglabels(self):
