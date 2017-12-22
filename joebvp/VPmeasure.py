@@ -598,7 +598,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
         cfg.wavegroups = []
-        if 1:
+        try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff.split('.')[0] + outparfile
@@ -608,7 +608,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
             if inspect:
                 jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
             q_pass += 1
-        else: #except:
+        except:
             print('VPmeasure: Fitting failed:', ff)
             fails += [ff]
             q_fail += 1
