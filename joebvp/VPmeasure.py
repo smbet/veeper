@@ -14,7 +14,11 @@ from PyQt5 import QtWidgets
 
 import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
-from joebvp import cfg
+try:
+    import joebvp_cfg as cfg
+except:
+    print("joebvp.VPmeasure: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
+    from joebvp import cfg
 from joebvp import joebvpfit
 from joebvp import utils as jbu
 import os
@@ -319,6 +323,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.spls[i].set_ylim(cfg.ylim)
             self.spls[i].set_xlabel('wavelength',labelpad=0)
             self.spls[i].set_ylabel('relative flux',labelpad=-5)
+            self.spls[i].get_xaxis().get_major_formatter().set_scientific(False)
         fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,wspace=0.15,hspace=0.25)
         self.addmpl(fig)
 
@@ -357,6 +362,8 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.sideax.plot(self.wave, self.normsig, linestyle='steps-mid', color='red', lw=0.5)
         self.sideax.plot(self.wave, -self.normsig, linestyle='steps-mid', color='red', lw=0.5)
+        self.sideax.get_xaxis().get_major_formatter().set_scientific(False)
+        self.sideax.get_xaxis().get_major_formatter().set_useOffset(False)
         try:
             self.sideax.set_xlim(cenwave-wavebuf,cenwave+wavebuf)
             self.sideax.set_ylim(cfg.ylim)
@@ -478,6 +485,9 @@ class Main(QMainWindow, Ui_MainWindow):
                 sp.set_xlim(self.wave[prange[0]],self.wave[prange[-1]])
                 sp.set_xlabel('wavelength (A)', fontsize=cfg.xy_fontsize, labelpad=cfg.x_labelpad)
                 sp.set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
+                sp.get_xaxis().get_major_formatter().set_scientific(False)
+                sp.get_xaxis().get_major_formatter().set_useOffset(False)
+
         self.changefig(self.fig)
 
     def changefig(self, item):
@@ -598,7 +608,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
         cfg.wavegroups = []
-        try:
+        if 1:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff.split('.')[0] + outparfile
@@ -608,7 +618,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
             if inspect:
                 jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
             q_pass += 1
-        except:
+        else:#except:
             print('VPmeasure: Fitting failed:', ff)
             fails += [ff]
             q_fail += 1

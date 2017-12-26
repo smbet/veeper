@@ -7,7 +7,11 @@ from linetools.spectra.io import readspec
 from linetools.spectra.xspectrum1d import XSpectrum1D
 from astropy.table import Table,vstack
 from astropy.io import ascii
-import joebvp.cfg as cfg
+try:
+    import joebvp_cfg as cfg
+except:
+    print("joebvp.utils: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
+    import joebvp.cfg as cfg
 import astropy.units as u
 
 def compose_model(spec,filelist,outfile):

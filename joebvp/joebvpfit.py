@@ -7,7 +7,11 @@ import joebgoodies as jbg
 from joebvp import nmpfit
 import utils
 import makevoigt
-import cfg
+try:
+	import joebvp_cfg as cfg
+except:
+	print("joebvp.joebvpfit: No local joebvp_cfg.py found, using default cfg.py file form joebvp.")
+	import cfg
 import joebvp.atomicdata as atomicdata
 from astropy.io import ascii
 from astropy import units as u

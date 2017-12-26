@@ -16,7 +16,11 @@ import scipy.stats
 import joebvp.atomicdata as atomicdata
 from astropy import constants as const
 import sys,os
-import cfg
+try:
+    import joebvp_cfg as cfg
+except:
+    print("joebvp.makevoigt: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
+    import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
 import joebvpfit
 import astropy.units as u
