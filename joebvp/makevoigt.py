@@ -122,7 +122,7 @@ def convolvecos(wave,profile,lines,zs):
             fitwaves=wave[cfg.fitidx]
         else:
             # todo: figure out why are there cfg.fitidx = []?
-            pass
+            fitwaves = wave
             # import pdb; pdb.set_trace()
     else:
         fitwaves=wave
