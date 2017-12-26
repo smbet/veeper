@@ -14,7 +14,11 @@ from PyQt5 import QtWidgets
 
 import joebvp.atomicdata as atomicdata
 import joebvp.joebgoodies as jbg
-from joebvp import cfg
+try:
+    import joebvp_cfg as cfg
+except:
+    print("joebvp.VPmeasure: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
+    from joebvp import cfg
 from joebvp import joebvpfit
 from joebvp import utils as jbu
 import os
@@ -320,6 +324,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.spls[i].set_ylim(cfg.ylim)
             self.spls[i].set_xlabel('wavelength',labelpad=0)
             self.spls[i].set_ylabel('relative flux',labelpad=-5)
+            self.spls[i].get_xaxis().get_major_formatter().set_scientific(False)
         fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,wspace=0.15,hspace=0.25)
         self.addmpl(fig)
 
@@ -358,6 +363,8 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.sideax.plot(self.wave, self.normsig, linestyle='steps-mid', color='red', lw=0.5)
         self.sideax.plot(self.wave, -self.normsig, linestyle='steps-mid', color='red', lw=0.5)
+        self.sideax.get_xaxis().get_major_formatter().set_scientific(False)
+        self.sideax.get_xaxis().get_major_formatter().set_useOffset(False)
         try:
             self.sideax.set_xlim(cenwave-wavebuf,cenwave+wavebuf)
             self.sideax.set_ylim(cfg.ylim)
@@ -480,6 +487,9 @@ class Main(QMainWindow, Ui_MainWindow):
                 sp.set_xlim(self.wave[prange[0]],self.wave[prange[-1]])
                 sp.set_xlabel('wavelength (A)', fontsize=cfg.xy_fontsize, labelpad=cfg.x_labelpad)
                 sp.set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
+                sp.get_xaxis().get_major_formatter().set_scientific(False)
+                sp.get_xaxis().get_major_formatter().set_useOffset(False)
+
         self.changefig(self.fig)
 
     def changefig(self, item):
@@ -545,7 +555,7 @@ def go(specfilename, parfilename):
     main.show()
     app.exec_()
 
-def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
+def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', inspect=True, **kwargs):
     """
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file. The program will then ask whether to run the failed
@@ -560,9 +570,13 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         listing the input files.
         See joebvpfit.readpars for details of file format
     outparfile : str, optional
-        Output file for fitted line parameters.
+        Suffix for output file for fitted line parameters.
     outmodelfile: str, optional
-        Output fits file for fitted model as the 'flux'.
+        Suffix for output fits file for fitted model as the 'flux'.
+    inspect : bool, optional
+        Whether to produce plots and model for inspection of individual parameter input files.
+        Default is True.
+
 
     **kwargs : maxiter, itertol
         These are fed on to the joebvp.fit_to_convergence() function
@@ -596,16 +610,18 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
         cfg.wavegroups = []
-        if 1:
+        try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
-            paroutfilename = ff[:-6] + 'VP'
-            modeloutfilename = ff[:-7] + '_VPmodel.fits'
+            paroutfilename = ff.split('.')[0] + outparfile
+            modeloutfilename = ff.split('.')[0] + outmodelfile
             joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
+            if inspect:
+                jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
             q_pass += 1
-        else: #except:
-            print('VPmeasure: Fitting failed:',ff)
+        except:
+            print('VPmeasure: Fitting failed:', ff)
             fails += [ff]
             q_fail += 1
     print("")
@@ -625,6 +641,7 @@ def batch_fit(spec, filelist, outparfile=None, outmodelfile=None, **kwargs):
     # Concatenate and create fits inspection files
     concatenate_all(spectofit)
     print("VPmeasure: Done.")
+
 
 def concatenate_all(spectrum):
     """Takes all *.VP files in the working directory, and concatenates them into a single VP file
