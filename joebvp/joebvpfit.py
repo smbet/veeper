@@ -64,8 +64,8 @@ def update_bad_pixels():
 	# define bad pixels
 	cond_badpix = (cfg.spectrum.wavelength <= cfg.spectrum.wvmin) | \
 				  (cfg.spectrum.wavelength >= cfg.spectrum.wvmax) | \
-				  (cfg.spectrum.sig <= 0) | \
-				  (cfg.spectrum.flux / cfg.spectrum.sig < cfg.min_sn)  # bad S/N
+				  (cfg.spectrum.sig <= 0)
+				  #(cfg.spectrum.flux / cfg.spectrum.sig < cfg.min_sn)  # bad S/N
 	# spectral gaps
 	for gap in cfg.spectral_gaps:
 		cond_gap = (cfg.spectrum.wavelength >= gap[0]*u.AA) & (cfg.spectrum.wavelength <= gap[1]*u.AA)

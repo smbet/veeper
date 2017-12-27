@@ -100,7 +100,11 @@ def get_lsfs():
             lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
             if len(fg) < 10:
                 print("Line at {:.2f} AA is undersampling the LSF. Will increase number of pixels at either side to"
-                    "include at least 10.".format(lamobs))
+                    " include at least 10.".format(lamobs))
+                if np.isnan(lamobs):
+                    import pdb;pdb.set_trace()
+                    # NT: this could happen when pixels with S/N<0 exist, i.e. pixels where flux is <0 (e.g. black lines).
+                    # For this reason, is better to remove the option to eliminate pixels based on S/N.
                 n_more_side = (10 - len(fg))/2 + 1
                 inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
                 inds_left = [np.min(fg) - ii - 1 for ii in range(n_more_side)]
