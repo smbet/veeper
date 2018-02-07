@@ -25,12 +25,14 @@ for i in range(len(vernion)):
     vernion[i]=vernion[i].strip()
 
 def setatomicdata(lines,precise=True):
-    #if isinstance(lines,float):
-    #    lines = [lines]
+
+    from linetools.lists.linelist import LineList
+    llist = LineList('ISM')
+
     lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
     for i,ll in enumerate(lines):
         try:
-            al=AbsLine(ll*u.AA,closest=True)
+            al=AbsLine(ll*u.AA,closest=True,linelist = llist)
             lam[i]=al.data['wrest'].value ; fosc[i]=al.data['f'] ; gam[i]=al.data['gamma'].value
         except:
             idx=jbg.closest(adata['wrest'],ll)
@@ -41,10 +43,6 @@ def setatomicdata(lines,precise=True):
                 lam[i] = vdata['wrest'][idx].value; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx].value
             except:
                 lam[i] = vdata['wrest'][idx]; fosc[i] = vdata['f'][idx]; gam[i] = vdata['gamma'][idx]
-    #if len(lam)==1:
-    #    lam = lam[0]
-    #    fosc = fosc[0]
-    #    gam = gam[0]
 
     return lam,fosc,gam
 
