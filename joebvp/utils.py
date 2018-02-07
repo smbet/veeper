@@ -103,14 +103,17 @@ def abslines_from_fitpars(fitpars,ra=None,dec=None):
         List of AbsLine objects
     '''
     from linetools.spectralline import AbsLine
+    from linetools.lists.linelist import LineList
     import astropy.units as u
+    llist = LineList('ISM')
+
     abslinelist = [] # Initiate list to populate
     for i,rw in enumerate(fitpars[0]):
         vcent = fitpars[4][i]
         v1 = vcent + fitpars[5][i]
         v2 = vcent + fitpars[6][i]
 
-        line=AbsLine(fitpars[0][i]*u.AA, z=fitpars[3][i])
+        line=AbsLine(fitpars[0][i]*u.AA, z=fitpars[3][i],linelist=llist)
         vlims=[v1,v2]*u.km/u.s
         line.limits.set(vlims)
         ### Set other parameters
