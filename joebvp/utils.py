@@ -7,7 +7,11 @@ from linetools.spectra.io import readspec
 from linetools.spectra.xspectrum1d import XSpectrum1D
 from astropy.table import Table,vstack
 from astropy.io import ascii
-import joebvp.cfg as cfg
+try:
+    import joebvp_cfg as cfg
+except:
+    print("joebvp.utils: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
+    import joebvp.cfg as cfg
 import astropy.units as u
 
 def compose_model(spec,filelist,outfile):
@@ -159,10 +163,10 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         line.limits.set(vlims)
         ### Set other parameters
         line.attrib['logN'] = row['col']
-        line.attrib['sig_N'] = colerr
-        line.attrib['b'] = row['bval']
-        line.attrib['sig_b'] = berr
-        line.attrib['vel'] = row['vel']
+        line.attrib['sig_logN'] = colerr
+        line.attrib['b'] = row['bval'] * u.km/u.s
+        line.attrib['sig_b'] = berr * u.km/u.s
+        line.attrib['vel'] = row['vel'] * u.km/u.s
         ### Attach the spectrum to this AbsLine but check first to see if this one is same as previous
         if specfile==None:
             if i==0:
@@ -286,8 +290,8 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
 
         for i,ax in enumerate(stackaxes):
             line = comp._abslines[i]
-            thesepars=[[line.wrest.value],[line.attrib['logN']],[line.attrib['b']],
-                       [line.z],[line.attrib['vel']],[line.limits.vlim[0].value],[line.limits.vlim[1].value]]
+            thesepars=[[line.wrest.value],[line.attrib['logN']],[line.attrib['b'].value],
+                       [line.z],[line.attrib['vel'].value],[line.limits.vlim[0].value],[line.limits.vlim[1].value]]
             thismodel=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,thesepars)
             axlin=ax.get_lines()
             veldat=axlin[0].get_data()[0]
@@ -336,7 +340,8 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
     sparr=np.chararray(len(abslinelist),itemsize=6)
     for i,absline in enumerate(abslinelist):
         zarr[i]=absline.z
-        varr[i]=absline.attrib['vel']
+        # import pdb;        pdb.set_trace()
+        varr[i]=absline.attrib['vel'].value
         sparr[i]=atomicdata.lam2ion(absline.wrest.value)
 
     abslinelist=np.array(abslinelist) # Convert to array for the indexing used below
@@ -373,5 +378,3 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
         thiscomp=AbsComponent.from_abslines(lst.tolist(), stars=stars, chk_vel=False, **kwargs)
         comps.append(thiscomp)
     return comps
-
-
