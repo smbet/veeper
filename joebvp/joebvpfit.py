@@ -149,6 +149,7 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 
 	xtol=1e-11
 	gtol=1e-11
+	ftol=1e-11
 	# Only feed to the fitter the parameters that go into the model
 	partofit=linepars[:5]
 	parinfo=prepparinfo(partofit,flags)
@@ -163,8 +164,9 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	partofit=unfoldpars(partofit)
 	modelvars={'x':wave,'y':flux,'err':sig}
 	# Do the fit and translate the parameters back into the received format
-	m=nmpfit.mpfit(voigterrfunc,partofit,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=1e-10,xtol=xtol,gtol=gtol)
+	m=nmpfit.mpfit(voigterrfunc,partofit,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=ftol,xtol=xtol,gtol=gtol)
 	if m.status <= 0: print 'Fitting error:',m.errmsg
+	else: print 'Fit status:',m.status
 	fitpars=foldpars(m.params)
 	fiterrors = foldpars(m.perror)
 	# Add velocity windows back to parameter array

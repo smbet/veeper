@@ -639,11 +639,11 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
                 go(spec, ff)
 
     # Concatenate and create fits inspection files
-    concatenate_all(spectofit)
+    concatenate_all(spectofit,inspect=inspect)
     print("VPmeasure: Done.")
 
 
-def concatenate_all(spectrum):
+def concatenate_all(spectrum,inspect=True):
     """Takes all *.VP files in the working directory, and concatenates them into a single VP file
     as well as creates a single PDF file for fit inspection.
 
@@ -654,9 +654,10 @@ def concatenate_all(spectrum):
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
     jbu.concatenate_line_tables("all_VP.txt")
-    reload(cfg)  # Clear out the LSFs from the last fit
-    cfg.spectrum = spectrum
-    jbu.inspect_fits("compiledVPoutputs.dat")
+    if inspect is True:
+        reload(cfg)  # Clear out the LSFs from the last fit
+        cfg.spectrum = spectrum
+        jbu.inspect_fits("compiledVPoutputs.dat")
 
 
 if __name__ == '__main__':

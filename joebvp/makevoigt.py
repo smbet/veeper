@@ -79,6 +79,36 @@ def voigt(waves,line,coldens,bval,z,vels):
         tautot+=tauval
     return np.exp(-tautot)
 
+def voigt_speed(waves,line,coldens,bval,z,vels):
+    #cfg.lams = []
+    if len(cfg.lams)==0:
+        lam0,fosc,gam=atomicdata.setatomicdata(line)
+        cfg.lams=lam0 ; cfg.fosc=fosc ; cfg.gam=gam
+
+    z = np.array(z)
+    bval = np.array(bval)
+    line = np.array(line)
+    coldens = np.array(coldens)
+    vels = np.array(vels)
+
+    thatfactor=(1.+z)
+
+    lam0=cfg.lams
+    gam=cfg.gam
+    fosc=cfg.fosc
+
+    lam = np.outer(1./thatfactor,waves)
+    dlam=bval*lam0/c  #Doppler param in wavelength
+
+    a=gam/(4.*np.pi*(c*1e13/lam0**2*dlam))
+    xT = (lam.T - lam0 - lam0 * vels / c) / dlam
+    a = gam / (4. * np.pi * (c * 1e13 / lam0 ** 2 * dlam))
+    vp = Hfunc(xT, a)
+    tauval = np.sqrt(np.pi) * cfg.echarge ** 2 / cfg.m_e / cfg.c ** 2 * (lam0 * 1e-8) ** 2 / dlam * 1e8 * (
+    10 ** coldens) * fosc * vp
+    tautot = np.sum(tauval.T,axis=0)
+    return np.exp(-tautot)
+
 def get_lsfs():
 
     lsfobjs=[]
