@@ -1,3 +1,6 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
+
 import numpy as np
 import joebgoodies
 import joebvp.atomicdata as ad
@@ -97,7 +100,7 @@ def fitLegendre(x, y, sig=None, minord=1, maxord=8):
     sumsqdiffs=[]
     dfs=[]
     errmtxs=[]
-    print minord
+    print(minord)
     ### Loop through possible orders between minord and maxord
     for ord in range(minord,maxord+1):
 
