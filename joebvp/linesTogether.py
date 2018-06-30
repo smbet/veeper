@@ -5,6 +5,7 @@
 #  Quick usage: linesTogether.processFile([paramfile])
 ###################################################
 
+from __future__ import print_function, absolute_import, division, unicode_literals
 
 import numpy as np
 from astropy.io import ascii
@@ -61,7 +62,7 @@ def findblends(linepars,pixbuffer=10):
     for i in range(len(linepars)-1):
         if i == 0: 
             thisblend = [i]
-        print thisblend
+        print(thisblend)
         if (linepars['pix1'][i+1] - linepars['pix2'][i]) < pixbuffer: 
             thisblend.append(i+1)
             if i==(len(linepars)-2):
@@ -130,7 +131,7 @@ def rabbithole(lineidx,comps,blends):
 	blfound=[] ; cpfound=[]  # These will hold indices into  the 'blends' and 'comps' LoLs
 	newbl2try=[] ; newcp2try=[]  # Each iteration of while loop will find new blends and trans
 	bl=getblended(lineidx,blends)  # See if line is blended
-	print bl
+	print(bl)
 	if len(blends[bl])>1:
 		blfound.append(bl)  # Initialize with blends of input line
 		newbl2try=blfound
@@ -146,7 +147,7 @@ def rabbithole(lineidx,comps,blends):
 		newbl2try=[] ; newcp2try=[]	 # Make way for the new indices
 		if len(newbl)>0:  # Find all transitions of lines in new blend group found last time
 			for nb in newbl:  
-				print nb
+				print(nb)
 				for idx in blends[nb]:
 					cpidx=gettrans(idx,comps)
 					if cpidx not in cpfound:  # Make sure trans group is new
@@ -169,7 +170,7 @@ def findfitgroups(linepars,comps,blends):
 	fgroups=[]
 	idxlist=range(len(linepars))
 	for idx in idxlist:
-		print idx
+		print(idx)
 		thisg=rabbithole(idx,comps,blends)
 		for tgidx in thisg:
 			try:

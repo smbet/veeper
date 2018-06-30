@@ -4,6 +4,7 @@ Created on Mon Mar 21 22:50:45 2016
 
 @author: burchett
 """
+from __future__ import print_function, absolute_import, division, unicode_literals
 
 from PyQt5.uic import loadUiType
 from PyQt5 import QtGui
@@ -32,7 +33,7 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar)
 
 modpath=os.path.abspath(os.path.dirname(__file__))
-print os.path.abspath(os.path.dirname(__file__))
+print(os.path.abspath(os.path.dirname(__file__)))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
 c= c.to('km/s').value

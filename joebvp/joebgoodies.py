@@ -1,8 +1,11 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 import numpy as np
 #from angles import *
 #from velcorr import *
 import sys
 import subprocess
+import warnings
 
 ### Return index of array element closest to value
 def closest(arr,value):
@@ -88,8 +91,9 @@ def hhmmssdeg(coord):
         secs=float(parted[2].partition(':')[2])
     if coord[0]=='-':
         degs=-1.*(hours*15.+15.*mins/60.+15*secs/3600.)
-	print 'RED FLAG! You shouldn\'t have negative hours!'	    
-    else: degs=hours*15.+15.*mins/60.+15.*secs/3600.
+        warnings.warn('RED FLAG! You shouldn\'t have negative hours!')
+    else:
+        degs=hours*15.+15.*mins/60.+15.*secs/3600.
     return degs
 
 ### Convert ddmmss to decimal degrees
@@ -125,7 +129,7 @@ def roundto(x,n,retstring=1):
 		zerostoadd=n-leftdig-rightdig
 		numstr=numstr+'0'*zerostoadd
 	return numstr
-    else: return number;print 'yo'
+    else: return number
 
 ### Round number to n significant figures
 def decimalplaces(x,n):

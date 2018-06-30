@@ -73,10 +73,13 @@ def update_bad_pixels():
 	bad_pixels = np.where(cond_badpix)[0]
 	return bad_pixels
 
-def fitpix(wave,pararr):
-	# define bad pixels
-	cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
-
+def fitpix(wave,pararr,find_bad_pixels=True):
+	if find_bad_pixels:
+		# define bad pixels
+		cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
+	else:
+		cfg.bad_pixels = []
+		
 	ll=pararr[0]
 	lz=pararr[3]
 	lv1=pararr[5]

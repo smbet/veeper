@@ -5,8 +5,9 @@
 ###  params format (each entry a list): [restwave,coldens,bval,z,vel]
 ###
 #######################################################################
-from PyQt5 import QtGui, QtCore
+from __future__ import print_function, absolute_import, division, unicode_literals
 
+from PyQt5 import QtGui, QtCore
 
 import joebgoodies as jbg
 import numpy as np  
@@ -50,7 +51,7 @@ def cosvoigt(vwave,vpars):
 
 def cosvoigt_cont(vwave,cont,vpars):
     pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
-    cfg.fitidx=joebvpfit.fitpix(vwave, pars)
+    cfg.fitidx=joebvpfit.fitpix(vwave, pars,find_bad_pixels=False)
     cfg.wave=vwave
     vflux=np.zeros(len(vwave))+1.
     factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])

@@ -1,3 +1,5 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 from .. import joebgoodies as jbg
 import numpy as np
 from linetools.spectralline import AbsLine
@@ -79,7 +81,7 @@ def ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5):
         splitname=ion[0:2]+' '+ion[2:]
         try: lamidx=np.where(vernion==ion)[0]
         except:
-            print 'Ion name doesn\'t match database.'
+            print('Ion name doesn\'t match database.')
         else:
             restlams=vernlam[lamidx]
             obswaves=restlams*(1.+z)
