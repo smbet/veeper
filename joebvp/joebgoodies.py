@@ -99,12 +99,12 @@ def hhmmssdeg(coord):
 ### Convert ddmmss to decimal degrees
 def ddmmssdeg(coord):
     if ((coord[2]=='d') | (coord[3]=='d')):
-	degrees=np.abs(float(coord.partition('d')[0]))
+        degrees=np.abs(float(coord.partition('d')[0]))
         mins=float(coord.partition('d')[2].partition('m')[0])
         secs=float(coord.partition('d')[2].partition('m')[2].partition('s')[0])
     elif ((coord[2]==' ') | (coord[3]==' ')):
         parted=coord.partition(' ')
-	degrees=abs(float(parted[0]))
+        degrees=abs(float(parted[0]))
         mins=float(parted[2].partition(' ')[0])
         secs=float(parted[2].partition(' ')[2])
     elif ((coord[2]==':') | (coord[3]==':')):
@@ -122,14 +122,14 @@ def roundto(x,n,retstring=1):
     if (x==0): number=0
     else: number=round(x, -int(np.floor(np.log10(abs(x))))+(n-1))
     numstr=str(number)
-    if retstring==1: 
-	if ((len(numstr)-1)!=n) & (numstr[0]!='0'):
-		leftdig=len(numstr.partition('.')[0])
-		rightdig=len(numstr.partition('.')[2])
-		zerostoadd=n-leftdig-rightdig
-		numstr=numstr+'0'*zerostoadd
-	return numstr
-    else: return number
+    if ((len(numstr)-1)!=n) & (numstr[0]!='0'):
+        leftdig=len(numstr.partition('.')[0])
+        rightdig=len(numstr.partition('.')[2])
+        zerostoadd=n-leftdig-rightdig
+        numstr=numstr+'0'*zerostoadd
+        return numstr
+    else:
+        return number
 
 ### Round number to n significant figures
 def decimalplaces(x,n):

@@ -9,7 +9,7 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 from PyQt5 import QtGui, QtCore
 
-import joebgoodies as jbg
+from joebvp import joebgoodies as jbg
 import numpy as np  
 from scipy.signal import convolve
 from scipy.special import wofz
@@ -21,9 +21,9 @@ try:
     import joebvp_cfg as cfg
 except:
     print("joebvp.makevoigt: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
-    import cfg
+    from joebvp import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
-import joebvpfit
+from joebvp import joebvpfit
 import astropy.units as u
 from astropy.io import ascii
 from astropy.table import Table
@@ -88,6 +88,7 @@ def get_lsfs():
                                 life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i],
                                 slit=cfg.slits[i])))
     cfg.lsfs=[]
+    import pdb; pdb.set_trace()
     for fg in cfg.fgs:
         if isinstance(fg,int):
             lamobs=cfg.wave[fg]
@@ -136,7 +137,7 @@ def convolvecos(wave,profile,lines,zs):
     else:
         fitwaves=wave
     if cfg.wavegroups==[]:
-        X = np.array(zip(fitwaves,np.zeros(len(fitwaves))), dtype=float)
+        X = np.array(list(zip(fitwaves,np.zeros(len(fitwaves)))), dtype=float)
         ms = MeanShift(bandwidth=25.)
         ms.fit(X)
         cfg.wgidxs = ms.labels_

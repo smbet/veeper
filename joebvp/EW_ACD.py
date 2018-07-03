@@ -2,10 +2,10 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 
 import numpy as np
-import joebgoodies
+from joebvp import joebgoodies
 import joebvp.atomicdata as ad
 import numpy.polynomial.legendre as L
-import cfg
+from joebvp import cfg
 from scipy import stats
 
 def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True,**kwargs):

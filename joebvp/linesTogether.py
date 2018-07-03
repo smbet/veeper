@@ -9,7 +9,7 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 import numpy as np
 from astropy.io import ascii
-from goodies import closest
+from joebvp.joebgoodies import closest
 import pdb
 
 buf = 5  #number of pixels between pix2 and pix1 for lines to be unblended

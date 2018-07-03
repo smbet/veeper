@@ -2,15 +2,15 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 import numpy as np
 from matplotlib import pyplot as plt
-import joebvpfit
-import makevoigt
-import atomicdata
+from joebvp import joebvpfit
+from joebvp import makevoigt
+from joebvp import atomicdata
 from linetools.spectra.io import readspec
 from linetools.spectra.xspectrum1d import XSpectrum1D
 from astropy.table import Table,vstack
 from astropy.io import ascii
 try:
-    import joebvp_cfg as cfg
+    from joebvp import joebvp_cfg as cfg
 except:
     print("joebvp.utils: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
     import joebvp.cfg as cfg
