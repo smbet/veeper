@@ -23,7 +23,6 @@ except:
     print("joebvp.makevoigt: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
     from joebvp import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
-from joebvp import joebvpfit
 import astropy.units as u
 from astropy.io import ascii
 from astropy.table import Table
@@ -40,6 +39,7 @@ def Hfunc(x,a):
     return I
 
 def cosvoigt(vwave,vpars):
+    from joebvp import joebvpfit
     pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
     cfg.fitidx=joebvpfit.fitpix(vwave, pars)
     cfg.wave=vwave
@@ -50,6 +50,7 @@ def cosvoigt(vwave,vpars):
     return vflux
 
 def cosvoigt_cont(vwave,cont,vpars):
+    from joebvp import joebvpfit
     pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
     cfg.fitidx=joebvpfit.fitpix(vwave, pars,find_bad_pixels=False)
     cfg.wave=vwave

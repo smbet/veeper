@@ -407,8 +407,6 @@ Perform Levenberg-Marquardt least-squares minimization, based on MINPACK-1.
         Translated from MPFIT (Craig Markwardt's IDL package) to Python,
         August, 2002.  Mark Rivers
 """
-from stsci.tools import numerixenv
-numerixenv.check()
 
 import numpy
 import types

@@ -2,7 +2,6 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 import numpy as np
 from matplotlib import pyplot as plt
-from joebvp import joebvpfit
 from joebvp import makevoigt
 from joebvp import atomicdata
 from linetools.spectra.io import readspec
@@ -34,6 +33,7 @@ def compose_model(spec,filelist,outfile):
         Name of model spectrum output file
 
     '''
+    from joebvp import joebvpfit
 
     ### Deal with alternate input types
     if isinstance(spec,str):
@@ -269,7 +269,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
     -------
 
     '''
-
+    from joebvp import joebvpfit
     from matplotlib.backends.backend_pdf import PdfPages
     pp=PdfPages(output)
 
