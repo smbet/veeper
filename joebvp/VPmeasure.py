@@ -32,7 +32,7 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar)
 
 modpath=os.path.abspath(os.path.dirname(__file__))
-print os.path.abspath(os.path.dirname(__file__))
+print(os.path.abspath(os.path.dirname(__file__)))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
 
 c= c.to('km/s').value

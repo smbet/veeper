@@ -2,7 +2,7 @@
 ### Parameters: [lam_rest,column_density,doppler_param,z,velocity_offset]
 
 import numpy as np
-import joebgoodies as jbg
+from joebvp import joebgoodies as jbg
 # from stsci.tools import nmpfit
 from joebvp import nmpfit
 import utils
@@ -164,17 +164,17 @@ def joebvpfit(wave,flux,sig,linepars,flags):
 	modelvars={'x':wave,'y':flux,'err':sig}
 	# Do the fit and translate the parameters back into the received format
 	m=nmpfit.mpfit(voigterrfunc,partofit,functkw=modelvars,parinfo=parinfo,nprint=1,quiet=0,fastnorm=1,ftol=1e-10,xtol=xtol,gtol=gtol)
-	if m.status <= 0: print 'Fitting error:',m.errmsg
+	if m.status <= 0: print('Fitting error:',m.errmsg)
 	fitpars=foldpars(m.params)
 	fiterrors = foldpars(m.perror)
 	# Add velocity windows back to parameter array
 	fitpars.append(vlim1) ; fitpars.append(vlim2)
 
 
-	print '\nFit results: \n'
+	print('\nFit results: \n')
 	for i in range(len(fitpars[0])):
-		print jbg.tabdelimrow([round(fitpars[0][i],2),jbg.decimalplaces(fitpars[3][i],5),jbg.roundto(fitpars[1][i],5),jbg.roundto(fitpars[2][i],5),jbg.roundto(fitpars[4][i],5)])[:-2]
-		print jbg.tabdelimrow([' ',' ',' ',round(fiterrors[1][i],3),round(fiterrors[2][i],3),round(fiterrors[4][i],3)])
+		print(jbg.tabdelimrow([round(fitpars[0][i],2),jbg.decimalplaces(fitpars[3][i],5),jbg.roundto(fitpars[1][i],5),jbg.roundto(fitpars[2][i],5),jbg.roundto(fitpars[4][i],5)])[:-2])
+		print(jbg.tabdelimrow([' ',' ',' ',round(fiterrors[1][i],3),round(fiterrors[2][i],3),round(fiterrors[4][i],3)]))
 
 	return fitpars,fiterrors
 
@@ -554,8 +554,8 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 		bigparfile.write(towrite)
 	VPparfile.close()
 	bigparfile.close()
-	print 'Line parameters written to:'
-	print filetowrite
+	print('Line parameters written to:')
+	print(filetowrite)
 
 
 def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
@@ -567,8 +567,8 @@ def writeVPmodel(outfile, wave, fitpars, normflux, normsig):
 	spec = XSpectrum1D.from_tuple((modeltab['wavelength'], modeltab['model'], modeltab['normsig'], dummycont))
 	spec.write_to_fits(outfile)
 
-	print 'Voigt profile model written to:'
-	print outfile
+	print('Voigt profile model written to:')
+	print(outfile)
 
 def writeVPmodelByComp(outdir, spectrum, fitpars):
 	import copy
@@ -580,7 +580,7 @@ def writeVPmodelByComp(outdir, spectrum, fitpars):
 	complist = utils.abscomponents_from_abslines(linelist)
 
 	for comp in complist:
-		print '\n',comp.name
+		print('\n',comp.name)
 		wave,model = modelFromAbsComp(cfg.spectrum, comp)
 		spec = copy.deepcopy(cfg.spectrum)
 		spec.flux = model
@@ -591,7 +591,7 @@ def writeVPmodelByComp(outdir, spectrum, fitpars):
 			fname = comp.name+'_VPmodel.fits'
 		spec.write_to_fits(outdir+'/'+fname)
 
-	print 'Voigt profile models written to directory:', outdir
+	print('Voigt profile models written to directory:', outdir)
 
 def modelFromAbsComp(spectrum,abscomp):
 	'''
@@ -674,11 +674,11 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 			fitpars, fiterrors = joebvpfit(wave, flux, sig,
 											 fitpars, parinfo)
 			fitpars = np.array(fitpars)
-			print 'Iteration', ctr, '-'
+			print('Iteration', ctr, '-')
 
 		except:
-			print 'Fitting error!'
-			print "Unexpected error:", sys.exc_info()[0]
+			print('Fitting error!')
+			print("Unexpected error:", sys.exc_info()[0])
 			okay = 0
 			raise
 
@@ -686,7 +686,7 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 			#break
 
 	if okay != 0:
-		print 'Fit converged after',ctr,'iterations.'
+		print('Fit converged after',ctr,'iterations.')
 		return fitpars, fiterrors
 	else:
 		return linepars,fiterrors

@@ -88,19 +88,19 @@ def hhmmssdeg(coord):
         secs=float(parted[2].partition(':')[2])
     if coord[0]=='-':
         degs=-1.*(hours*15.+15.*mins/60.+15*secs/3600.)
-	print 'RED FLAG! You shouldn\'t have negative hours!'	    
+        print('RED FLAG! You shouldn\'t have negative hours!')
     else: degs=hours*15.+15.*mins/60.+15.*secs/3600.
     return degs
 
 ### Convert ddmmss to decimal degrees
 def ddmmssdeg(coord):
     if ((coord[2]=='d') | (coord[3]=='d')):
-	degrees=np.abs(float(coord.partition('d')[0]))
+        degrees=np.abs(float(coord.partition('d')[0]))
         mins=float(coord.partition('d')[2].partition('m')[0])
         secs=float(coord.partition('d')[2].partition('m')[2].partition('s')[0])
     elif ((coord[2]==' ') | (coord[3]==' ')):
         parted=coord.partition(' ')
-	degrees=abs(float(parted[0]))
+        degrees=abs(float(parted[0]))
         mins=float(parted[2].partition(' ')[0])
         secs=float(parted[2].partition(' ')[2])
     elif ((coord[2]==':') | (coord[3]==':')):
@@ -118,14 +118,14 @@ def roundto(x,n,retstring=1):
     if (x==0): number=0
     else: number=round(x, -int(np.floor(np.log10(abs(x))))+(n-1))
     numstr=str(number)
-    if retstring==1: 
-	if ((len(numstr)-1)!=n) & (numstr[0]!='0'):
-		leftdig=len(numstr.partition('.')[0])
-		rightdig=len(numstr.partition('.')[2])
-		zerostoadd=n-leftdig-rightdig
-		numstr=numstr+'0'*zerostoadd
-	return numstr
-    else: return number;print 'yo'
+    if retstring==1:
+        if ((len(numstr)-1)!=n) & (numstr[0]!='0'):
+            leftdig=len(numstr.partition('.')[0])
+            rightdig=len(numstr.partition('.')[2])
+            zerostoadd=n-leftdig-rightdig
+            numstr=numstr+'0'*zerostoadd
+        return numstr
+    else: return number; print('yo')
 
 ### Round number to n significant figures
 def decimalplaces(x,n):
@@ -235,7 +235,8 @@ def changefocus(window):
 
 ### Test whether a value is two others
 def between(testval,lim1,lim2):
-	return ((testval>lim1)&(testval<lim2))
+    return ((testval>lim1)&(testval<lim2))
+
 
 '''
 ### Calculate impact parameter (in kpc) corrected for peculiar velocities
@@ -253,13 +254,13 @@ def impactvelcorr(qra,qdec,galra,galdec,galz):
 
 
 def wherebetween(testval,lim1,lim2):
-	'''
+    '''
 	Given multiple ranges of values (lim1 and lim2 are same-sized),
 	return indices where testval falls between lim1[idx] and lim2[idx].
 	'''
-	lim1=np.array(lim1);lim2=np.array(lim2)
-	result=np.where((testval>lim1)&(testval<lim2))[0]
-	return result
+    lim1=np.array(lim1);lim2=np.array(lim2)
+    result=np.where((testval>lim1)&(testval<lim2))[0]
+    return result
 
 # '''
 # ### Return sorted indices of matched coordinates from a list
