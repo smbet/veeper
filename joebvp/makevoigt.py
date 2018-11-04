@@ -89,7 +89,6 @@ def get_lsfs():
                                 life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i],
                                 slit=cfg.slits[i])))
     cfg.lsfs=[]
-    import pdb; pdb.set_trace()
     for fg in cfg.fgs:
         if isinstance(fg,int):
             lamobs=cfg.wave[fg]
@@ -186,15 +185,18 @@ def convolvecos(wave,profile,lines,zs):
     convprof=profile
     for i,ll in enumerate(cfg.fgs):
         if isinstance(ll,int):
-            lsfwidth= len(cfg.fgs) / 2 + 1
+            lsfwidth= int(np.ceil(len(cfg.fgs) / 2 + 1))
             paddedprof = np.insert(profile[cfg.fgs], 0, [1.] * lsfwidth)
             paddedprof = np.append(paddedprof, [1.] * lsfwidth)
             convprof[cfg.fgs] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
             break
         else:
 
-            lsfwidth=len(ll)/2+1
-            paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
+            lsfwidth=int(np.ceil(len(ll)/2+1))
+            try:
+                paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
+            except:
+                import pdb; pdb.set_trace()
             paddedprof=np.append(paddedprof,[1.]*lsfwidth)
             convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
 
