@@ -317,7 +317,7 @@ class Main(QMainWindow, Ui_MainWindow):
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
-            pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
+            pixs=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen, dtype='int')
             self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps-mid')
             if self.fitpars!=None:
                 self.spls[i].plot(self.wave,model,'r')
@@ -460,7 +460,7 @@ class Main(QMainWindow, Ui_MainWindow):
         wlen=len(self.spectrum.wavelength)/self.numchunks
         for i,sp in enumerate(self.spls):
                 sp.clear()
-                prange=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
+                prange=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen,dtype='int')
     
                 if ((len(self.fitpars[0])>0)):
     

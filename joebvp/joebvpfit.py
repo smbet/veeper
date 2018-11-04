@@ -26,9 +26,9 @@ c=299792.458
 def foldpars(pars,numpars=5):
 	rows=len(pars)/numpars
 	fpars=[]
-	for i in range(numpars):
+	for i in np.arange(numpars,dtype='int'):
 		fparrow=[]
-		for j in range(rows):
+		for j in np.arange(rows,dtype='int'):
 			fparrow.append(pars[i+numpars*j])
 		fpars.append(fparrow)
 	return fpars
@@ -37,7 +37,7 @@ def unfoldpars(pars,numpars=5):
 	rows=len(pars[0])
 	ufpars=[]
 	for j in range(rows):
-		for i in range(numpars):
+		for i in np.arange(numpars,dtype='int'):
 			ufpars.append(pars[i][j])
 	return ufpars
 

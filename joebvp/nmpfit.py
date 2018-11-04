@@ -409,7 +409,6 @@ Perform Levenberg-Marquardt least-squares minimization, based on MINPACK-1.
 """
 
 import numpy
-import types
 
 
 #     Original FORTRAN documentation
@@ -877,11 +876,11 @@ e.g. mpfit.status, mpfit.errmsg, mpfit.params, npfit.niter, mpfit.covar.
 
         ## Be sure that PARINFO is of the right type
         if (parinfo is not None):
-            if (type(parinfo) != types.ListType):
+            if (type(parinfo) != list):
                 self.errmsg = 'ERROR: PARINFO must be a list of dictionaries.'
                 return
             else:
-                if (type(parinfo[0]) != types.DictionaryType):
+                if (type(parinfo[0]) != dict):
                     self.errmsg = 'ERROR: PARINFO must be a list of dictionaries.'
                     return
             if ((xall is not None) and (len(xall) != len(parinfo))):
@@ -1414,10 +1413,10 @@ e.g. mpfit.status, mpfit.errmsg, mpfit.params, npfit.niter, mpfit.covar.
 
         # Convert to numeric arrays if possible
         test = default
-        if (type(default) == types.ListType): test=default[0]
-        if (type(test) == types.IntType):
+        if (type(default) == list): test=default[0]
+        if (type(test) == int):
             values = numpy.asarray(values, dtype=numpy.int)
-        elif (type(test) == types.FloatType):
+        elif (type(test) == float):
             values = numpy.asarray(values, dtype=numpy.float)
         return(values)
 
