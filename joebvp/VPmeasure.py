@@ -461,7 +461,6 @@ class Main(QMainWindow, Ui_MainWindow):
         for i,sp in enumerate(self.spls):
                 sp.clear()
                 prange=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen,dtype='int')
-    
                 if ((len(self.fitpars[0])>0)):
     
                     sp.plot(self.wave,self.normflux,linestyle='steps-mid')
