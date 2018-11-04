@@ -5,6 +5,7 @@ import numpy as np
 from linetools.spectralline import AbsLine
 from linetools.lists import parse as lilp
 import astropy.units as u
+from astropy.table import Table
 import imp
 
 jbvp_path = imp.find_module('joebvp')[1]
@@ -18,6 +19,14 @@ verngl=jbg.arrfromcol(vernerlist,4)
 verngu=jbg.arrfromcol(vernerlist,5)
 vernosc=jbg.arrfromcol(vernerlist,6)
 vernp=jbg.arrfromcol(vernerlist,7)
+
+starts = (0,10,18,21,24,27,30,40)
+verntab = Table.read(jbvp_path+'/atomicdata/verner6.txt',
+                     format='ascii.fixed_width_no_header',
+                     col_starts=starts,fill_values=('','0'),
+                     names=['lam','ion','Z','nume','gl','gu','fosc','P'])
+verntab['fosc'].astype(float)
+vernion=verntab['ion']
 
 # A start to using the linetools atomic data framework
 adata=lilp.parse_morton03()
@@ -55,7 +64,8 @@ def closestlam(restwave):
 
 def lam2ion(restwave):
     if (isinstance(restwave,int))|(isinstance(restwave,float)):
-        return vernion[jbg.closest(vernlam,restwave)].strip()
+        ionstr = vernion[jbg.closest(vernlam, restwave)].strip()
+        return ionstr
     else:
         ions=[]
         for rw in restwave: ions.append(vernion[jbg.closest(vernlam,rw)].strip())

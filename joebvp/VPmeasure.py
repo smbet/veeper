@@ -73,7 +73,9 @@ class LineParTableModel(QAbstractTableModel):
         if index.isValid() and role == Qt.DisplayRole:
             row = index.row()
             column = index.column()
-            if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
+            if column == 0: toret=round(self.fitpars[0][row],3)
+            elif column == 1:
+                toret=atomicdata.lam2ion(self.fitpars[0][row])
             elif column == 2: toret=round(self.fitpars[3][row],5)
             elif column == 3: toret=round(self.fitpars[1][row],3)
             elif column == 4: toret=round(self.fiterrors[1][row],3)
@@ -84,7 +86,7 @@ class LineParTableModel(QAbstractTableModel):
             elif column == 9: toret=self.linecmts[0][row]
             elif column == 10: toret=self.linecmts[1][row]
             else: toret=QVariant(round(self.fitpars[column][row],3))
-            return toret
+            return str(toret)
 
         else: return None
 
@@ -305,7 +307,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.sidefig = sidefig
         self.addsidempl(self.sidefig)
         self.sideplot(self.lastclick)  #Dummy initial cenwave setting
-
 
     def initplot(self,fig,numchunks=8):
         wlen=len(self.spectrum.wavelength)/numchunks
