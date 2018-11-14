@@ -27,6 +27,7 @@ from linetools.spectra.io import readspec
 import numpy as np
 from astropy.constants import c
 
+import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -35,6 +36,8 @@ from matplotlib.backends.backend_qt5agg import (
 modpath=os.path.abspath(os.path.dirname(__file__))
 print(os.path.abspath(os.path.dirname(__file__)))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
+
+matplotlib.rcParams['font.size']=cfg.general_fontsize
 
 c= c.to('km/s').value
 
@@ -298,12 +301,12 @@ class Main(QMainWindow, Ui_MainWindow):
         self.quitButton.clicked.connect(self.quitGui)
 
         ### Initialize spectral plots
-        fig=Figure()
+        fig=Figure(figsize=(5,3))
         self.fig=fig
         self.initplot(fig)
 
         ### Initialize side plot
-        sidefig=Figure(figsize=(5.25,2))
+        sidefig=Figure(figsize=(5.85,3.75))
         self.sidefig = sidefig
         self.addsidempl(self.sidefig)
         self.sideplot(self.lastclick)  #Dummy initial cenwave setting
@@ -319,15 +322,21 @@ class Main(QMainWindow, Ui_MainWindow):
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
             pixs=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen, dtype='int')
-            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps-mid')
+            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],
+                              linestyle='steps-mid',linewidth=cfg.spec_linewidth)
             if self.fitpars!=None:
                 self.spls[i].plot(self.wave,model,'r')
             self.spls[i].set_xlim(self.wave[pixs[0]],self.wave[pixs[-1]])
             self.spls[i].set_ylim(cfg.ylim)
-            self.spls[i].set_xlabel('wavelength',labelpad=0)
-            self.spls[i].set_ylabel('relative flux',labelpad=-5)
+            self.spls[i].set_xlabel('wavelength', fontsize=cfg.xy_fontsize,
+                                    labelpad=cfg.x_labelpad)
+            self.spls[i].set_ylabel('relative flux', fontsize=cfg.xy_fontsize,
+                                    labelpad=cfg.y_labelpad)
             self.spls[i].get_xaxis().get_major_formatter().set_scientific(False)
-        fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,wspace=0.15,hspace=0.25)
+            self.spls[i].tick_params(axis='both', which='major',direction='in',
+                                     pad=2,length=2)
+        fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,
+                            wspace=0.15,hspace=0.24)
         self.addmpl(fig)
 
     def initialpars(self,parfilename):
@@ -343,15 +352,25 @@ class Main(QMainWindow, Ui_MainWindow):
         if len(self.sidefig.axes)==0:
             self.sideax=self.sidefig.add_subplot(111)
         self.sideax.clear()
-        self.sideax.plot(self.wave, self.normflux, linestyle='steps-mid')
+        self.sideax.plot(self.wave, self.normflux, linestyle='steps-mid',
+                         linewidth=cfg.spec_linewidth)
         if self.pixtog == 1:
             self.sideax.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
         model = joebvpfit.voigtfunc(self.wave, self.fitpars)
         res = self.normflux - model
         self.sideax.plot(self.wave, model, 'r')
         if self.restog == 1:
-            self.sideax.plot(self.wave, -res, '.', color='black', ms=2)
+            self.sideax.plot(self.wave, -res, '.', color='black',
+                             ms=cfg.residual_markersize)
         self.sideax.plot(self.wave, [0] * len(self.wave), color='gray')
+        self.sideax.set_xlabel('wavelength', fontsize=cfg.xy_fontsize,
+                                labelpad=cfg.x_labelpad)
+        self.sideax.set_ylabel('relative flux', fontsize=cfg.xy_fontsize,
+                                labelpad=cfg.y_labelpad)
+        self.sideax.tick_params(axis='both', which='major', direction='in',
+                                pad=1, length=2)
+        self.sidefig.subplots_adjust(top=0.98, bottom=0.17, left=0.12,
+                                     right=0.97)
 
         ### label lines we are trying to fit
         if self.labeltog == 1:
@@ -412,6 +431,7 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.restog = 1
         self.updateplot()
+        self.sideplot(self.lastclick)
 
     def openParFileDialog(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
@@ -471,7 +491,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     res=self.normflux-model
                     sp.plot(self.wave,model,'r')
                     if self.restog==1:
-                        sp.plot(self.wave,-res,'.',color='black', ms=2)
+                        sp.plot(self.wave,-res,'.',color='black', ms=cfg.residual_markersize)
                     sp.plot(self.wave,[0]*len(self.wave),color='gray')
     
                     ### label lines we are trying to fit
