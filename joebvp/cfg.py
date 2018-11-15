@@ -73,14 +73,14 @@ upperblim_HI = 210.
 
 # Plotting
 ylim = (-0.2, 1.4)
-general_fontsize = 6
+general_fontsize = 20.
 xtick_fontsize = 'small'
 ytick_fontsize = 'small'
 xy_fontsize = 'small'
 x_labelpad = 0
 y_labelpad = 0
 label_ypos = 0.2 * (ylim[0]+ylim[1])
-label_fontsize = 6
+label_fontsize = 20.
 residual_markersize = 1
 spec_linewidth = 1
 

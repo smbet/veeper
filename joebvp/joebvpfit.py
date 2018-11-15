@@ -523,9 +523,9 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 
 	### Prep header of line parameter file
 	if linecmts is not None:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
+		header = b'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
 	else:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
+		header = b'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
 
@@ -552,8 +552,8 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
 				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
 				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, round(z_comp, 5),trans])
-		VPparfile.write(towrite)
-		bigparfile.write(towrite)
+		VPparfile.write(towrite.encode())
+		bigparfile.write(towrite.encode())
 	VPparfile.close()
 	bigparfile.close()
 	print('Line parameters written to:')

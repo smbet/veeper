@@ -510,13 +510,14 @@ class Main(QMainWindow, Ui_MainWindow):
                 sp.set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
                 sp.get_xaxis().get_major_formatter().set_scientific(False)
                 sp.get_xaxis().get_major_formatter().set_useOffset(False)
-
         self.changefig(self.fig)
 
     def changefig(self, item):
         #text = str(item.text())
+        #self.canvas.draw()
         self.rmmpl()
         self.addmpl(self.fig)
+
 
     def changesidefig(self, item):
         #text = str(item.text())
@@ -549,10 +550,10 @@ class Main(QMainWindow, Ui_MainWindow):
 
         
     def rmmpl(self,):
-        self.mplvl.removeWidget(self.canvas)
         self.canvas.close()
-        self.mplvl.removeWidget(self.toolbar)
+        self.mplvl.removeWidget(self.canvas)
         self.toolbar.close()
+        self.mplvl.removeWidget(self.toolbar)
 
     def rmsidempl(self, ):
         self.sidemplvl.removeWidget(self.sidecanvas)
