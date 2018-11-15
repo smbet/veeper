@@ -514,15 +514,16 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def changefig(self, item):
         #text = str(item.text())
-        #self.canvas.draw()
-        self.rmmpl()
-        self.addmpl(self.fig)
+        self.canvas.draw()
+        #self.rmmpl()
+        #self.addmpl(self.fig)
 
 
     def changesidefig(self, item):
         #text = str(item.text())
-        self.rmsidempl()
-        self.addsidempl(self.sidefig)
+        self.sidecanvas.draw()
+        #self.rmsidempl()
+        #self.addsidempl(self.sidefig)
         
         
     def on_click(self, event):
