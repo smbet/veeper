@@ -26,7 +26,10 @@ import os
 from linetools.spectra.io import readspec
 import numpy as np
 from astropy.constants import c
-
+try:
+    from importlib import reload
+except:
+    pass
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
@@ -630,9 +633,17 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
     q_fail = 0
     fails = [] # store failures filenames
     for i,ff in enumerate(listofiles):
+        if isinstance(ff,bytes):
+            ff = ff.decode()
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
+
+        cfg.lsfs = []
+        cfg.fgs = []
         cfg.wavegroups = []
+        cfg.wgidxs = []
+        cfg.uqwgidxs = []
+
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
@@ -654,7 +665,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
     if q_fail > 0:
         print("VPmeasure: Failed runs are: {}\n".format(fails))
         while True:
-            answer = raw_input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")
+            answer = input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")
             if answer in ['y','n', 'yes','no']:
                 break
         if answer in ['y', 'yes']:
@@ -676,6 +687,7 @@ def concatenate_all(spectrum):
     # concatenate and inspect fit
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
+    import pdb; pdb.set_trace()
     jbu.concatenate_line_tables("all_VP.txt")
     reload(cfg)  # Clear out the LSFs from the last fit
     cfg.spectrum = spectrum

@@ -87,10 +87,6 @@ def fitpix(wave,pararr,find_bad_pixels=True):
 	relpix=[]
 	for i in range(len(ll)):
 		vels=jbg.veltrans(lz[i],wave,ll[i])
-		#w1=ll[i]*(1.+lz[i]+lv1[i]/c)
-		#w2=ll[i]*(1.+lz[i]+lv2[i]/c)
-		#p1=jbg.closest(wave,w1)
-		#p2=jbg.closest(wave,w2)
 		p1=jbg.closest(vels,lv1[i])
 		p2=jbg.closest(vels,lv2[i])
 

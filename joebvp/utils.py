@@ -6,6 +6,7 @@ from joebvp import makevoigt
 from joebvp import atomicdata
 from linetools.spectra.io import readspec
 from linetools.spectra.xspectrum1d import XSpectrum1D
+from linetools.lists.linelist import LineList
 from astropy.table import Table,vstack
 from astropy.io import ascii
 try:
@@ -58,6 +59,64 @@ def compose_model(spec,filelist,outfile):
     outspec=XSpectrum1D.from_tuple((wave,model,normsig))
     outspec.write_to_fits(outfile)
 
+def model_profile(spec,fitpars,instr=None,gratings=None,lsfranges=None,
+                  cen_wave=None,lps=None,slits=None):
+    '''Produce Voigt profile model from parameters and instrumental setup for
+    convolving proper line spread function.  Note
+
+    Parameters
+    ----------
+    spec : string or XSpectrum1D
+        The spectrum to be fitted with the input lines
+    fitpars : list of lists
+        The joebvp parameter array that includes line measurements
+    instr : list of str, optional
+        Instruments used to observe the spectral regions defined in lsfranges
+    gratings : list of str, optional
+        Gratings used for each spectral region defined in lsfranges
+    lsfranges : array of size len(instr)x2
+        Beginning and ending wavelengths of spectral ranges for each setup
+    cen_wave : list of str, optional
+        Central wavelength setting for each spectral region defined in lsfranges
+    lps : list of str, optional
+        Lifetime positions of detector (particularly for COS)
+    slits : list of str, optional
+        Slit setting for each spectral region defined in lsfranges
+
+    Returns
+    -------
+    wavelength : Quantity
+        Wavelength array from spec
+    profile : array
+        Voigt profile model
+
+    '''
+
+    ### Setup LSF parameters if provided
+    if instr is not None:
+        cfg.instr = instr
+        cfg.lsfranges = lsfranges
+        cfg.gratings = gratings
+        cfg.cen_wave = cen_wave
+        cfg.lps = lps
+        cfg.slits = slits
+
+    ### Deal with alternate input types
+    if isinstance(spec,str):
+        specobj = readspec(spec)
+    else:
+        specobj = spec
+
+    makevoigt.get_lsfs()
+    #import pdb; pdb.set_trace()
+    cfg.wave = specobj.wavelength.value
+    cfg.spectrum = specobj
+    profile = makevoigt.cosvoigt(cfg.wave, fitpars )
+    return specobj.wavelength,profile
+
+
+
+
 def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
     '''
     Compiles the output from several fitting runs into a single table
@@ -74,7 +133,7 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
 
     '''
 
-    if isinstance(filelist, str):
+    if isinstance(filelist, str)|isinstance(filelist, unicode):
         lstarr=np.genfromtxt(filelist,dtype=None)
         listofiles=lstarr.tolist()
     else:
@@ -82,11 +141,14 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
 
     tabs = []
     for i, ff in enumerate(listofiles):
+        if isinstance(ff,bytes):
+            ff = ff.decode()
+        #import pdb; pdb.set_trace()
         tabs.append(ascii.read(ff))
     bigpartable = vstack(tabs)
     ascii.write(bigpartable, output=outtablefile, delimiter='|')  # write out compiled table
 
-def abslines_from_fitpars(fitpars,ra=None,dec=None):
+def abslines_from_fitpars(fitpars,ra=None,dec=None,linelist=None):
     '''
     Takes a joebvp parameter array and builds a list of linetools AbsLines from the measurements
 
@@ -105,9 +167,11 @@ def abslines_from_fitpars(fitpars,ra=None,dec=None):
         List of AbsLine objects
     '''
     from linetools.spectralline import AbsLine
-    from linetools.lists.linelist import LineList
     import astropy.units as u
-    llist = LineList('ISM')
+    if linelist is None:
+        llist = LineList('ISM')
+    else:
+        llist = linelist
 
     abslinelist = [] # Initiate list to populate
     for i,rw in enumerate(fitpars[0]):
@@ -124,11 +188,40 @@ def abslines_from_fitpars(fitpars,ra=None,dec=None):
         line.attrib['b'] = fitpars[2][i]
         #line.attrib['sig_b'] = berr
         line.analy['spec']=cfg.spectrum
+        line.attrib['flag_N'] = 1
         ### Add it to the list and go on
         abslinelist.append(line)
     return abslinelist
 
-def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
+def fitpars_from_abslines(abslinelist):
+    '''Builds veeper parameter array from list of linetools AbsLines
+
+    Parameters
+    ----------
+    abslinelist: list
+        List of AbsLine objects
+
+    Returns
+    -------
+    fitpars : list of lists
+        The joebvp parameter array that includes line measurements
+    '''
+    from joebvp import joebvpfit
+    restwaves = [al.wrest.value for al in abslinelist]
+    linecol = [al.attrib['logN'] for al in abslinelist]
+    lineb = [al.attrib['b'].value for al in abslinelist]
+    linevel = [al.attrib['vel'].value for al in abslinelist]
+    linevlim1 = [al.limits.vlim[0].value for al in abslinelist]
+    linevlim2 = [al.limits.vlim[1].value for al in abslinelist]
+    zs = [al.z for al in abslinelist]
+    initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
+    initinfo = [[1]*len(abslinelist)]*len(initpars)
+    fitpars, parinfo = joebvpfit.initlinepars(zs, restwaves, initpars,
+                                              initinfo=initinfo)
+
+    return fitpars
+
+def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None,linelist=None):
     '''
     Takes a joebvp parameter file and builds a list of linetools AbsLines from the measurements therein.
 
@@ -147,9 +240,12 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         List of AbsLine objects
     '''
     from linetools.spectralline import AbsLine
-    from linetools.lists.linelist import LineList
+    from linetools.analysis import absline as ltaa
     import astropy.units as u
-    llist = LineList('ISM')
+    if linelist is None:
+        llist = LineList('ISM')
+    else:
+        llist = linelist
     if specfile!=None:
         spec=readspec(specfile) # Allow spectrum file to be declared in call
     linetab = ascii.read(parfile) # Read parameters from file
@@ -169,6 +265,10 @@ def abslines_from_VPfile(parfile,specfile=None,ra=None,dec=None):
         ### Set other parameters
         line.attrib['logN'] = row['col']
         line.attrib['sig_logN'] = colerr
+        line.attrib['flag_N'] = 1
+        lincol = ltaa.linear_clm(line.attrib)
+        line.attrib['N']= lincol[0]
+        line.attrib['sig_N'] = lincol[1]
         line.attrib['b'] = row['bval'] * u.km/u.s
         line.attrib['sig_b'] = berr * u.km/u.s
         line.attrib['vel'] = row['vel'] * u.km/u.s
@@ -271,9 +371,11 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
     '''
     from joebvp import joebvpfit
     from matplotlib.backends.backend_pdf import PdfPages
+    llist = LineList('ISM')
+
     pp=PdfPages(output)
 
-    all=abslines_from_VPfile(parfile,**kwargs) # Instantiate AbsLine objects and make list
+    all=abslines_from_VPfile(parfile,linelist=llist,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
     fitpars,fiterrors,parinfo,linecmts = joebvpfit.readpars(parfile)
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
@@ -357,7 +459,7 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
     for uqz in uqzs:
         ### Identify velocity groups
         thesez = np.where(zarr==uqz)[0]
-        X = np.array(zip(varr[thesez],np.zeros(len(varr[thesez]))), dtype=float)
+        X = np.array(list(zip(varr[thesez],np.zeros(len(varr[thesez])))), dtype=float)
         ms = MeanShift(bandwidth=7.)
         ms.fit(X)
         vidxs = ms.labels_
@@ -380,6 +482,8 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
             stars='*'*starct
         else:
             stars = None
-        thiscomp=AbsComponent.from_abslines(lst.tolist(), stars=stars, chk_vel=False, **kwargs)
+        thiscomp=AbsComponent.from_abslines(lst.tolist(), stars=stars,
+                                            chk_vel=False, adopt_median=True,
+                                            **kwargs)
         comps.append(thiscomp)
     return comps

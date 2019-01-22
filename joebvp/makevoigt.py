@@ -97,9 +97,15 @@ def get_lsfs():
             cfg.lsfs.append(lsf['kernel'])
             break
         else:
-
-            lamobs=np.median(cfg.wave[fg])
+            try:
+                lamobs=np.median(cfg.wave[fg])
+            except:
+                import pdb; pdb.set_trace()
             lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+            try:
+                lfg = len(fg)
+            except:
+                import pdb; pdb.set_trace()
             if len(fg) < 10:
                 print("Line at {:.2f} AA is undersampling the LSF. Will increase number of pixels at either side to"
                     " include at least 10.".format(lamobs))
@@ -107,8 +113,11 @@ def get_lsfs():
                     import pdb;pdb.set_trace()
                     # NT: this could happen when pixels with S/N<0 exist, i.e. pixels where flux is <0 (e.g. black lines).
                     # For this reason, is better to remove the option to eliminate pixels based on S/N.
-                n_more_side = (10 - len(fg))/2 + 1
-                inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
+                n_more_side = int(np.ceil((10 - len(fg))/2 + 1))
+                try:
+                    inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
+                except:
+                    import pdb; pdb.set_trace()
                 inds_left = [np.min(fg) - ii - 1 for ii in range(n_more_side)]
                 inds_left.sort()
                 # QtCore.pyqtRemoveInputHook()
@@ -117,8 +126,8 @@ def get_lsfs():
                 fg = inds_left + fg.tolist() + inds_right
                 fg = np.array(fg)
                 print("New fg is: {}".format(fg))
-
             lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA, kind='cubic')
+
             # except:
             # 	QtCore.pyqtRemoveInputHook()
             # 	import pdb; pdb.set_trace()
@@ -148,11 +157,13 @@ def convolvecos(wave,profile,lines,zs):
         df= cfg.fitidx[1:] - cfg.fitidx[:-1]
         dividers = np.where(df > buf)[0] #These are the last indices of each group
         if len(dividers)==0:
-            cfg.fgs=cfg.fitidx
+            cfg.fgs=[cfg.fitidx]
         else:
             cfg.fgs=[np.arange(cfg.fitidx[0], cfg.fitidx[dividers[0]])] #1st group
             for i, idx in enumerate(dividers[:-1]):
-                cfg.fgs.append(np.arange(cfg.fitidx[idx + 1], cfg.fitidx[dividers[i + 1]])) # 'i+1' b/c 1st group handled separately
+                newfg = np.arange(cfg.fitidx[idx + 1], cfg.fitidx[dividers[i + 1]]) # 'i+1' b/c 1st group handled separately
+                if len(newfg)>1.:
+                    cfg.fgs.append(newfg)
             cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1] + 1], cfg.fitidx[-1] + 1))  #last group
             newfgs=[]
             ### Deal with wavegroups that may have huge jumps in wavelength between pixels

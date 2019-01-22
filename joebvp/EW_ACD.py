@@ -264,6 +264,7 @@ def EW_ACD_array(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwar
     effflux[belowerr] = ferr[belowerr]
 
     ### Calculate EW and errors due to flux and continuum placement
+    print(dv,effflux[velidx],cont[velidx],restlam,c)
     EWpix = dv * (1.-effflux[velidx]/cont[velidx])*restlam/c
     sigEWf = dv / cont[velidx] * ferr[velidx] * restlam/c
     sigEWc = dv * restlam/c * effflux[velidx] / cont[velidx]**2 * conterr[velidx]  # Will not be added in quad.
