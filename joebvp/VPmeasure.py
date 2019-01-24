@@ -656,6 +656,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
             q_pass += 1
         except:
             print('VPmeasure: Fitting failed:', ff)
+            #import pdb; pdb.set_trace()
             fails += [ff]
             q_fail += 1
     print("")
@@ -670,7 +671,10 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
                 break
         if answer in ['y', 'yes']:
             for ff in fails:
-                go(spec, ff)
+                try:
+                    go(spec, ff)
+                except:
+                    raise ValueError('Spectrum/VP input failed to load in interactive mode.')
 
     # Concatenate and create fits inspection files
     concatenate_all(spectofit)
@@ -687,7 +691,6 @@ def concatenate_all(spectrum):
     # concatenate and inspect fit
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
     os.system("ls *.VP > all_VP.txt")
-    import pdb; pdb.set_trace()
     jbu.concatenate_line_tables("all_VP.txt")
     reload(cfg)  # Clear out the LSFs from the last fit
     cfg.spectrum = spectrum

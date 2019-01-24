@@ -141,8 +141,9 @@ def convolvecos(wave,profile,lines,zs):
             fitwaves=wave[cfg.fitidx]
         else:
             # todo: figure out why are there cfg.fitidx = []?
-            fitwaves = wave
-            # import pdb; pdb.set_trace()
+            #fitwaves = wave
+            raise ValueError('No valid pixel ranges for fit, possibly due spectral_gaps setting in cfg.py')
+            import pdb; pdb.set_trace()
     else:
         fitwaves=wave
     if cfg.wavegroups==[]:

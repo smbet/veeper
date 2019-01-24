@@ -133,12 +133,15 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
 
     '''
 
-    if isinstance(filelist, str)|isinstance(filelist, unicode):
+    if isinstance(filelist, bytes):
+        filelist = filelist.decode()
+        lstarr = np.genfromtxt(filelist, dtype=None)
+        listofiles = lstarr.tolist()
+    elif isinstance(filelist, str):
         lstarr=np.genfromtxt(filelist,dtype=None)
         listofiles=lstarr.tolist()
     else:
         listofiles=filelist
-
     tabs = []
     for i, ff in enumerate(listofiles):
         if isinstance(ff,bytes):
@@ -146,7 +149,7 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
         #import pdb; pdb.set_trace()
         tabs.append(ascii.read(ff))
     bigpartable = vstack(tabs)
-    ascii.write(bigpartable, output=outtablefile, delimiter='|')  # write out compiled table
+    ascii.write(bigpartable, output=outtablefile, delimiter='|',overwrite=True)  # write out compiled table
 
 def abslines_from_fitpars(fitpars,ra=None,dec=None,linelist=None):
     '''
@@ -375,9 +378,13 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
 
     pp=PdfPages(output)
 
+    #import pdb;
+    #pdb.set_trace()
     all=abslines_from_VPfile(parfile,linelist=llist,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
     fitpars,fiterrors,parinfo,linecmts = joebvpfit.readpars(parfile)
+
+
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
 
     ### Make a stackplot for each component
@@ -399,7 +406,11 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
             line = comp._abslines[i]
             thesepars=[[line.wrest.value],[line.attrib['logN']],[line.attrib['b'].value],
                        [line.z],[line.attrib['vel'].value],[line.limits.vlim[0].value],[line.limits.vlim[1].value]]
-            thismodel=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,thesepars)
+            try:
+                thismodel=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,thesepars)
+            except:
+                ax.text(-100,0.05,'These pixels not used to fit this line')
+                continue
             axlin=ax.get_lines()
             veldat=axlin[0].get_data()[0]
             ax.plot(veldat,fullmodel,color='red',alpha=0.8)

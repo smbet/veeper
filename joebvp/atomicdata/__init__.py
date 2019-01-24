@@ -7,6 +7,9 @@ from linetools.lists import parse as lilp
 import astropy.units as u
 from astropy.table import Table
 import imp
+from linetools.lists.linelist import LineList
+
+llist = LineList('ISM')
 
 jbvp_path = imp.find_module('joebvp')[1]
 
@@ -36,9 +39,6 @@ for i in range(len(vernion)):
     vernion[i]=vernion[i].strip()
 
 def setatomicdata(lines,precise=True):
-
-    from linetools.lists.linelist import LineList
-    llist = LineList('ISM')
 
     lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
     for i,ll in enumerate(lines):
