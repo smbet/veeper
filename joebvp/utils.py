@@ -10,7 +10,7 @@ from linetools.lists.linelist import LineList
 from astropy.table import Table,vstack
 from astropy.io import ascii
 try:
-    from joebvp import joebvp_cfg as cfg
+    import joebvp_cfg
 except:
     print("joebvp.utils: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
     import joebvp.cfg as cfg

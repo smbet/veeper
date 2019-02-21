@@ -97,15 +97,9 @@ def get_lsfs():
             cfg.lsfs.append(lsf['kernel'])
             break
         else:
-            try:
-                lamobs=np.median(cfg.wave[fg])
-            except:
-                import pdb; pdb.set_trace()
+            lamobs=np.median(cfg.wave[fg])
             lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
-            try:
-                lfg = len(fg)
-            except:
-                import pdb; pdb.set_trace()
+            lfg = len(fg)
             if len(fg) < 10:
                 print("Line at {:.2f} AA is undersampling the LSF. Will increase number of pixels at either side to"
                     " include at least 10.".format(lamobs))
@@ -114,10 +108,7 @@ def get_lsfs():
                     # NT: this could happen when pixels with S/N<0 exist, i.e. pixels where flux is <0 (e.g. black lines).
                     # For this reason, is better to remove the option to eliminate pixels based on S/N.
                 n_more_side = int(np.ceil((10 - len(fg))/2 + 1))
-                try:
-                    inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
-                except:
-                    import pdb; pdb.set_trace()
+                inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
                 inds_left = [np.min(fg) - ii - 1 for ii in range(n_more_side)]
                 inds_left.sort()
                 # QtCore.pyqtRemoveInputHook()
@@ -205,10 +196,7 @@ def convolvecos(wave,profile,lines,zs):
         else:
 
             lsfwidth=int(np.ceil(len(ll)/2+1))
-            try:
-                paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
-            except:
-                import pdb; pdb.set_trace()
+            paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
             paddedprof=np.append(paddedprof,[1.]*lsfwidth)
             convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
 

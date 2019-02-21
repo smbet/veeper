@@ -195,14 +195,6 @@ def wherebetween(testval,lim1,lim2):
 	return result
 
 
-### Estimate total H I mass given flat line profile
-def himass(dist,S,dv):
- 	'''
- 	Units: [dist] = Mpc, [S] = Jy, [dv] = km/s
- 	'''
- 	return 2.356e5*dist**2*S*dv
-
-
 ### Generate appropriate calls for a grid of subplots
 def subplotgrid(num):
   if num==1: calls=[[1,1,1]]

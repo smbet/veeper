@@ -72,7 +72,6 @@ def lam2ion(restwave):
         return ions
 
 def lam2osc(restwave):
-    #return round(vernosc[jbg.closest(vernlam,restwave)],3)
     lam,fosc,gam = setatomicdata(restwave)
     return fosc[0]
 
@@ -81,35 +80,3 @@ def lam2vernp(restwave):
         return round(vernp[jbg.closest(vernlam,restwave)],2)
     else:
         return vernp[jbg.closest(vernlam,restwave)].round(2)
-
-def ion2lam(ion):
-    return vernlam[np.where(vernion==ion)[0]]
-
-def ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5):
-    '''
-    Usage: ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5)
-    Given ion (string) and wavelength range observed, return lambdas to search.
-    Use frame='rest' to return restframe wavelengths even if supplying a redshift.
-    '''
-    try: lamidx=np.where(vernion==ion)[0]
-    except:
-        splitname=ion[0:2]+' '+ion[2:]
-        try: lamidx=np.where(vernion==ion)[0]
-        except:
-            print('Ion name doesn\'t match database.')
-        else:
-            restlams=vernlam[lamidx]
-            obswaves=restlams*(1.+z)
-            linesinrange=lamidx[np.where(jbg.between(obswaves,wave1,wave2)&(lam2vernp(restlams)>pthresh))]
-            if frame=='obs':
-               return vernlam[linesinrange]*(1.+z)
-            if frame=='rest':
-               return vernlam[linesinrange]
-    else:
-        restlams=vernlam[lamidx]
-        obswaves=restlams*(1.+z)
-        linesinrange=lamidx[np.where(jbg.between(obswaves,wave1,wave2)&(lam2vernp(restlams)>pthresh))]
-        if frame=='obs':
-           return vernlam[linesinrange]*(1.+z)
-        if frame=='rest':
-           return vernlam[linesinrange]
