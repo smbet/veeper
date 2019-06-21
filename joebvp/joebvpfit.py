@@ -2,16 +2,17 @@
 ### Parameters: [lam_rest,column_density,doppler_param,z,velocity_offset]
 
 import numpy as np
-from joebvp import joebgoodies as jbg
+import joebvp.joebgoodies as jbg
+
 # from stsci.tools import nmpfit
 from joebvp import nmpfit
-import utils
-import makevoigt
+from joebvp import utils
+from joebvp import makevoigt
 try:
 	import joebvp_cfg as cfg
 except:
 	print("joebvp.joebvpfit: No local joebvp_cfg.py found, using default cfg.py file form joebvp.")
-	import cfg
+	from joebvp import cfg
 import joebvp.atomicdata as atomicdata
 from astropy.io import ascii
 from astropy import units as u
@@ -26,9 +27,9 @@ c=299792.458
 def foldpars(pars,numpars=5):
 	rows=len(pars)/numpars
 	fpars=[]
-	for i in range(numpars):
+	for i in np.arange(numpars,dtype='int'):
 		fparrow=[]
-		for j in range(rows):
+		for j in np.arange(rows,dtype='int'):
 			fparrow.append(pars[i+numpars*j])
 		fpars.append(fparrow)
 	return fpars
@@ -37,7 +38,7 @@ def unfoldpars(pars,numpars=5):
 	rows=len(pars[0])
 	ufpars=[]
 	for j in range(rows):
-		for i in range(numpars):
+		for i in np.arange(numpars,dtype='int'):
 			ufpars.append(pars[i][j])
 	return ufpars
 
@@ -73,10 +74,13 @@ def update_bad_pixels():
 	bad_pixels = np.where(cond_badpix)[0]
 	return bad_pixels
 
-def fitpix(wave,pararr):
-	# define bad pixels
-	cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
-
+def fitpix(wave,pararr,find_bad_pixels=True):
+	if find_bad_pixels:
+		# define bad pixels
+		cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
+	else:
+		cfg.bad_pixels = []
+		
 	ll=pararr[0]
 	lz=pararr[3]
 	lv1=pararr[5]
@@ -84,10 +88,6 @@ def fitpix(wave,pararr):
 	relpix=[]
 	for i in range(len(ll)):
 		vels=jbg.veltrans(lz[i],wave,ll[i])
-		#w1=ll[i]*(1.+lz[i]+lv1[i]/c)
-		#w2=ll[i]*(1.+lz[i]+lv2[i]/c)
-		#p1=jbg.closest(wave,w1)
-		#p2=jbg.closest(wave,w2)
 		p1=jbg.closest(vels,lv1[i])
 		p2=jbg.closest(vels,lv2[i])
 
@@ -443,9 +443,9 @@ def readpars(filename,wave1=None,wave2=None):
 	linerestwave = linelist['restwave'].data
 	linez = linelist['zsys'].data
 	if (wave1 == None)&(wave2 == None):
-		lineshere = range(len(linelist))
+		lineshere = np.arange(len(linelist))
 	elif ((wave1 == None)|(wave2 == None))|(wave1>=wave2):
-		lineshere = range(len(linelist))
+		lineshere = np.arange(len(linelist))
 		warnings.warn('Note that both \'wave1\' and \'wave2\' must be declared or neither must be. \n Loading all lines in list.')
 	else:
 		lineobswave = linerestwave * (1. + linez)
@@ -454,7 +454,6 @@ def readpars(filename,wave1=None,wave2=None):
 	linelist['ions']=atomicdata.lam2ion(linelist['restwave'])
 
 	linelist.sort(['ions','zsys','vel','restwave'])
-
 
 	linerestwave = linelist['restwave']
 	zs = linelist['zsys']
@@ -521,9 +520,9 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 
 	### Prep header of line parameter file
 	if linecmts is not None:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
+		header = b'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans|rely|comment \n'
 	else:
-		header = 'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
+		header = b'specfile|restwave|zsys|col|sigcol|bval|sigbval|vel|sigvel|nflag|bflag|vflag|vlim1|vlim2|wobs1|wobs2|pix1|pix2|z_comp|trans \n'
 	VPparfile.write(header)
 	bigparfile.write(header)
 
@@ -550,8 +549,8 @@ def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=Non
 				[specfile, restwave, round(zline, 5), round(fitpars[1][i], 3), round(fiterrors[1][i], 3),
 				 round(fitpars[2][i], 3), round(fiterrors[2][i], 3), round(fitpars[4][i], 3), round(fiterrors[4][i], 3),
 				 parinfo[1][i], parinfo[2][i], parinfo[4][i], vlim1, vlim2, wobs1, wobs2, pix1, pix2, round(z_comp, 5),trans])
-		VPparfile.write(towrite)
-		bigparfile.write(towrite)
+		VPparfile.write(towrite.encode())
+		bigparfile.write(towrite.encode())
 	VPparfile.close()
 	bigparfile.close()
 	print('Line parameters written to:')
@@ -634,6 +633,7 @@ def modelFromAbsComp(spectrum,abscomp):
 	cfg.lams=lam ; cfg.fosc=fosc ; cfg.gam=gam
 
 	profile = voigtfunc(spectrum.wavelength.value, pars)
+	### For debugging old feature
 	#nonone = np.where(np.abs(profile - 1.) > 0.01)[0]
 	#print spectrum.wavelength[nonone]
 	return spectrum.wavelength.value,profile

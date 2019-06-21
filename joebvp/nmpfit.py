@@ -1,6 +1,7 @@
 """
 Python/Numeric version of this module was called mpfit. This version was modified to use numpy.
 """
+from __future__ import print_function, absolute_import, division, unicode_literals
 from __future__ import division # confidence medium
 __version__ = '0.2'
 
@@ -406,11 +407,8 @@ Perform Levenberg-Marquardt least-squares minimization, based on MINPACK-1.
         Translated from MPFIT (Craig Markwardt's IDL package) to Python,
         August, 2002.  Mark Rivers
 """
-from stsci.tools import numerixenv
-numerixenv.check()
 
 import numpy
-import types
 
 
 #     Original FORTRAN documentation
@@ -878,11 +876,11 @@ e.g. mpfit.status, mpfit.errmsg, mpfit.params, npfit.niter, mpfit.covar.
 
         ## Be sure that PARINFO is of the right type
         if (parinfo is not None):
-            if (type(parinfo) != types.ListType):
+            if (type(parinfo) != list):
                 self.errmsg = 'ERROR: PARINFO must be a list of dictionaries.'
                 return
             else:
-                if (type(parinfo[0]) != types.DictionaryType):
+                if (type(parinfo[0]) != dict):
                     self.errmsg = 'ERROR: PARINFO must be a list of dictionaries.'
                     return
             if ((xall is not None) and (len(xall) != len(parinfo))):
@@ -1415,10 +1413,10 @@ e.g. mpfit.status, mpfit.errmsg, mpfit.params, npfit.niter, mpfit.covar.
 
         # Convert to numeric arrays if possible
         test = default
-        if (type(default) == types.ListType): test=default[0]
-        if (type(test) == types.IntType):
+        if (type(default) == list): test=default[0]
+        if (type(test) == int):
             values = numpy.asarray(values, dtype=numpy.int)
-        elif (type(test) == types.FloatType):
+        elif (type(test) == float):
             values = numpy.asarray(values, dtype=numpy.float)
         return(values)
 

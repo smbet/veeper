@@ -1,8 +1,11 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
+
 import numpy as np
-import joebgoodies
+from joebvp import joebgoodies
 import joebvp.atomicdata as ad
 import numpy.polynomial.legendre as L
-import cfg
+from joebvp import cfg
 from scipy import stats
 
 def contFitLegendreAboutLine(wave,flux,err,restlam,z,velfitregions,uniform=True,**kwargs):
@@ -97,7 +100,7 @@ def fitLegendre(x, y, sig=None, minord=1, maxord=8):
     sumsqdiffs=[]
     dfs=[]
     errmtxs=[]
-    print minord
+    print(minord)
     ### Loop through possible orders between minord and maxord
     for ord in range(minord,maxord+1):
 
@@ -261,6 +264,7 @@ def EW_ACD_array(wave,flux,ferr,cont,conterr,restlam,zabs,vellim=[-50,50],**kwar
     effflux[belowerr] = ferr[belowerr]
 
     ### Calculate EW and errors due to flux and continuum placement
+    print(dv,effflux[velidx],cont[velidx],restlam,c)
     EWpix = dv * (1.-effflux[velidx]/cont[velidx])*restlam/c
     sigEWf = dv / cont[velidx] * ferr[velidx] * restlam/c
     sigEWc = dv * restlam/c * effflux[velidx] / cont[velidx]**2 * conterr[velidx]  # Will not be added in quad.

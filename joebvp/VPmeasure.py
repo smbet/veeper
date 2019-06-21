@@ -4,6 +4,7 @@ Created on Mon Mar 21 22:50:45 2016
 
 @author: burchett
 """
+from __future__ import print_function, absolute_import, division, unicode_literals
 
 from PyQt5.uic import loadUiType
 from PyQt5 import QtGui
@@ -25,7 +26,11 @@ import os
 from linetools.spectra.io import readspec
 import numpy as np
 from astropy.constants import c
-
+try:
+    from importlib import reload
+except:
+    pass
+import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -34,6 +39,8 @@ from matplotlib.backends.backend_qt5agg import (
 modpath=os.path.abspath(os.path.dirname(__file__))
 print(os.path.abspath(os.path.dirname(__file__)))
 Ui_MainWindow, QMainWindow = loadUiType(modpath+'/mainvpwindow.ui')
+
+matplotlib.rcParams['font.size']=cfg.general_fontsize
 
 c= c.to('km/s').value
 
@@ -72,7 +79,9 @@ class LineParTableModel(QAbstractTableModel):
         if index.isValid() and role == Qt.DisplayRole:
             row = index.row()
             column = index.column()
-            if column == 1: toret=atomicdata.lam2ion(self.fitpars[0][row])
+            if column == 0: toret=round(self.fitpars[0][row],3)
+            elif column == 1:
+                toret=atomicdata.lam2ion(self.fitpars[0][row])
             elif column == 2: toret=round(self.fitpars[3][row],5)
             elif column == 3: toret=round(self.fitpars[1][row],3)
             elif column == 4: toret=round(self.fiterrors[1][row],3)
@@ -83,7 +92,7 @@ class LineParTableModel(QAbstractTableModel):
             elif column == 9: toret=self.linecmts[0][row]
             elif column == 10: toret=self.linecmts[1][row]
             else: toret=QVariant(round(self.fitpars[column][row],3))
-            return toret
+            return str(toret)
 
         else: return None
 
@@ -295,16 +304,15 @@ class Main(QMainWindow, Ui_MainWindow):
         self.quitButton.clicked.connect(self.quitGui)
 
         ### Initialize spectral plots
-        fig=Figure()
+        fig=Figure(figsize=(5,3))
         self.fig=fig
         self.initplot(fig)
 
         ### Initialize side plot
-        sidefig=Figure(figsize=(5.25,2))
+        sidefig=Figure(figsize=(5.85,3.75))
         self.sidefig = sidefig
         self.addsidempl(self.sidefig)
         self.sideplot(self.lastclick)  #Dummy initial cenwave setting
-
 
     def initplot(self,fig,numchunks=8):
         wlen=len(self.spectrum.wavelength)/numchunks
@@ -316,16 +324,22 @@ class Main(QMainWindow, Ui_MainWindow):
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
-            pixs=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
-            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],linestyle='steps-mid')
+            pixs=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen, dtype='int')
+            self.spls[i].plot(self.wave[pixs],self.normflux[pixs],
+                              linestyle='steps-mid',linewidth=cfg.spec_linewidth)
             if self.fitpars!=None:
                 self.spls[i].plot(self.wave,model,'r')
             self.spls[i].set_xlim(self.wave[pixs[0]],self.wave[pixs[-1]])
             self.spls[i].set_ylim(cfg.ylim)
-            self.spls[i].set_xlabel('wavelength',labelpad=0)
-            self.spls[i].set_ylabel('relative flux',labelpad=-5)
+            self.spls[i].set_xlabel('wavelength', fontsize=cfg.xy_fontsize,
+                                    labelpad=cfg.x_labelpad)
+            self.spls[i].set_ylabel('relative flux', fontsize=cfg.xy_fontsize,
+                                    labelpad=cfg.y_labelpad)
             self.spls[i].get_xaxis().get_major_formatter().set_scientific(False)
-        fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,wspace=0.15,hspace=0.25)
+            self.spls[i].tick_params(axis='both', which='major',direction='in',
+                                     pad=2,length=2)
+        fig.subplots_adjust(top=0.98,bottom=0.05,left=0.08,right=0.97,
+                            wspace=0.15,hspace=0.24)
         self.addmpl(fig)
 
     def initialpars(self,parfilename):
@@ -341,15 +355,25 @@ class Main(QMainWindow, Ui_MainWindow):
         if len(self.sidefig.axes)==0:
             self.sideax=self.sidefig.add_subplot(111)
         self.sideax.clear()
-        self.sideax.plot(self.wave, self.normflux, linestyle='steps-mid')
+        self.sideax.plot(self.wave, self.normflux, linestyle='steps-mid',
+                         linewidth=cfg.spec_linewidth)
         if self.pixtog == 1:
             self.sideax.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
         model = joebvpfit.voigtfunc(self.wave, self.fitpars)
         res = self.normflux - model
         self.sideax.plot(self.wave, model, 'r')
         if self.restog == 1:
-            self.sideax.plot(self.wave, -res, '.', color='black', ms=2)
+            self.sideax.plot(self.wave, -res, '.', color='black',
+                             ms=cfg.residual_markersize)
         self.sideax.plot(self.wave, [0] * len(self.wave), color='gray')
+        self.sideax.set_xlabel('wavelength', fontsize=cfg.xy_fontsize,
+                                labelpad=cfg.x_labelpad)
+        self.sideax.set_ylabel('relative flux', fontsize=cfg.xy_fontsize,
+                                labelpad=cfg.y_labelpad)
+        self.sideax.tick_params(axis='both', which='major', direction='in',
+                                pad=1, length=2)
+        self.sidefig.subplots_adjust(top=0.98, bottom=0.17, left=0.12,
+                                     right=0.97)
 
         ### label lines we are trying to fit
         if self.labeltog == 1:
@@ -410,6 +434,7 @@ class Main(QMainWindow, Ui_MainWindow):
         else:
             self.restog = 1
         self.updateplot()
+        self.sideplot(self.lastclick)
 
     def openParFileDialog(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open line parameter file','.')
@@ -459,8 +484,7 @@ class Main(QMainWindow, Ui_MainWindow):
         wlen=len(self.spectrum.wavelength)/self.numchunks
         for i,sp in enumerate(self.spls):
                 sp.clear()
-                prange=range(waveidx1+i*wlen,waveidx1+(i+1)*wlen)
-    
+                prange=np.arange(waveidx1+i*wlen,waveidx1+(i+1)*wlen,dtype='int')
                 if ((len(self.fitpars[0])>0)):
     
                     sp.plot(self.wave,self.normflux,linestyle='steps-mid')
@@ -470,7 +494,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     res=self.normflux-model
                     sp.plot(self.wave,model,'r')
                     if self.restog==1:
-                        sp.plot(self.wave,-res,'.',color='black', ms=2)
+                        sp.plot(self.wave,-res,'.',color='black', ms=cfg.residual_markersize)
                     sp.plot(self.wave,[0]*len(self.wave),color='gray')
     
                     ### label lines we are trying to fit
@@ -489,18 +513,20 @@ class Main(QMainWindow, Ui_MainWindow):
                 sp.set_ylabel('normalized flux', fontsize=cfg.xy_fontsize, labelpad=cfg.y_labelpad)
                 sp.get_xaxis().get_major_formatter().set_scientific(False)
                 sp.get_xaxis().get_major_formatter().set_useOffset(False)
-
         self.changefig(self.fig)
 
     def changefig(self, item):
         #text = str(item.text())
-        self.rmmpl()
-        self.addmpl(self.fig)
+        self.canvas.draw()
+        #self.rmmpl()
+        #self.addmpl(self.fig)
+
 
     def changesidefig(self, item):
         #text = str(item.text())
-        self.rmsidempl()
-        self.addsidempl(self.sidefig)
+        self.sidecanvas.draw()
+        #self.rmsidempl()
+        #self.addsidempl(self.sidefig)
         
         
     def on_click(self, event):
@@ -528,10 +554,10 @@ class Main(QMainWindow, Ui_MainWindow):
 
         
     def rmmpl(self,):
-        self.mplvl.removeWidget(self.canvas)
         self.canvas.close()
-        self.mplvl.removeWidget(self.toolbar)
+        self.mplvl.removeWidget(self.canvas)
         self.toolbar.close()
+        self.mplvl.removeWidget(self.toolbar)
 
     def rmsidempl(self, ):
         self.sidemplvl.removeWidget(self.sidecanvas)
@@ -607,9 +633,17 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
     q_fail = 0
     fails = [] # store failures filenames
     for i,ff in enumerate(listofiles):
+        if isinstance(ff,bytes):
+            ff = ff.decode()
         i += 1
         fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
+
+        cfg.lsfs = []
+        cfg.fgs = []
         cfg.wavegroups = []
+        cfg.wgidxs = []
+        cfg.uqwgidxs = []
+
         try:
             fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
@@ -622,6 +656,7 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
             q_pass += 1
         except:
             print('VPmeasure: Fitting failed:', ff)
+            #import pdb; pdb.set_trace()
             fails += [ff]
             q_fail += 1
     print("")
@@ -631,12 +666,15 @@ def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', in
     if q_fail > 0:
         print("VPmeasure: Failed runs are: {}\n".format(fails))
         while True:
-            answer = raw_input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")
+            answer = input("VPmeasure: Would you like to run the failed fits in GUI mode? (y/n): ")
             if answer in ['y','n', 'yes','no']:
                 break
         if answer in ['y', 'yes']:
             for ff in fails:
-                go(spec, ff)
+                try:
+                    go(spec, ff)
+                except:
+                    raise ValueError('Spectrum/VP input failed to load in interactive mode.')
 
     # Concatenate and create fits inspection files
     concatenate_all(spectofit)

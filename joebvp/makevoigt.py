@@ -5,10 +5,11 @@
 ###  params format (each entry a list): [restwave,coldens,bval,z,vel]
 ###
 #######################################################################
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 from PyQt5 import QtGui, QtCore
 
-
-import joebgoodies as jbg
+from joebvp import joebgoodies as jbg
 import numpy as np  
 from scipy.signal import convolve
 from scipy.special import wofz
@@ -20,9 +21,8 @@ try:
     import joebvp_cfg as cfg
 except:
     print("joebvp.makevoigt: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
-    import cfg
+    from joebvp import cfg
 from sklearn.cluster import MeanShift, estimate_bandwidth
-import joebvpfit
 import astropy.units as u
 from astropy.io import ascii
 from astropy.table import Table
@@ -39,6 +39,7 @@ def Hfunc(x,a):
     return I
 
 def cosvoigt(vwave,vpars):
+    from joebvp import joebvpfit
     pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
     cfg.fitidx=joebvpfit.fitpix(vwave, pars)
     cfg.wave=vwave
@@ -49,8 +50,9 @@ def cosvoigt(vwave,vpars):
     return vflux
 
 def cosvoigt_cont(vwave,cont,vpars):
+    from joebvp import joebvpfit
     pars,info=joebvpfit.initlinepars(vpars[3],vpars[0],vpars,initinfo=[0,0,0])
-    cfg.fitidx=joebvpfit.fitpix(vwave, pars)
+    cfg.fitidx=joebvpfit.fitpix(vwave, pars,find_bad_pixels=False)
     cfg.wave=vwave
     vflux=np.zeros(len(vwave))+1.
     factor=voigt(vwave,vpars[0],vpars[1],vpars[2],vpars[3],vpars[4])
@@ -95,9 +97,9 @@ def get_lsfs():
             cfg.lsfs.append(lsf['kernel'])
             break
         else:
-
             lamobs=np.median(cfg.wave[fg])
             lsfmatch = jbg.wherebetween(lamobs, cfg.lsfranges[:, 0], cfg.lsfranges[:, 1])
+            lfg = len(fg)
             if len(fg) < 10:
                 print("Line at {:.2f} AA is undersampling the LSF. Will increase number of pixels at either side to"
                     " include at least 10.".format(lamobs))
@@ -105,7 +107,7 @@ def get_lsfs():
                     import pdb;pdb.set_trace()
                     # NT: this could happen when pixels with S/N<0 exist, i.e. pixels where flux is <0 (e.g. black lines).
                     # For this reason, is better to remove the option to eliminate pixels based on S/N.
-                n_more_side = (10 - len(fg))/2 + 1
+                n_more_side = int(np.ceil((10 - len(fg))/2 + 1))
                 inds_right = [np.max(fg) + ii + 1 for ii in range(n_more_side)]
                 inds_left = [np.min(fg) - ii - 1 for ii in range(n_more_side)]
                 inds_left.sort()
@@ -115,8 +117,8 @@ def get_lsfs():
                 fg = inds_left + fg.tolist() + inds_right
                 fg = np.array(fg)
                 print("New fg is: {}".format(fg))
-
             lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA, kind='cubic')
+
             # except:
             # 	QtCore.pyqtRemoveInputHook()
             # 	import pdb; pdb.set_trace()
@@ -130,12 +132,13 @@ def convolvecos(wave,profile,lines,zs):
             fitwaves=wave[cfg.fitidx]
         else:
             # todo: figure out why are there cfg.fitidx = []?
-            fitwaves = wave
-            # import pdb; pdb.set_trace()
+            #fitwaves = wave
+            raise ValueError('No valid pixel ranges for fit, possibly due spectral_gaps setting in cfg.py')
+            import pdb; pdb.set_trace()
     else:
         fitwaves=wave
     if cfg.wavegroups==[]:
-        X = np.array(zip(fitwaves,np.zeros(len(fitwaves))), dtype=float)
+        X = np.array(list(zip(fitwaves,np.zeros(len(fitwaves)))), dtype=float)
         ms = MeanShift(bandwidth=25.)
         ms.fit(X)
         cfg.wgidxs = ms.labels_
@@ -146,11 +149,13 @@ def convolvecos(wave,profile,lines,zs):
         df= cfg.fitidx[1:] - cfg.fitidx[:-1]
         dividers = np.where(df > buf)[0] #These are the last indices of each group
         if len(dividers)==0:
-            cfg.fgs=cfg.fitidx
+            cfg.fgs=[cfg.fitidx]
         else:
             cfg.fgs=[np.arange(cfg.fitidx[0], cfg.fitidx[dividers[0]])] #1st group
             for i, idx in enumerate(dividers[:-1]):
-                cfg.fgs.append(np.arange(cfg.fitidx[idx + 1], cfg.fitidx[dividers[i + 1]])) # 'i+1' b/c 1st group handled separately
+                newfg = np.arange(cfg.fitidx[idx + 1], cfg.fitidx[dividers[i + 1]]) # 'i+1' b/c 1st group handled separately
+                if len(newfg)>1.:
+                    cfg.fgs.append(newfg)
             cfg.fgs.append(np.arange(cfg.fitidx[dividers[-1] + 1], cfg.fitidx[-1] + 1))  #last group
             newfgs=[]
             ### Deal with wavegroups that may have huge jumps in wavelength between pixels
@@ -183,14 +188,14 @@ def convolvecos(wave,profile,lines,zs):
     convprof=profile
     for i,ll in enumerate(cfg.fgs):
         if isinstance(ll,int):
-            lsfwidth= len(cfg.fgs) / 2 + 1
+            lsfwidth= int(np.ceil(len(cfg.fgs) / 2 + 1))
             paddedprof = np.insert(profile[cfg.fgs], 0, [1.] * lsfwidth)
             paddedprof = np.append(paddedprof, [1.] * lsfwidth)
             convprof[cfg.fgs] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]
             break
         else:
 
-            lsfwidth=len(ll)/2+1
+            lsfwidth=int(np.ceil(len(ll)/2+1))
             paddedprof = np.insert(profile[ll], 0, [1.] * lsfwidth)
             paddedprof=np.append(paddedprof,[1.]*lsfwidth)
             convprof[ll] = convolve(paddedprof, cfg.lsfs[i], mode='same')[lsfwidth:-lsfwidth]

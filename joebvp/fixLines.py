@@ -5,6 +5,7 @@
 #
 ######################################################
 
+from __future__ import print_function, absolute_import, division, unicode_literals
 from astropy.io import ascii
 
 def fixinput(fname,outfile='fixedVP.dat',fixpars=['n','b','v']):

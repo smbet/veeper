@@ -1,3 +1,5 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 import os
 import numpy as np
 from astropy.constants import c as C
@@ -71,13 +73,16 @@ upperblim_HI = 210.
 
 # Plotting
 ylim = (-0.2, 1.4)
+general_fontsize = 10.
 xtick_fontsize = 'small'
 ytick_fontsize = 'small'
 xy_fontsize = 'small'
 x_labelpad = 0
-y_labelpad = -3
+y_labelpad = 0
 label_ypos = 0.2 * (ylim[0]+ylim[1])
-label_fontsize = 8
+label_fontsize = 10.
+residual_markersize = 1
+spec_linewidth = 1
 
 
 # Handy definitions

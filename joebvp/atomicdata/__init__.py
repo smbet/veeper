@@ -1,9 +1,15 @@
+from __future__ import print_function, absolute_import, division, unicode_literals
+
 from .. import joebgoodies as jbg
 import numpy as np
 from linetools.spectralline import AbsLine
 from linetools.lists import parse as lilp
 import astropy.units as u
+from astropy.table import Table
 import imp
+from linetools.lists.linelist import LineList
+
+llist = LineList('ISM')
 
 jbvp_path = imp.find_module('joebvp')[1]
 
@@ -17,6 +23,14 @@ verngu=jbg.arrfromcol(vernerlist,5)
 vernosc=jbg.arrfromcol(vernerlist,6)
 vernp=jbg.arrfromcol(vernerlist,7)
 
+starts = (0,10,18,21,24,27,30,40)
+verntab = Table.read(jbvp_path+'/atomicdata/verner6.txt',
+                     format='ascii.fixed_width_no_header',
+                     col_starts=starts,fill_values=('','0'),
+                     names=['lam','ion','Z','nume','gl','gu','fosc','P'])
+verntab['fosc'].astype(float)
+vernion=verntab['ion']
+
 # A start to using the linetools atomic data framework
 adata=lilp.parse_morton03()
 vdata=lilp.parse_verner96()
@@ -25,9 +39,6 @@ for i in range(len(vernion)):
     vernion[i]=vernion[i].strip()
 
 def setatomicdata(lines,precise=True):
-
-    from linetools.lists.linelist import LineList
-    llist = LineList('ISM')
 
     lam=np.zeros(len(lines)) ; fosc=np.zeros(len(lines)) ; gam=np.zeros(len(lines))
     for i,ll in enumerate(lines):
@@ -53,14 +64,14 @@ def closestlam(restwave):
 
 def lam2ion(restwave):
     if (isinstance(restwave,int))|(isinstance(restwave,float)):
-        return vernion[jbg.closest(vernlam,restwave)].strip()
+        ionstr = vernion[jbg.closest(vernlam, restwave)].strip()
+        return ionstr
     else:
         ions=[]
         for rw in restwave: ions.append(vernion[jbg.closest(vernlam,rw)].strip())
         return ions
 
 def lam2osc(restwave):
-    #return round(vernosc[jbg.closest(vernlam,restwave)],3)
     lam,fosc,gam = setatomicdata(restwave)
     return fosc[0]
 
@@ -69,35 +80,3 @@ def lam2vernp(restwave):
         return round(vernp[jbg.closest(vernlam,restwave)],2)
     else:
         return vernp[jbg.closest(vernlam,restwave)].round(2)
-
-def ion2lam(ion):
-    return vernlam[np.where(vernion==ion)[0]]
-
-def ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5):
-    '''
-    Usage: ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5)
-    Given ion (string) and wavelength range observed, return lambdas to search.
-    Use frame='rest' to return restframe wavelengths even if supplying a redshift.
-    '''
-    try: lamidx=np.where(vernion==ion)[0]
-    except:
-        splitname=ion[0:2]+' '+ion[2:]
-        try: lamidx=np.where(vernion==ion)[0]
-        except:
-            print('Ion name doesn\'t match database.')
-        else:
-            restlams=vernlam[lamidx]
-            obswaves=restlams*(1.+z)
-            linesinrange=lamidx[np.where(jbg.between(obswaves,wave1,wave2)&(lam2vernp(restlams)>pthresh))]
-            if frame=='obs':
-               return vernlam[linesinrange]*(1.+z)
-            if frame=='rest':
-               return vernlam[linesinrange]
-    else:
-        restlams=vernlam[lamidx]
-        obswaves=restlams*(1.+z)
-        linesinrange=lamidx[np.where(jbg.between(obswaves,wave1,wave2)&(lam2vernp(restlams)>pthresh))]
-        if frame=='obs':
-           return vernlam[linesinrange]*(1.+z)
-        if frame=='rest':
-           return vernlam[linesinrange]
