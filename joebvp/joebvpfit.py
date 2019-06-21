@@ -3,6 +3,7 @@
 
 import numpy as np
 import joebvp.joebgoodies as jbg
+
 # from stsci.tools import nmpfit
 from joebvp import nmpfit
 from joebvp import utils

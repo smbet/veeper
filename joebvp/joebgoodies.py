@@ -91,6 +91,7 @@ def hhmmssdeg(coord):
         secs=float(parted[2].partition(':')[2])
     if coord[0]=='-':
         degs=-1.*(hours*15.+15.*mins/60.+15*secs/3600.)
+
         warnings.warn('RED FLAG! You shouldn\'t have negative hours!')
     else:
         degs=hours*15.+15.*mins/60.+15.*secs/3600.
@@ -182,17 +183,18 @@ def changefocus(window):
 
 ### Test whether a value is two others
 def between(testval,lim1,lim2):
-	return ((testval>lim1)&(testval<lim2))
+    return ((testval>lim1)&(testval<lim2))
+
 
 
 def wherebetween(testval,lim1,lim2):
-	'''
+    '''
 	Given multiple ranges of values (lim1 and lim2 are same-sized),
 	return indices where testval falls between lim1[idx] and lim2[idx].
 	'''
-	lim1=np.array(lim1);lim2=np.array(lim2)
-	result=np.where((testval>lim1)&(testval<lim2))[0]
-	return result
+    lim1=np.array(lim1);lim2=np.array(lim2)
+    result=np.where((testval>lim1)&(testval<lim2))[0]
+    return result
 
 
 ### Generate appropriate calls for a grid of subplots
