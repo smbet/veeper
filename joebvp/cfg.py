@@ -26,7 +26,6 @@ islocal = False
 
 Todd = False
 if Todd:
-    lsf='COS_LP1'
     instr=['COS','COS','COS','COS','STIS']
     gratings=['G130M','G160M','G185M','G225M','E230M']
     slits=['NA','NA','NA','NA','0.2x0.2']
@@ -34,9 +33,10 @@ if Todd:
     lps=['1','1','1','1','1']
     cen_wave=['1327','1600','1953','2250','2707']
     spectral_gaps = []
+    pixel_scales = []
+    fwhms = []
 
 else:  # this is for the casual user
-    lsf='COS_LP1' # not being used, is it?
     instr=['COS','COS']
     lsfranges=np.array([[1130,1450],[1450,1800]])
     gratings=['G130M','G160M']
@@ -44,6 +44,8 @@ else:  # this is for the casual user
     slits=['NA','NA']
     lps=['2','2']
     spectral_gaps = [[0,1162.5], [1198,1201.5], [1213.3, 1217.93], [1299.3,1321.6],[1596,1612.8],[1782,2000]]
+    pixel_scales = []
+    fwhms = []
 
 # fundamental constants
 echarge = 4.803204505713468e-10

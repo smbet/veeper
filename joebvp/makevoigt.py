@@ -85,9 +85,13 @@ def get_lsfs():
 
     lsfobjs=[]
     for i,inst in enumerate(cfg.instr):
-        lsfobjs.append(LSF(dict(name=inst, grating=cfg.gratings[i],
+        if inst in ['COS','STIS']:
+            lsfobjs.append(LSF(dict(name=inst, grating=cfg.gratings[i],
                                 life_position=cfg.lps[i], cen_wave=cfg.cen_wave[i],
                                 slit=cfg.slits[i])))
+        elif inst in ['Gaussian','gaussian']:
+            lsfobjs.append(LSF(dict(name=inst, pixel_scale=cfg.pixel_scales[i],
+                                    FWHM=cfg.fwhms[i])))
     cfg.lsfs=[]
     for fg in cfg.fgs:
         if isinstance(fg,int):
@@ -117,7 +121,10 @@ def get_lsfs():
                 fg = inds_left + fg.tolist() + inds_right
                 fg = np.array(fg)
                 print("New fg is: {}".format(fg))
-            lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA, kind='cubic')
+            try:
+                lsf = lsfobjs[lsfmatch[0]].interpolate_to_wv_array(cfg.wave[fg] * u.AA, kind='cubic')
+            except:
+                import pdb; pdb.set_trace()
 
             # except:
             # 	QtCore.pyqtRemoveInputHook()
