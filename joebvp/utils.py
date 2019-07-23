@@ -142,6 +142,8 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
         listofiles=lstarr.tolist()
     else:
         listofiles=filelist
+    if sum(1 for line in open(filelist)) == 1:
+        listofiles = [listofiles]
     tabs = []
     for i, ff in enumerate(listofiles):
         if isinstance(ff,bytes):
