@@ -74,13 +74,20 @@ def update_bad_pixels():
 	bad_pixels = np.where(cond_badpix)[0]
 	return bad_pixels
 
+
+###
+###
 def fitpix(wave,pararr,find_bad_pixels=True):
+###
+###
+
+
 	if find_bad_pixels:
 		# define bad pixels
 		cfg.bad_pixels = update_bad_pixels() # this variable stores the indices of bad pixels
 	else:
 		cfg.bad_pixels = []
-		
+
 	ll=pararr[0]
 	lz=pararr[3]
 	lv1=pararr[5]
@@ -365,11 +372,11 @@ def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
 	uqcfs=np.unique(colflags)
 	uqbfs=np.unique(bflags)
 	uqvfs=np.unique(velflags)
-	
+
 	colerrs=fiterrors[1]
 	berrs = fiterrors[2]
 	velerrs = fiterrors[4]
-	
+
 	# Set up arrays to hold initial parameters and widths of random deviations
 	mcpararr=np.transpose(np.array([fitpars[1],fitpars[2],fitpars[3]]))
 	diffarr=np.transpose(np.array([sig*fiterrors[1],sig*fiterrors[2],sig*fiterrors[4]]))
@@ -377,7 +384,7 @@ def errors_mc(fitpars,fiterrors,parinfo,wave,flux,err,sig=6,numiter=2000):
 	randarr = random.random_sample(size=(numiter,len(fitpars[0]),3))
 	# Deviate parameters
 	mcpararr=(mcpararr-diffarr)+2.*diffarr*randarr
-	
+
 	# Some lines' parameters are tied to other lines'; also fits sometime top or bottom out b-values
 	for i,ff in enumerate(uqcfs):
 		theselines=np.where(colflags==ff)[0]
@@ -671,8 +678,7 @@ def fit_to_convergence(wave,flux,sig,linepars,parinfo,maxiter=50,itertol=0.0001)
 
 		try:
 			oldfitpars = fitpars
-			fitpars, fiterrors = joebvpfit(wave, flux, sig,
-											 fitpars, parinfo)
+			fitpars, fiterrors = joebvpfit(wave, flux, sig, fitpars, parinfo)
 			fitpars = np.array(fitpars)
 			print('Iteration', ctr, '-')
 

@@ -52,9 +52,10 @@ def closestlam(restwave):
 def lam2ion(restwave):
     if (isinstance(restwave,int))|(isinstance(restwave,float)):
         ionstr = vernion[jbg.closest(vernlam,restwave)].strip()
-        import pdb; pdb.set_trace()
+        # why is this here?
+        #import pdb; pdb.set_trace()
         return ionstr
-    else: 
+    else:
         ions=[]
         for rw in restwave: ions.append(vernion[jbg.closest(vernlam,rw)].strip())
         return ions
@@ -79,7 +80,7 @@ def ion2laminrange(ion,wave1,wave2,z=0.,frame='obs',pthresh=9.5):
     Use frame='rest' to return restframe wavelengths even if supplying a redshift.
     '''
     try: lamidx=np.where(vernion==ion)[0]
-    except: 
+    except:
         splitname=ion[0:2]+' '+ion[2:]
         try: lamidx=np.where(vernion==ion)[0]
         except:

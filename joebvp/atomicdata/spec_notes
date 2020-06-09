@@ -1,0 +1,9 @@
+make very simple fake Spectrum
+XSpectrum1D from linetools
+see how continuum fitting output differs from XSpectrum1D
+go through whatever VPmeasure does <--- or specifically the setting up the cfg parts of it
+and from there it should be something that can be put into our veeper stuff
+
+go through same process with input spectrum containing actual line flux
+
+main change from now fill be addition of continuum list

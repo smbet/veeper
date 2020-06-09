@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 
 import os
 import numpy as np
-from astropy.constants import c as C
+import astropy.constants as const
 
 wave=0
 flux=0
@@ -36,7 +36,7 @@ if Todd:
     spectral_gaps = []
 
 else:  # this is for the casual user
-    lsf='COS_LP1' # not being used, is it?
+    lsf='COS_LP1'
     instr=['COS','COS']
     lsfranges=np.array([[1130,1450],[1450,1800]])
     gratings=['G130M','G160M']
@@ -46,10 +46,10 @@ else:  # this is for the casual user
     spectral_gaps = [[0,1162.5], [1198,1201.5], [1213.3, 1217.93], [1299.3,1321.6],[1596,1612.8],[1782,2000]]
 
 # fundamental constants
-echarge = 4.803204505713468e-10
-m_e = 9.10938291e-28
-c = C.to('cm/s').value
-c2 = 29979245800.0
+echarge = 4.803204505713468e-10 # you want this in cgs, it's staying hardcoded
+m_e = const.m_e.to('g').value
+c = const.c.to('cm/s').value
+c2 = 29979245800.0 # not sure why this one is needed
 
 # store LSFs and FGs
 lsfs=[]

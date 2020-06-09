@@ -8,12 +8,14 @@ import subprocess
 import warnings
 
 ### Return index of array element closest to value
+
+from collections.abc import Iterable
 def closest(arr,value):
-    if (isinstance(value,int)|isinstance(value,float)):
-        idx = (np.abs(arr-value)).argmin()
-    else:
+    if (isinstance(value,Iterable)):
         idx=[]
         for val in value: idx.append((np.abs(arr-val)).argmin())
+    else:
+        idx = (np.abs(arr-value)).argmin()
     return idx
 
 ### Transform wavelength into velocity space centered on some line
@@ -24,7 +26,7 @@ def veltrans(redshift,waves,line):
     else:
         transline=[]
         for ll in line: transline.append(c*(waves-(1+redshift)*ll)/ll/(1+redshift))
-    return transline 
+    return transline
 
 ### Return row of pipe-delimited data
 def pipedelimrow(data):
@@ -140,7 +142,7 @@ def decimalplaces(x,n):
     rhs=numstr.split('.')[1]
     if len(str(rhs))<n: rhs=rhs+'0'*(n-len(str(rhs)))
     return lhs+'.'+rhs
-    
+
 ### Volume of a sphere
 def volsphere(r):
     return 4./3.*np.pi*r**3
@@ -173,12 +175,12 @@ def changefocus(window):
     if window=='terminal':
         if 'linux' in sys.platform:
             subprocess.call(['wmctrl','-a','cardinal'])
-        else: 
-            subprocess.call(['open','-a','terminal'])    
+        else:
+            subprocess.call(['open','-a','terminal'])
     if window=='figure':
         if 'linux' in sys.platform:
             subprocess.call(['wmctrl','-a','Figure'])
-        else: 
+        else:
             subprocess.call(['open','-a','XQuartz'])
 
 ### Test whether a value is two others
@@ -189,9 +191,9 @@ def between(testval,lim1,lim2):
 
 def wherebetween(testval,lim1,lim2):
     '''
-	Given multiple ranges of values (lim1 and lim2 are same-sized),
-	return indices where testval falls between lim1[idx] and lim2[idx].
-	'''
+    Given multiple ranges of values (lim1 and lim2 are same-sized),
+    return indices where testval falls between lim1[idx] and lim2[idx].
+    '''
     lim1=np.array(lim1);lim2=np.array(lim2)
     result=np.where((testval>lim1)&(testval<lim2))[0]
     return result
@@ -226,4 +228,3 @@ def subplotgridspec(num):
     elif num==7: calls=[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1]]
     elif num==8: calls=[[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1]]
     return calls
-

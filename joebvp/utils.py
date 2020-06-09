@@ -9,6 +9,10 @@ from linetools.spectra.xspectrum1d import XSpectrum1D
 from linetools.lists.linelist import LineList
 from astropy.table import Table,vstack
 from astropy.io import ascii
+from pyigm.guis import igmguesses
+from linetools.isgm import io, utils
+from joebvp import VPmeasure
+import os
 try:
     import joebvp_cfg
 except:
@@ -355,7 +359,7 @@ def get_errors(partable,idx2check):
         velerr=row['sigvel']
 
     return colerr, berr, velerr
-    
+
 def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **kwargs):
     '''
     Produce pdf of fitting results for quality check.
@@ -500,3 +504,36 @@ def abscomponents_from_abslines(abslinelist, **kwargs):
                                             **kwargs)
         comps.append(thiscomp)
     return comps
+
+def pyigm_to_veeper(json, fits):
+
+    '''
+    Converts from a werksquad igmguesses .json file to veeper-fitted components.
+
+    Parameters
+    ----------
+
+    json : str
+        Werksquad QSO .json file.
+
+    fits : str
+        QSO spectrum fits file.
+
+    A function to call the various methods needed to go from the werksquad .json file
+    to a set of inputs that the veeper can understand. NOTE: This process makes
+    a ton of files - so a subdirectory is made to cut down on the clutter in the working directory.
+
+    '''
+
+    # Separates out the giant werksquad .json file into a list of absorption components.
+    comp = igmguesses.from_igmguesses_to_complist(json)
+    # Groups absorption components so that veeper doesn't try to fit every component at the same time.
+    coincident = utils.group_coincident_components(comp)
+
+    # to reduce clutter:
+    path = os.path.join('.','component_groups')
+    os.makedirs(path, exist_ok=True)
+    # Make each set of grouped components into a .txt file suitable for veeper input.
+    for ii,group in enumerate(coincident):
+        savename = 'component_groups/test_group_{}.txt'.format(ii)
+        io.write_joebvp_from_components(group,fits,savename)

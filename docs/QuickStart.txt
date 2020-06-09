@@ -1,3 +1,10 @@
+Basic instructions for batch_fit:
+
+
+
+
+
+
 Basic usage for GUI:
 
 from joebvp import VPmeasure

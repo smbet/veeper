@@ -1,0 +1,33 @@
+Steps to go from werksquad .json file to inputting components into the veeper:
+
+  from joebvp import utils
+
+  utils.pyigm_to_veeper('galaxyname.json', 'galaxyname.fits')
+
+This will create a directory with text files corresponding to each group of
+absorption features in the spectrum. Each one of these files is now ready to be
+put into the veeper for fitting:
+
+  from joebvp import VPmeasure
+
+  VPmeasure.batch_fit('galaxyname.fits', ['componentname1.txt'], filepath='./component_groups/')
+
+Keep in mind batch_fit can accept at many component arguments as you want to give it,
+I've just shown it with one. The filepath argument will default to the working directory if
+not specified. Given that pyigm_to_veeper automatically creates a subdirectory for the
+input files, not including the above will produce an error.
+A successful fit will end with something like this:
+
+  VPmeasure: 1/1 fits converged, 0/1 failed (see log for details).
+
+  VPmeasure: concatenating individual outputs and creating figures for inspection.
+
+  .
+  .
+  .
+
+  Wrote spectrum to FitInspection.fits
+  VPmeasure: Done.
+
+If you want to check your fit, among the plethora of files veeper created are some fit inspection files called
+FitInspection. Congratulations on your new fitted QSO sightline absorption!

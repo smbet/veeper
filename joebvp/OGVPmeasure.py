@@ -20,13 +20,12 @@ try:
 except:
     print("joebvp.VPmeasure: No local joebvp_cfg.py found, using default cfg.py file from joebvp.")
     from joebvp import cfg
-from joebvp import stevebvpfit
+from joebvp import joebvpfit
 from joebvp import utils as jbu
 import os
 from linetools.spectra.io import readspec
 import numpy as np
 from astropy.constants import c
-import time
 try:
     from importlib import reload
 except:
@@ -58,9 +57,7 @@ class LineParTableModel(QAbstractTableModel):
         return len(self.fitpars[0])
 
     def columnCount(self, parent):
-        return len(self.headers)
-        # originally this just said return(11) so I assume this is a less hardcode-y
-        # way of saying the same thing...
+        return 11
 
     def data(self,index,role):
         if role == Qt.EditRole:
@@ -82,35 +79,19 @@ class LineParTableModel(QAbstractTableModel):
         if index.isValid() and role == Qt.DisplayRole:
             row = index.row()
             column = index.column()
-            try:
-                if column == 0: toret=round(self.fitpars[0][row],3)
-                elif column == 1:
-                    toret=atomicdata.lam2ion(self.fitpars[0][row])
-                elif column == 2: toret=round(self.fitpars[3][row],5)
-                elif column == 3: toret=round(self.fitpars[1][row],3)
-                elif column == 4: toret=round(self.fiterrors[1][row],3)
-                elif column == 5: toret=round(self.fitpars[2][row],3)
-                elif column == 6: toret=round(self.fiterrors[2][row],3)
-                elif column == 7: toret=round(self.fitpars[4][row],3)
-                elif column == 8: toret=round(self.fiterrors[4][row],3)
-                # this is coded such that it is not expecting you to add an additional line
-                elif column == 9: toret=self.linecmts[0][row]
-                elif column == 10: toret=self.linecmts[1][row]
-                else: toret=QVariant(round(self.fitpars[column][row],3))
-            except IndexError:
-                if column == 0: toret=round(self.fitpars[0][row],3)
-                elif column == 1:
-                    toret=atomicdata.lam2ion(self.fitpars[0][row])
-                elif column == 2: toret=round(self.fitpars[3][row],5)
-                elif column == 3: toret=round(self.fitpars[1][row],3)
-                elif column == 4: toret=round(self.fiterrors[1][row],3)
-                elif column == 5: toret=round(self.fitpars[2][row],3)
-                elif column == 6: toret=round(self.fiterrors[2][row],3)
-                elif column == 7: toret=round(self.fitpars[4][row],3)
-                elif column == 8: toret=round(self.fiterrors[4][row],3)
-                elif column == 9: toret=self.newlinecmts[0][row]
-                elif column == 10: toret=self.newlinecmts[1][row]
-                else: toret=QVariant(round(self.fitpars[column][row],3))
+            if column == 0: toret=round(self.fitpars[0][row],3)
+            elif column == 1:
+                toret=atomicdata.lam2ion(self.fitpars[0][row])
+            elif column == 2: toret=round(self.fitpars[3][row],5)
+            elif column == 3: toret=round(self.fitpars[1][row],3)
+            elif column == 4: toret=round(self.fiterrors[1][row],3)
+            elif column == 5: toret=round(self.fitpars[2][row],3)
+            elif column == 6: toret=round(self.fiterrors[2][row],3)
+            elif column == 7: toret=round(self.fitpars[4][row],3)
+            elif column == 8: toret=round(self.fiterrors[4][row],3)
+            elif column == 9: toret=self.linecmts[0][row]
+            elif column == 10: toret=self.linecmts[1][row]
+            else: toret=QVariant(round(self.fitpars[column][row],3))
             return str(toret)
 
         else: return None
@@ -118,11 +99,12 @@ class LineParTableModel(QAbstractTableModel):
     def flags(self,index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
+
     def setData(self,index,value,role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
             column = index.column()
-            if value.toFloat()[1]==True: # value needs to be QString not regular string for this to work
+            if value.toFloat()[1]==True:
                 val = round(float(value.toFloat()[0]),2)
                 if column == 1: pass
                 if column == 2: self.fitpars[3][row] = val
@@ -140,28 +122,27 @@ class LineParTableModel(QAbstractTableModel):
 
         return False
 
-    def addLine(self,wave,newrestwave,newz,newcol,newb,newvel,newvel1,newvel2,newrely='-',newcmt='none'):
+
+    def addLine(self,wave,newrestwave,newz,newcol,newb,newvel,newvel1,newvel2,newrely=None,newcmt=None):
         ### Setup new parameters and append them to main arrays of the data model
         newpars=[[newrestwave],[newcol],[newb],[newz],[newvel],[newvel1],[newvel2]]
         fitpars=np.hstack((self.fitpars,newpars))
-        newerrors=[[-99],[-99],[-99],[-99],[-99]] # shouldn't this be updated at some point?
-        # works as long as existing lines are fit (why.....?)
-        # actually, did this ever work?
-        fiterrors=np.hstack((np.array(self.fiterrors[:5]),np.array(newerrors)))
+        newerrors=[[-99],[-99],[-99],[-99],[-99]]
+        fiterrors=np.hstack((self.fiterrors,newerrors))
         newindex=np.max(self.parinfo[1])+1
         newinfo=[[1],[newindex],[newindex],[1],[newindex]]
         parinfo=np.hstack((self.parinfo,newinfo))
         newcmts=[newrely,newcmt]
-        linecmts=np.hstack((np.array(self.linecmts),np.array(newcmts).reshape(2,1)))
-        self.newlinecmts = linecmts
+        linecmts=np.hstack((self.linecmts,newcmts))
         ### Call initlinepars to set atomic data in cfg.fosc, etc.
+        junk,junk=joebvpfit.initlinepars(fitpars[3],fitpars[0],initvals=fitpars,initinfo=parinfo)
         ### Do the update
         midx=QModelIndex()  # Needed for 'beginInsertRows'
         self.beginInsertRows(midx,len(self.fitpars[0]),len(self.fitpars[0]))
         self.updatedata(fitpars,fiterrors,parinfo,linecmts)
         self.endInsertRows()
         ### Reset pixels for fit and wavegroups for convolution
-        cfg.fitidx=stevebvpfit.fitpix(wave, fitpars) #Reset pixels for fit
+        cfg.fitidx=joebvpfit.fitpix(wave, fitpars) #Reset pixels for fit
         cfg.wavegroups=[]
     '''
     def insertRows(self,position,rows,parent=QModelIndex()):
@@ -308,6 +289,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if not parfilename==None:
             self.initialpars(parfilename)
 
+
         ### Connect signals to slots
         self.fitButton.clicked.connect(self.fitlines)
         self.fitConvBox.clicked.connect(self.togfitconv)
@@ -338,7 +320,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.wave1==None:  waveidx1=0  # Default to plotting entire spectrum for now
         else: waveidx1=jbg.closest(self.wave,self.wave1)
         if self.fitpars!=None:
-                model=stevebvpfit.voigtfunc(self.wave,self.datamodel.fitpars)
+                model=joebvpfit.voigtfunc(self.wave,self.datamodel.fitpars)
         sg=jbg.subplotgrid(numchunks)
         for i in range(numchunks):
             self.spls.append(fig.add_subplot(sg[i][0],sg[i][1],sg[i][2]))
@@ -362,8 +344,8 @@ class Main(QMainWindow, Ui_MainWindow):
 
     def initialpars(self,parfilename):
         ### Deal with initial parameters from line input file
-        self.fitpars,self.fiterrors,self.parinfo,self.linecmts = stevebvpfit.readpars(parfilename)
-        cfg.fitidx=stevebvpfit.fitpix(self.wave, self.fitpars) #Set pixels for fit
+        self.fitpars,self.fiterrors,self.parinfo,self.linecmts = joebvpfit.readpars(parfilename)
+        cfg.fitidx=joebvpfit.fitpix(self.wave, self.fitpars) #Set pixels for fit
         cfg.wavegroups=[]
         self.datamodel = LineParTableModel(self.fitpars,self.fiterrors,self.parinfo,linecmts=self.linecmts)
         self.tableView.setModel(self.datamodel)
@@ -377,7 +359,7 @@ class Main(QMainWindow, Ui_MainWindow):
                          linewidth=cfg.spec_linewidth)
         if self.pixtog == 1:
             self.sideax.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
-        model = stevebvpfit.voigtfunc(self.wave, self.fitpars)
+        model = joebvpfit.voigtfunc(self.wave, self.fitpars)
         res = self.normflux - model
         self.sideax.plot(self.wave, model, 'r')
         if self.restog == 1:
@@ -417,13 +399,10 @@ class Main(QMainWindow, Ui_MainWindow):
         print('VPmeasure: Fitting line profile(s)...')
         print(len(self.fitpars[0]),'lines loaded for fitting.')
         if self.fitconvtog:
-            self.fitpars, self.fiterrors = stevebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
-                                                               self.parinfo, linepars=self.datamodel.fitpars, xall=self.datamodel.fitpars[:5]
-                                                               )
+            self.fitpars, self.fiterrors = joebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
+                                                               self.datamodel.fitpars, self.datamodel.parinfo)
         else:
-            self.fitpars, self.fiterrors = stevebvpfit.stevebvpfit(self.wave, self.normflux,self.normsig,
-                                                               self.parinfo, linepars=self.datamodel.fitpars, xall=self.datamodel.fitpars[:5]
-                                                               )
+            self.fitpars, self.fiterrors = joebvpfit.joebvpfit(self.wave, self.normflux,self.normsig, self.datamodel.fitpars,self.datamodel.parinfo)
         self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,self.linecmts)
         self.tableView.resizeColumnsToContents()
         self.updateplot()
@@ -469,13 +448,13 @@ class Main(QMainWindow, Ui_MainWindow):
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save line parameter file', cfg.VPparoutfile)
         fname = str(fname[0])
         if fname != '':
-            stevebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname, self.datamodel.linecmts)
+            joebvpfit.writelinepars(self.datamodel.fitpars, self.datamodel.fiterrors, self.datamodel.parinfo, self.specfilename, fname, self.datamodel.linecmts)
 
     def writeModelFileDialog(self):
         fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save model to file', cfg.VPmodeloutfile)
         fname = str(fname[0])
         if fname != '':
-            stevebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
+            joebvpfit.writeVPmodel(fname, self.wave, self.fitpars, self.normflux, self.normsig)
 
     def writeModelCompFileDialog(self):
         dirDialog = QtWidgets.QFileDialog(self)
@@ -485,7 +464,7 @@ class Main(QMainWindow, Ui_MainWindow):
         dname = dirDialog.getSaveFileName(self, 'Save model to files split by components',defDirName)
         dname = str(dname[0])
         if dname != '':
-            stevebvpfit.writeVPmodelByComp(dname, self.spectrum,self.fitpars)
+            joebvpfit.writeVPmodelByComp(dname, self.spectrum,self.fitpars)
 
     def addLineDialog(self):
         dlgOutput=newLineDialog.get_newline()
@@ -511,7 +490,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     sp.plot(self.wave,self.normflux,linestyle='steps-mid')
                     if self.pixtog==1:
                         sp.plot(self.wave[cfg.fitidx], self.normflux[cfg.fitidx], 'gs', markersize=4, mec='green')
-                    model=stevebvpfit.voigtfunc(self.wave,self.fitpars)
+                    model=joebvpfit.voigtfunc(self.wave,self.fitpars)
                     res=self.normflux-model
                     sp.plot(self.wave,model,'r')
                     if self.restog==1:
@@ -602,7 +581,7 @@ def go(specfilename, parfilename):
     main.show()
     app.exec_()
 
-def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPmodel.fits', inspect=True, **kwargs):
+def batch_fit(spec, filelist, outparfile='.VP', outmodelfile='_VPmodel.fits', inspect=True, **kwargs):
     """
     Takes a number of input files and fits the lines in them.  The fitting algorithm will
     be run until convergence for each input file. The program will then ask whether to run the failed
@@ -615,9 +594,7 @@ def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPm
     filelist : list of strings or str
         This should be a list containing the names of VP input files or a string referring to a file simply
         listing the input files.
-        See stevebvpfit.readpars for details of file format
-    filepath : str, optional
-        Path to directory where input txt files live.
+        See joebvpfit.readpars for details of file format
     outparfile : str, optional
         Suffix for output file for fitted line parameters.
     outmodelfile: str, optional
@@ -659,28 +636,25 @@ def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPm
         if isinstance(ff,bytes):
             ff = ff.decode()
         i += 1
-        fitpars, fiterrors, parinfo, linecmts = stevebvpfit.readpars(ff)
+        fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars(ff)
 
         cfg.lsfs = []
         cfg.fgs = []
         cfg.wavegroups = []
         cfg.wgidxs = []
-        cfg.uqwgidxs = [] # wtf? This annotation brought to you by Steven Bet.
+        cfg.uqwgidxs = []
 
         try:
-            xall = fitpars[:5]
-            fitpars,fiterrors=stevebvpfit.fit_to_convergence(wave,normflux,normsig,parinfo,fitpars,xall, **kwargs)
+            fitpars,fiterrors=joebvpfit.fit_to_convergence(wave,normflux,normsig,fitpars,parinfo, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff.split('.')[0] + outparfile
             modeloutfilename = ff.split('.')[0] + outmodelfile
-            stevebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
-            stevebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
-
+            joebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
+            joebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
             if inspect:
                 jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
             q_pass += 1
         except:
-            raise
             print('VPmeasure: Fitting failed:', ff)
             #import pdb; pdb.set_trace()
             fails += [ff]
@@ -703,42 +677,25 @@ def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPm
                     raise ValueError('Spectrum/VP input failed to load in interactive mode.')
 
     # Concatenate and create fits inspection files
-    concatenate_all(spectofit, filepath=filepath, outparfile=outparfile)
+    concatenate_all(spectofit)
     print("VPmeasure: Done.")
 
 
-def concatenate_all(spectrum, filepath='.', outparfile='.VP'):
-    """
-
-    Takes all *.VP files in the working directory, and concatenates them into a single VP file
+def concatenate_all(spectrum):
+    """Takes all *.VP files in the working directory, and concatenates them into a single VP file
     as well as creates a single PDF file for fit inspection.
 
-    Parameters
-    ----------
-
     spectrum : XSpectrum1D
-        Original spectrum.
-
-    filepath : str, optional
-        Path to directory where input txt files live. Obtained from identically-named argument in batch_fit.
-
-    outparfile : str, optional
-        File exptension of the veeper batch_fit output. Also obtained from identically-named argument in batch_fit.
-
+        Original spectrum
     """
     # concatenate and inspect fit
     print("VPmeasure: concatenating individual outputs and creating figures for inspection.")
-    path = os.path.join(filepath,'*'+outparfile)
-    os.system("ls " + path + " > all_VP.txt")
-    with open('all_VP.txt','r') as f:
-        firstline = f.readline()
-        if (firstline is None) or (firstline.isspace()) or (firstline == ''):
-            reload(cfg)
-            raise ValueError('all_VP.txt is empty - are you totally sure you have the right directory for your input files?')
+    os.system("ls *.VP > all_VP.txt")
     jbu.concatenate_line_tables("all_VP.txt")
     reload(cfg)  # Clear out the LSFs from the last fit
     cfg.spectrum = spectrum
     jbu.inspect_fits("compiledVPoutputs.dat")
+
 
 if __name__ == '__main__':
         import sys
