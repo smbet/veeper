@@ -584,7 +584,6 @@ def calc_covar(rr, ipvt=None, tol=1.e-14):
     return(r)
 
 def calc_perrors(jac, ifree, numpars=5):
-
     n = len(ifree)
     rr = np.linalg.inv(jac.T @ jac)
     covar = np.zeros([numpars,numpars], np.float)
@@ -697,6 +696,21 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     xall_fitted[ifree] = m['x'][indices]
 
     fitpars = foldpars(xall_fitted)
+    breakpoint()
+
+    # This is a super-hacky fix to the issue of parameters having Jacobians of 0.
+    # It could obscure other problems and so it would make sense to replace it
+    # at some point.
+
+    if np.isclose(m.jac.T.all(),1e-10):
+        bad_var_ind = np.ravel(np.where(np.isclose(m.jac.sum(axis=0),1e-10)))
+        # Replacing bad columns with value near 0.
+        m.jac.T[bad_var_ind]=m.jac.T[bad_var_ind]+1.0e-5
+        # Giving rest wavelength and redshift of bad lines. Also really janky in and
+        # of itself so that's fun.
+        bad_wav = xall[np.ravel(np.where(xall==x[bad_var_ind][0]))-1]
+        bad_red = xall[np.ravel(np.where(xall==x[bad_var_ind][1]))+1]
+        print('Bad component of {0:.5f} at {1:.5f}.'.format(np.float(bad_wav),np.float(bad_red)))
 
     perr = calc_perrors(m.jac,freeanduntied, numpars=xall.size)
 
