@@ -696,7 +696,6 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     xall_fitted[ifree] = m['x'][indices]
 
     fitpars = foldpars(xall_fitted)
-    breakpoint()
 
     # This is a super-hacky fix to the issue of parameters having Jacobians of 0.
     # It could obscure other problems and so it would make sense to replace it

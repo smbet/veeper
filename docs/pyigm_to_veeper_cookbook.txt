@@ -2,7 +2,7 @@ Steps to go from werksquad .json file to inputting components into the veeper:
 
   from joebvp import utils
 
-  utils.pyigm_to_veeper('galaxyname.json', 'galaxyname.fits')
+  utils.pyigm_to_veeper('QSOname.json', 'QSOname.fits')
 
 This will create a directory with text files corresponding to each group of
 absorption features in the spectrum. Each one of these files is now ready to be
@@ -10,7 +10,7 @@ put into the veeper for fitting:
 
   from joebvp import VPmeasure
 
-  VPmeasure.batch_fit('galaxyname.fits', ['componentname1.txt'], filepath='./component_groups/')
+  VPmeasure.batch_fit('QSOname.fits', ['componentname1.txt'], filepath='./component_groups/')
 
 Keep in mind batch_fit can accept at many component arguments as you want to give it,
 I've just shown it with one. The filepath argument will default to the working directory if
@@ -30,4 +30,12 @@ A successful fit will end with something like this:
   VPmeasure: Done.
 
 If you want to check your fit, among the plethora of files veeper created are some fit inspection files called
-FitInspection. Congratulations on your new fitted QSO sightline absorption!
+FitInspection. Congratulations on your new fitted QSO sightline absorption! Additional note: if you want to re-run
+a group, you'll first need to go into component_groups and delete that group's .VP file.
+
+e.g.
+
+  $ cd component_groups/
+  $ rm group_[whatever].VP
+
+And then you'll be good to run the veeper on that input file again.
