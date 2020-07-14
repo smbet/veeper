@@ -417,11 +417,11 @@ class Main(QMainWindow, Ui_MainWindow):
         print('VPmeasure: Fitting line profile(s)...')
         print(len(self.fitpars[0]),'lines loaded for fitting.')
         if self.fitconvtog:
-            self.fitpars, self.fiterrors = stevebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
+            self.fitpars, self.fiterrors, self.rchi2 = stevebvpfit.fit_to_convergence(self.wave, self.normflux, self.normsig,
                                                                self.parinfo, linepars=self.datamodel.fitpars, xall=self.datamodel.fitpars[:5]
                                                                )
         else:
-            self.fitpars, self.fiterrors = stevebvpfit.stevebvpfit(self.wave, self.normflux,self.normsig,
+            self.fitpars, self.fiterrors, self.rchi2 = stevebvpfit.stevebvpfit(self.wave, self.normflux,self.normsig,
                                                                self.parinfo, linepars=self.datamodel.fitpars, xall=self.datamodel.fitpars[:5]
                                                                )
         self.datamodel.updatedata(self.fitpars,self.fiterrors,self.parinfo,self.linecmts)
@@ -669,12 +669,13 @@ def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPm
 
         try:
             xall = fitpars[:5]
-            fitpars,fiterrors=stevebvpfit.fit_to_convergence(wave,normflux,normsig,parinfo,fitpars,xall, **kwargs)
+            fitpars,fiterrors,rchi2=stevebvpfit.fit_to_convergence(wave,normflux,normsig,parinfo,fitpars,xall, **kwargs)
             print('VPmeasure: Fit converged:', ff)
             paroutfilename = ff.split('.')[0] + outparfile
             modeloutfilename = ff.split('.')[0] + outmodelfile
             stevebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             stevebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
+            stevebvpfit.writerchi2(rchi2,paroutfilename.split('.')[0]+'_rchi2.txt')
 
             if inspect:
                 jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")

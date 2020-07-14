@@ -142,7 +142,7 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
         lstarr = np.genfromtxt(filelist, dtype=None)
         listofiles = lstarr.tolist()
     elif isinstance(filelist, str):
-        lstarr=np.genfromtxt(filelist,dtype=None)
+        lstarr=np.genfromtxt(filelist,dtype=None,encoding=None)
         listofiles=lstarr.tolist()
     else:
         listofiles=filelist
@@ -535,5 +535,5 @@ def pyigm_to_veeper(json, fits):
     os.makedirs(path, exist_ok=True)
     # Make each set of grouped components into a .txt file suitable for veeper input.
     for ii,group in enumerate(coincident):
-        savename = 'component_groups/test_group_{}.txt'.format(ii)
+        savename = 'component_groups/input_group_{}.txt'.format(ii)
         io.write_joebvp_from_components(group,fits,savename)

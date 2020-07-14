@@ -12,7 +12,7 @@ ilist = LineList('ISM')
 
 jbvp_path = imp.find_module('joebvp')[1]
 
-vernerlist=np.genfromtxt(jbvp_path+'/atomicdata/verner6.txt',dtype=None,delimiter=[10,8,3,4,3,2,9,6])
+vernerlist=np.genfromtxt(jbvp_path+'/atomicdata/verner6.txt',dtype=None,encoding=None,delimiter=[10,8,3,4,3,2,9,6])
 vernlam=jbg.arrfromcol(vernerlist,0)
 vernion=jbg.arrfromcol(vernerlist,1)
 vernzatom=jbg.arrfromcol(vernerlist,2)

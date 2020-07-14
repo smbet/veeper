@@ -106,7 +106,6 @@ def readpars(filename,wave1=None,wave2=None):
     linecmts: list of lists
         Reliability and comment flags, e.g., from igmguesses
     '''
-    # also how come this one gets docstrings?
     linelist = ascii.read(filename)
     linerestwave = linelist['restwave'].data
     linez = linelist['zsys'].data
@@ -689,7 +688,7 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
 
     m = least_squares(stevevoigterrfunc, x, bounds=bnds, args=arg, kwargs={}, verbose=True)
 
-    if m.status <= 0: print('Fitting error:',m.errmsg)
+    if m.status < 0: print('Fitting error:',m.message)
 
     xall_fitted = xall.copy()
 
@@ -702,14 +701,17 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     # at some point.
 
     if np.isclose(m.jac.T.all(),1e-10):
-        bad_var_ind = np.ravel(np.where(np.isclose(m.jac.sum(axis=0),1e-10)))
-        # Replacing bad columns with value near 0.
-        m.jac.T[bad_var_ind]=m.jac.T[bad_var_ind]+1.0e-5
-        # Giving rest wavelength and redshift of bad lines. Also really janky in and
-        # of itself so that's fun.
-        bad_wav = xall[np.ravel(np.where(xall==x[bad_var_ind][0]))-1]
-        bad_red = xall[np.ravel(np.where(xall==x[bad_var_ind][1]))+1]
-        print('Bad component of {0:.5f} at {1:.5f}.'.format(np.float(bad_wav),np.float(bad_red)))
+        try:
+            bad_var_ind = np.ravel(np.where(np.isclose(m.jac.sum(axis=0),1e-10)))
+            # Replacing bad columns with value near 0.
+            m.jac.T[bad_var_ind]=m.jac.T[bad_var_ind]+1.0e-5
+            # Giving rest wavelength and redshift of bad lines. Also really janky in and
+            # of itself so that's fun.
+            bad_wav = xall[np.ravel(np.where(xall==x[bad_var_ind][0]))-1]
+            bad_red = xall[np.ravel(np.where(xall==x[bad_var_ind][1]))+1]
+            print('Bad component of {0:.5f} at {1:.5f}.'.format(np.float(bad_wav),np.float(bad_red)))
+        except IndexError:
+            pass
 
     perr = calc_perrors(m.jac,freeanduntied, numpars=xall.size)
 
@@ -718,6 +720,8 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     for par in perr:
         par = np.ravel(np.array(par))
 
+    # Adding in reduced chi-squared bit:
+    rchi2 = 2*m.cost/(len(cfg.fitidx)-len(freeanduntied))
     # Add velocity windows back to parameter array
     fitpars.append(vlim1) ; fitpars.append(vlim2)
 
@@ -726,8 +730,8 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     for i in range(len(fitpars[0])):
         print(jbg.tabdelimrow([round(fitpars[0][i],2),jbg.decimalplaces(fitpars[3][i],5),jbg.roundto(fitpars[1][i],5),jbg.roundto(fitpars[2][i],5),jbg.roundto(fitpars[4][i],5)])[:-2])
         print(jbg.tabdelimrow([' ',' ',' ',round(fitperr[1][i],3),round(fitperr[2][i],3),round(fitperr[4][i],3)]))
-
-    return fitpars,fitperr
+    print('\nReduced chi-squared: {0:f}'.format(rchi2))
+    return fitpars,fitperr,rchi2
 
 # ... the other main event:
 def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.0001):
@@ -736,8 +740,8 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
     Parameters
     ----------
     wave
-    flux       dw you don't need to
-    sig        know about these ones
+    flux
+    sig
     flags
     linepars
     xall
@@ -754,7 +758,7 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
     -------
 
     '''
-    fitpars = linepars # why????
+    fitpars = linepars
     oldfitpars = np.zeros([7, len(fitpars[0])]) - 99
     ctr = 0
     okay = 1
@@ -764,7 +768,7 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
         try:
             # so the fitpars from the last iteration doesn't get erased:
             oldfitpars = fitpars
-            fitpars, fiterrors = stevebvpfit(wave, flux, sig, flags, linepars=linepars, xall=xall)
+            fitpars, fiterrors, rchi2 = stevebvpfit(wave, flux, sig, flags, linepars=linepars, xall=xall)
             fitpars = np.array(fitpars)
             print('Iteration', ctr, '-')
 
@@ -776,9 +780,17 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
 
     if okay != 0:
         print('Fit converged after',ctr,'iterations.')
-        return fitpars, fiterrors
+        return fitpars, fiterrors, rchi2
     else:
-        return linepars,fiterrors
+        return linepars,fiterrors, rchi2
+
+def writerchi2(rchi2,outfilename):
+    '''
+    Writes reduced input group's chi-squared to file.
+    '''
+    rchi2file = open(outfilename, 'wt')
+    rchi2file.write(str(rchi2))
+    rchi2file.close()
 
 def writelinepars(fitpars,fiterrors,parinfo, specfile, outfilename, linecmts=None):
     '''
