@@ -676,9 +676,11 @@ def batch_fit(spec, filelist, filepath='.', outparfile='.VP', outmodelfile='_VPm
             stevebvpfit.writelinepars(fitpars, fiterrors, parinfo, specfile, paroutfilename, linecmts)
             stevebvpfit.writeVPmodel(modeloutfilename, wave, fitpars, normflux, normsig)
             stevebvpfit.writerchi2(rchi2,paroutfilename.split('.')[0]+'_rchi2.txt')
-
+            # pass reduced chi-squared as optional kwarg
             if inspect:
-                jbu.inspect_fits(paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf")
+                jbu.inspect_fits(
+                paroutfilename, output=paroutfilename.split('.')[0]+"_inspect.pdf",rchi2filepath=paroutfilename.split('.')[0]+'_rchi2.txt'
+                )
             q_pass += 1
         except:
             raise

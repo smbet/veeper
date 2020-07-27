@@ -32,13 +32,13 @@ def compose_model(spec,filelist,outfile):
     filelist : list of strings or str
         This should be a list containing the names of VP input files or a string referring to a file simply
         listing the input files.
-        See joebvpfit.readpars for details of file format
+        See stevebvpfit.readpars for details of file format
 
     outfile : str
         Name of model spectrum output file
 
     '''
-    from joebvp import joebvpfit
+    from joebvp import stevebvpfit
 
     ### Deal with alternate input types
     if isinstance(spec,str):
@@ -55,9 +55,9 @@ def compose_model(spec,filelist,outfile):
     concatenate_line_tables(filelist,outtablefile='compiledVPinputs.dat')
 
     ### Make the model!
-    fitpars, fiterrors, parinfo, linecmts = joebvpfit.readpars('compiledVPinputs.dat')  # read this back in to load params
-    cfg.fitidx = joebvpfit.fitpix(wave, fitpars)  # set the pixels in the line regions
-    model = joebvpfit.voigtfunc(wave,fitpars)  # generate the Voigt profiles of all lines
+    fitpars, fiterrors, parinfo, linecmts = stevebvpfit.readpars('compiledVPinputs.dat')  # read this back in to load params
+    cfg.fitidx = stevebvpfit.fitpix(wave, fitpars)  # set the pixels in the line regions
+    model = stevebvpfit.voigtfunc(wave,fitpars)  # generate the Voigt profiles of all lines
 
     ### Instantiate XSpectrum1D object and write it out
     outspec=XSpectrum1D.from_tuple((wave,model,normsig))
@@ -130,7 +130,7 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
     filelist : list of strings or str
         This should be a list containing the names of VP input files or a string referring to a file simply
         listing the input files.
-        See joebvpfit.readpars for details of file format
+        See stevebvpfit.readpars for details of file format
 
     outtablefile : str
         Name of compiled model parameter output file
@@ -215,7 +215,7 @@ def fitpars_from_abslines(abslinelist):
     fitpars : list of lists
         The joebvp parameter array that includes line measurements
     '''
-    from joebvp import joebvpfit
+    from joebvp import stevebvpfit
     restwaves = [al.wrest.value for al in abslinelist]
     linecol = [al.attrib['logN'] for al in abslinelist]
     lineb = [al.attrib['b'].value for al in abslinelist]
@@ -225,7 +225,7 @@ def fitpars_from_abslines(abslinelist):
     zs = [al.z for al in abslinelist]
     initpars = [restwaves, linecol, lineb, zs, linevel, linevlim1, linevlim2]
     initinfo = [[1]*len(abslinelist)]*len(initpars)
-    fitpars, parinfo = joebvpfit.initlinepars(zs, restwaves, initpars,
+    fitpars, parinfo = stevebvpfit.initlinepars(zs, restwaves, initpars,
                                               initinfo=initinfo)
 
     return fitpars
@@ -360,7 +360,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
 
-def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **kwargs):
+def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rchi2filepath='.', **kwargs):
     '''
     Produce pdf of fitting results for quality check.
 
@@ -373,12 +373,14 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
     vlim : Quantity array, optional
         Velocity range of stackplots
         e.g.: [-400,
+    rchi2filepath : str, optional
+        writes reduced chi^2 of fit onto plot
 
     Returns
     -------
 
     '''
-    from joebvp import joebvpfit
+    from joebvp import stevebvpfit
     from matplotlib.backends.backend_pdf import PdfPages
     llist = LineList('ISM')
 
@@ -388,10 +390,18 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
     #pdb.set_trace()
     all=abslines_from_VPfile(parfile,linelist=llist,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
-    fitpars,fiterrors,parinfo,linecmts = joebvpfit.readpars(parfile)
+    fitpars,fiterrors,parinfo,linecmts = stevebvpfit.readpars(parfile)
 
 
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
+
+    # reduced chi^2 part:
+
+    if rchi2filepath!='.':
+
+        rchi2file = open(rchi2filepath)
+        rchi2 = rchi2file.read()
+        rchi2file.close()
 
     ### Make a stackplot for each component
     for comp in acl:
@@ -421,6 +431,8 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s, **
             veldat=axlin[0].get_data()[0]
             ax.plot(veldat,fullmodel,color='red',alpha=0.8)
             ax.plot(veldat,thismodel,color='purple',linestyle='dashed')
+            if rchi2filepath!='.':
+                ax.text(100,0.16,'rchi^2='+rchi2[0:6])
         botbuf = 0.5/height
         fig.subplots_adjust(bottom=botbuf,left=0.1,right=0.95,hspace=0.,wspace=0.35)
 

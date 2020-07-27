@@ -10,7 +10,7 @@ put into the veeper for fitting:
 
   from joebvp import VPmeasure
 
-  VPmeasure.batch_fit('QSOname.fits', ['componentname1.txt'], filepath='./component_groups/')
+  VPmeasure.batch_fit('QSOname.fits', ['component_groups/componentname1.txt'], filepath='./component_groups/')
 
 Keep in mind batch_fit can accept at many component arguments as you want to give it,
 I've just shown it with one. The filepath argument will default to the working directory if
