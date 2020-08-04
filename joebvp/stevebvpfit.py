@@ -725,13 +725,24 @@ def stevebvpfit(wave, flux, sig, flags, linepars=None, xall=None):
     # Add velocity windows back to parameter array
     fitpars.append(vlim1) ; fitpars.append(vlim2)
 
+    # determining status of fitgood flag:
+    fitgood = 0
+    # velocity error condition
+    for velerr_ind in range(len(fitperr[-1])):
+        if np.abs(fitperr[-1][velerr_ind]) > np.abs(vlim2[0] - vlim1[0]):
+            fitgood = 1
+    # b error condition
+    for berr_ind in range(len(fitperr[2])):
+        if np.abs(fitperr[2][berr_ind]) > (np.abs(fitpars[2][berr_ind])+20):
+            fitgood = 1
+    
     # prints results in terminal/notebook/whatever thing you have python running from
     print('\nFit results: \n')
     for i in range(len(fitpars[0])):
         print(jbg.tabdelimrow([round(fitpars[0][i],2),jbg.decimalplaces(fitpars[3][i],5),jbg.roundto(fitpars[1][i],5),jbg.roundto(fitpars[2][i],5),jbg.roundto(fitpars[4][i],5)])[:-2])
         print(jbg.tabdelimrow([' ',' ',' ',round(fitperr[1][i],3),round(fitperr[2][i],3),round(fitperr[4][i],3)]))
     print('\nReduced chi-squared: {0:f}'.format(rchi2))
-    return fitpars,fitperr,rchi2
+    return fitpars,fitperr,rchi2,fitgood
 
 # ... the other main event:
 def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.0001):
@@ -768,7 +779,7 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
         try:
             # so the fitpars from the last iteration doesn't get erased:
             oldfitpars = fitpars
-            fitpars, fiterrors, rchi2 = stevebvpfit(wave, flux, sig, flags, linepars=linepars, xall=xall)
+            fitpars, fiterrors, rchi2, fitgood = stevebvpfit(wave, flux, sig, flags, linepars=linepars, xall=xall)
             fitpars = np.array(fitpars)
             print('Iteration', ctr, '-')
 
@@ -780,9 +791,9 @@ def fit_to_convergence(wave,flux,sig,flags,linepars,xall,maxiter=50,itertol=0.00
 
     if okay != 0:
         print('Fit converged after',ctr,'iterations.')
-        return fitpars, fiterrors, rchi2
+        return fitpars, fiterrors, rchi2, fitgood
     else:
-        return linepars,fiterrors, rchi2
+        return linepars,fiterrors, rchi2, fitgood
 
 def writerchi2(rchi2,outfilename):
     '''

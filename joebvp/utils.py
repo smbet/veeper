@@ -153,7 +153,9 @@ def concatenate_line_tables(filelist,outtablefile='compiledVPoutputs.dat'):
         if isinstance(ff,bytes):
             ff = ff.decode()
         #import pdb; pdb.set_trace()
-        tabs.append(ascii.read(ff))
+        smallpartable = ascii.read(ff)
+        smallpartable['groupfilename'] = ff
+        tabs.append(smallpartable) # <-- put it here
     bigpartable = vstack(tabs)
     ascii.write(bigpartable, output=outtablefile, delimiter='|',overwrite=True)  # write out compiled table
 
@@ -360,7 +362,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
 
-def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rchi2filepath='.', **kwargs):
+def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rchi2filepath='.',fitgood=0, **kwargs):
     '''
     Produce pdf of fitting results for quality check.
 
@@ -375,6 +377,8 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
         e.g.: [-400,
     rchi2filepath : str, optional
         writes reduced chi^2 of fit onto plot
+    fitgood : int, optional
+        flag to note if there are any problems in the error of the fit
 
     Returns
     -------
@@ -391,7 +395,10 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
     all=abslines_from_VPfile(parfile,linelist=llist,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
     fitpars,fiterrors,parinfo,linecmts = stevebvpfit.readpars(parfile)
-
+    try:
+        groupnames = ascii.read(parfile)['groupfilename']
+    except KeyError:
+        groupnames = []
 
     fullmodel=makevoigt.cosvoigt(all[0].analy['spec'].wavelength.value,fitpars)
 
@@ -427,12 +434,17 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
             except:
                 ax.text(-100,0.05,'These pixels not used to fit this line')
                 continue
+            if groupnames!=[]:
+                ax.text(-290,0.3,groupnames[i].split('./')[1],fontsize=8.5)
             axlin=ax.get_lines()
             veldat=axlin[0].get_data()[0]
             ax.plot(veldat,fullmodel,color='red',alpha=0.8)
             ax.plot(veldat,thismodel,color='purple',linestyle='dashed')
             if rchi2filepath!='.':
                 ax.text(100,0.16,'rchi^2='+rchi2[0:6])
+            # now for fitgood flag part:
+            if fitgood==1:
+                ax.text(100,0.2,'ErrorFlag=1')
         botbuf = 0.5/height
         fig.subplots_adjust(bottom=botbuf,left=0.1,right=0.95,hspace=0.,wspace=0.35)
 
