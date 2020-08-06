@@ -362,7 +362,7 @@ def get_errors(partable,idx2check):
 
     return colerr, berr, velerr
 
-def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rchi2filepath='.',fitgood=0, **kwargs):
+def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rchi2filepath='.', **kwargs):
     '''
     Produce pdf of fitting results for quality check.
 
@@ -377,8 +377,6 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
         e.g.: [-400,
     rchi2filepath : str, optional
         writes reduced chi^2 of fit onto plot
-    fitgood : int, optional
-        flag to note if there are any problems in the error of the fit
 
     Returns
     -------
@@ -395,6 +393,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
     all=abslines_from_VPfile(parfile,linelist=llist,**kwargs) # Instantiate AbsLine objects and make list
     acl=abscomponents_from_abslines(all,vtoler=15.)  # Instantiate AbsComponent objects from this list
     fitpars,fiterrors,parinfo,linecmts = stevebvpfit.readpars(parfile)
+
     try:
         groupnames = ascii.read(parfile)['groupfilename']
     except KeyError:
@@ -409,9 +408,8 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
         rchi2file = open(rchi2filepath)
         rchi2 = rchi2file.read()
         rchi2file.close()
-
     ### Make a stackplot for each component
-    for comp in acl:
+    for jj,comp in enumerate(acl):
         fig=comp.stack_plot(ymnx=(-0.1,1.3),show=False,return_fig=True,vlim=vlim, tight_layout=True)
         if (len(comp._abslines)<6):
             numrow = len(comp._abslines)%6
@@ -424,27 +422,39 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
         else:
             fig.set_figwidth(10.)
         stackaxes = fig.axes
-
         for i,ax in enumerate(stackaxes):
             line = comp._abslines[i]
             thesepars=[[line.wrest.value],[line.attrib['logN']],[line.attrib['b'].value],
                        [line.z],[line.attrib['vel'].value],[line.limits.vlim[0].value],[line.limits.vlim[1].value]]
+            theseperrs = [[line.attrib['sig_b'].value],[line.attrib['sig_vel'].value]]
             try:
                 thismodel=makevoigt.cosvoigt(line.analy['spec'].wavelength.value,thesepars)
             except:
                 ax.text(-100,0.05,'These pixels not used to fit this line')
                 continue
+
+            # determining status of fit error flag:
+
+            # velocity error condition
+            if np.abs(theseperrs[1]) > np.abs(np.array(thesepars[-1]) - np.array(thesepars[-2])):
+                ax.text(100,0.4,'ErrorFlag=1',fontsize=8)
+            # b error condition
+            if np.abs(theseperrs[0]) > (np.abs(thesepars[2])+20):
+                ax.text(100,0.4,'ErrorFlag=1',fontsize=8)
+
+            # match versus some line params from parfile to get the correct groupnames index:
+
+            # print group names for the concatenated one:
             if groupnames!=[]:
-                ax.text(-290,0.3,groupnames[i].split('./')[1],fontsize=8.5)
+                groupno = np.array(groupnames)[np.where(fitpars[3]==line.z)]
+                ax.text(-293,0.3,groupno[0].split('./component_groups/')[1],fontsize=8)
+
             axlin=ax.get_lines()
             veldat=axlin[0].get_data()[0]
             ax.plot(veldat,fullmodel,color='red',alpha=0.8)
             ax.plot(veldat,thismodel,color='purple',linestyle='dashed')
             if rchi2filepath!='.':
                 ax.text(100,0.16,'rchi^2='+rchi2[0:6])
-            # now for fitgood flag part:
-            if fitgood==1:
-                ax.text(100,0.2,'ErrorFlag=1')
         botbuf = 0.5/height
         fig.subplots_adjust(bottom=botbuf,left=0.1,right=0.95,hspace=0.,wspace=0.35)
 
