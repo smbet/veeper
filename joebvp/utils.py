@@ -396,6 +396,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
 
     try:
         groupnames = ascii.read(parfile)['groupfilename']
+        zsys = ascii.read(parfile)['zsys']
     except KeyError:
         groupnames = []
 
@@ -446,7 +447,7 @@ def inspect_fits(parfile,output='FitInspection.pdf',vlim=[-300,300]*u.km/u.s,rch
 
             # print group names for the concatenated one:
             if groupnames!=[]:
-                groupno = np.array(groupnames)[np.where(fitpars[3]==line.z)]
+                groupno = np.array(groupnames)[np.isclose(zsys,np.array(fitpars[3])[np.where(fitpars[3]==line.z)][0])]
                 ax.text(-293,0.3,groupno[0].split('./component_groups/')[1],fontsize=8)
 
             axlin=ax.get_lines()
