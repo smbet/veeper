@@ -98,7 +98,6 @@ def voigt(waves, line, coldens, bval, z, vels):
 
 
 def get_lsfs():
-
     lsfobjs = []
     for i, inst in enumerate(cfg.instr):
         lsfobjs.append(
@@ -159,14 +158,9 @@ def convolvecos(wave, profile, lines, zs):
         if len(cfg.fitidx) > 0:
             fitwaves = wave[cfg.fitidx]
         else:
-            import warnings
-            # todo: figure out why are there cfg.fitidx = []?
-            #fitwaves = wave
-            # raise ValueError('No valid pixel ranges for fit, possibly due spectral_gaps setting in cfg.py')
-            warnings.warn(
+            raise ValueError(
                 'No valid pixel ranges for fit, possibly due spectral_gaps setting in cfg.py'
             )
-            # import pdb; pdb.set_trace()
     else:
         fitwaves = wave
     if cfg.wavegroups == []:

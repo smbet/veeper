@@ -839,6 +839,13 @@ def batch_fit(spec,
         i += 1
         fitpars, fiterrors, parinfo, linecmts = stevebvpfit.readpars(ff)
 
+        # check to see if there were no valid pixels left over after exluding bad regions.
+        # If not, skip this and keep going.
+        cfg.fitidx = stevebvpfit.fitpix(wave, fitpars)
+        if len(cfg.fitidx) == 0:
+            print('There are no valid pixels to fit in the region. Moving on.')
+            continue
+
         cfg.lsfs = []
         cfg.fgs = []
         cfg.wavegroups = []
